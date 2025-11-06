@@ -2,6 +2,10 @@ import { Datagrid, type DatagridProps } from "react-admin";
 import { styled } from "@mui/material/styles";
 
 const StyledDatagridRoot = styled(Datagrid)(({ theme }) => ({
+    margin: "17px 17px",
+    borderRadius: 12,
+    overflow: "visible",
+
     "& .RaDatagrid-table": {
         tableLayout: "fixed",
         width: "100%",
@@ -26,21 +30,6 @@ const StyledDatagridRoot = styled(Datagrid)(({ theme }) => ({
         }`,
     },
 
-    "& .RaDatagrid-row": {
-        "&:nth-of-type(odd)": {
-            backgroundColor:
-                theme.palette.mode === "dark"
-                    ? theme.palette.action.selectedOpacity
-                    : theme.palette.action.hover,
-        },
-        "&:hover": {
-            backgroundColor:
-                theme.palette.mode === "dark"
-                    ? theme.palette.action.selected
-                    : theme.palette.action.focus,
-        },
-    },
-
     "& .RaDatagrid-cell": {
         whiteSpace: "nowrap",
         overflow: "hidden",
@@ -56,15 +45,27 @@ const StyledDatagridRoot = styled(Datagrid)(({ theme }) => ({
         verticalAlign: "middle",
     },
 
-    // ✅ 數字對齊控制：讓所有金額、數量、ID 改為置中或靠左
-    "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
-        textAlign: "left", // 可改為 'left' 依需求
+    "& .RaDatagrid-cell:first-of-type, & .RaDatagrid-headerCell:first-of-type": {
+        width: "64px !important",
+        minWidth: "64px !important",
+        overflow: "visible !important",
+        paddingLeft: "8px",
     },
 
-    // 若你想讓金額或數字靠左，可改成：
-    // "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
-    //     textAlign: "left",
-    // },
+    //  讓「備註」欄位有更多寬度（避免被縮排）
+    "& .RaDatagrid-cell:last-of-type, & .RaDatagrid-headerCell:last-of-type": {
+        whiteSpace: "normal",    
+        overflow: "visible",     
+        textOverflow: "unset",   
+        lineHeight: 1.4,
+        wordBreak: "break-word",
+        minWidth: "160px",
+    },
+
+    //  數字靠左對齊
+    "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
+        textAlign: "left",
+    },
 }));
 
 export const StyledDatagrid = (props: DatagridProps) => (

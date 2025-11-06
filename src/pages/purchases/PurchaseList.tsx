@@ -42,7 +42,6 @@ const PaymentSubList = () => {
 export const PurchaseList = () => (
   <List title="進貨紀錄">
     <StyledDatagrid expand={<PaymentSubList />}>
-      <TextField source="id" label="ID" />
       <TextField source="supplierName" label="供應商" />
       <TextField source="item" label="品項" />
       <NumberField source="qty" label="數量" />
@@ -68,6 +67,7 @@ export const PurchaseList = () => (
       />
       <TextField source="status" label="狀態" />
       <DateField source="purchaseDate" label="進貨日期" />
+      <TextField source="note" label="備註" />
     </StyledDatagrid>
   </List>
 );
