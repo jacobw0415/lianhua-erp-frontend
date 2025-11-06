@@ -5,6 +5,10 @@ import dataProvider from "./providers/dataProvider";
 import Dashboard from "./pages/dashboard/dashboard";
 import { CustomLayout } from "./layout/CustomLayout";
 import { LianhuaLightTheme, LianhuaDarkTheme } from "./theme/LianhuaTheme";
+import { SupplierList } from "./pages/suppliers/SupplierList";
+import { PurchaseList } from "./pages/purchases/PurchaseList";
+import { PaymentList } from "./pages/payments/PaymentList";
+import { SaleList } from "./pages/sales/SaleList";
 
 const App = () => {
     // 從 localStorage 讀取使用者偏好
@@ -28,10 +32,10 @@ const App = () => {
             )}
             theme={theme}
         >
-            <Resource name="suppliers" list={ListGuesser} />
-            <Resource name="purchases" list={ListGuesser} />
-            <Resource name="payments" list={ListGuesser} />
-            <Resource name="sales" list={ListGuesser} />
+            <Resource name="suppliers" list={SupplierList} />
+            <Resource name="purchases" list={PurchaseList} />
+            <Resource name="payments" list={PaymentList} />
+            <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />
         </Admin>
