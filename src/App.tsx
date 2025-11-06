@@ -9,6 +9,8 @@ import { SupplierList } from "./pages/suppliers/SupplierList";
 import { PurchaseList } from "./pages/purchases/PurchaseList";
 import { PaymentList } from "./pages/payments/PaymentList";
 import { SaleList } from "./pages/sales/SaleList";
+import { PurchaseCreate } from '@/pages/purchases/PurchaseCreate';
+import { PurchaseEdit } from '@/pages/purchases/PurchaseEdit';
 
 const App = () => {
     // 從 localStorage 讀取使用者偏好
@@ -33,7 +35,7 @@ const App = () => {
             theme={theme}
         >
             <Resource name="suppliers" list={SupplierList} />
-            <Resource name="purchases" list={PurchaseList} />
+            <Resource name="purchases" list={PurchaseList} create={PurchaseCreate} edit={PurchaseEdit} />
             <Resource name="payments" list={PaymentList} />
             <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
