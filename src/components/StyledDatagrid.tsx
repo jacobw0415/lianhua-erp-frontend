@@ -45,13 +45,6 @@ const StyledDatagridRoot = styled(Datagrid)(({ theme }) => ({
         verticalAlign: "middle",
     },
 
-    "& .RaDatagrid-cell:first-of-type, & .RaDatagrid-headerCell:first-of-type": {
-        width: "64px !important",
-        minWidth: "64px !important",
-        overflow: "visible !important",
-        paddingLeft: "8px",
-    },
-
     //  讓「備註」欄位有更多寬度（避免被縮排）
     "& .RaDatagrid-cell:last-of-type, & .RaDatagrid-headerCell:last-of-type": {
         whiteSpace: "normal",    

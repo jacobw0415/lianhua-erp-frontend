@@ -4,7 +4,6 @@ import { StyledDatagrid } from "../../components/StyledDatagrid";
 export const SaleList = () => (
   <List title="銷售紀錄">
     <StyledDatagrid>
-      <TextField source="id" label="ID" sx={{ width: 60 }} />
       <TextField source="productName" label="商品" sx={{ width: 150 }} />
       <NumberField source="qty" label="數量" sx={{ width: 80 }} />
       <NumberField source="payMethod" label="付款方式" sx={{ width: 80 }} />
