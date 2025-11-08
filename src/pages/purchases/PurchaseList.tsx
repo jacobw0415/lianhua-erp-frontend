@@ -21,45 +21,36 @@ const PaymentSubList = () => {
       <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 1, fontWeight: 600 }}>
         💰 付款紀錄
       </Typography>
-
       <StyledDatagrid
         data={record.payments}
         rowClick={false}
         bulkActionButtons={false}
         sx={{
           "& .MuiTable-root": {
-            tableLayout: "fixed",
+            // ❌ 移除固定寬度與固定布局
+            tableLayout: "auto",
             width: "100%",
           },
           "& .MuiTableCell-root": {
-            fontSize: "0.9rem",
             py: 1,
             px: 2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            overflow: "visible", // ✅ 改為 visible 以防止數字被截斷
+            textOverflow: "unset",
+            whiteSpace: "nowrap", // ✅ 保持數字與貨幣符號在同一行
           },
-          "& .MuiTableCell-head": {
-            fontWeight: 700,
-            backgroundColor: "#f8f9f8",
-          },
-
-          // ✅ 金額欄強制固定寬度 + 右對齊
           "& .column-amount": {
-            minWidth: "120px",
-            maxWidth: "150px",
-            textAlign: "right",
-            fontVariantNumeric: "tabular-nums",
-            paddingRight: "24px",
+            minWidth: "240px",
+            textAlign: "left",
+            paddingLeft: 2,
           },
           "& .column-amount span": {
             display: "inline-block",
-            width: "100%",
-            textAlign: "right",
+            textAlign: 'left'
           },
 
-          "& .column-payDate": { minWidth: "130px" },
-          "& .column-method": { minWidth: "120px" },
-          "& .column-note": { minWidth: "180px" },
+          "& .column-payDate": { minWidth: "30px" },
+          "& .column-method": { minWidth: "200px" },
+          "& .column-note": { minWidth: "190px" },
         }}
       >
         <NumberField
@@ -95,7 +86,8 @@ export const PurchaseList = () => (
           width: "64px !important",
           minWidth: "64px !important",
           overflow: "visible !important",
-          paddingLeft: "8px",
+ 
+          textAlign: "left",
         },
       }}
     >

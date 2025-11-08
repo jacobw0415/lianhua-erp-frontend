@@ -45,7 +45,7 @@ const PurchaseFormFields = () => {
         <Divider sx={{ my: 2 }} />
         <Typography>💰 總金額：<b>${record.totalAmount?.toFixed(2)}</b></Typography>
         <Typography>✅ 已付款：<b>${record.paidAmount?.toFixed(2)}</b></Typography>
-        <Typography>💸 餘額：<b>${record.balance?.toFixed(2)}</b></Typography>
+        <Typography>💸 剩餘額：<b>${record.balance?.toFixed(2)}</b></Typography>
         <Alert
           severity={record.status === 'PAID' ? 'success' :
             record.status === 'PARTIAL' ? 'warning' : 'info'}
@@ -59,7 +59,18 @@ const PurchaseFormFields = () => {
         <Typography variant="h6">💰 歷史付款紀錄</Typography>
         <Divider sx={{ my: 2 }} />
         {record.payments?.length ? (
-          <Datagrid data={record.payments} bulkActionButtons={false} sx={{ '& .RaDatagrid-thead': { display: 'none' } }}>
+          <Datagrid data={record.payments} bulkActionButtons={false} sx={{
+            
+            // ✅ 金額欄靠左對齊
+            '& .column-amount': {
+              textAlign: 'left',
+              paddingLeft: 2, // 去除多餘內距
+            },
+            '& .column-amount span': {
+              display: 'inline-block',
+              textAlign: 'left',
+            },
+          }}>
             <NumberField source="amount" label="金額" />
             <DateField source="payDate" label="付款日期" />
             <TextField source="method" label="付款方式" />
