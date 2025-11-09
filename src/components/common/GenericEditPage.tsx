@@ -13,7 +13,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import React from "react";
 
 interface GenericEditPageProps {
-  resource: string;                // 對應 resource 名稱，如 "purchases"
+  resource: string;                // 對應 resource 名稱，如 "suppliers"
   title: string;                   // 頁面標題
   children: React.ReactNode;       // 表單內容（由各模組傳入）
   successMessage?: string;         // 自訂成功提示
@@ -64,10 +64,13 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const [update] = useUpdate();
 
   const handleSubmit = async (values: any) => {
+    // ✅ React-Admin 的 values 會包含 id，需在送出前移除
+    const { id, ...dataWithoutId } = values;
+
     try {
       await update(
         resource,
-        { id: values.id, data: values },
+        { id, data: dataWithoutId }, // id 作為更新目標，但不包含在 data payload 裡
         {
           onSuccess: () => {
             notify(successMessage, { type: "success" });

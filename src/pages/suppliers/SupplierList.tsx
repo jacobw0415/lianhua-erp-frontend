@@ -1,7 +1,6 @@
 import {
   List,
   TextField,
-  DateField,
   EditButton,
   DeleteButton,
   TopToolbar,
@@ -22,12 +21,16 @@ export const SupplierList = () => (
     <StyledDatagrid
       
     >
-      {/* 資料欄位 */}
       <TextField source="name" label="供應商名稱" />
+      <TextField source="none" label="" />
       <TextField source="contact" label="聯絡人" />
+      <TextField source="none" label="" />
       <TextField source="phone" label="電話" />
-
-      {/* 操作按鈕 */}
+      <TextField source="none" label="" />
+      <TextField source="billingCycle" label="結帳週期" />
+      <TextField source="none" label="" />
+      <TextField source="note" label="備註" />
+      <TextField source="none" label="" />
       <EditButton label="編輯" />
       <DeleteButton label="刪除" />
     </StyledDatagrid>
