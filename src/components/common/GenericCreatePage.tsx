@@ -1,3 +1,4 @@
+// ✅ src/components/common/GenericCreatePage.tsx
 import {
   Create,
   SimpleForm,
@@ -12,12 +13,12 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import React from "react";
 
 interface GenericCreatePageProps {
-  resource: string;                // 對應 resource 名稱，如 "purchases"
-  title: string;                   // 頁面標題
-  children: React.ReactNode;       // 表單內容區塊
-  successMessage?: string;         // 自訂成功提示
-  errorMessage?: string;           // 自訂錯誤提示
-  width?: string;                  // 可選：表單寬度
+  resource: string;
+  title: string;
+  children: React.ReactNode;
+  successMessage?: string;
+  errorMessage?: string;
+  width?: string;
 }
 
 const CustomToolbar = ({ onBack }: { onBack: () => void }) => (
@@ -78,21 +79,27 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
   return (
     <Box
       sx={{
+        position: "relative",
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "flex-start",
         minHeight: "calc(100vh - 64px)",
         backgroundColor: "background.default",
+        py: 6,
+        px: 2,
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       <Box
         sx={{
-          width: "100%",
-          maxWidth: width,
+          width: width,                // ✅ 改成固定寬度，而不是 100%
+          maxWidth: width,             // ✅ 讓不同頁面內容不影響外框大小
           backgroundColor: "background.paper",
           borderRadius: "12px",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
           padding: "2rem 3rem",
+          mb: 8,
         }}
       >
         <Create title={title} actions={false}>
@@ -105,5 +112,6 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
         </Create>
       </Box>
     </Box>
+
   );
 };

@@ -13,12 +13,12 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import React from "react";
 
 interface GenericEditPageProps {
-  resource: string;                // 對應 resource 名稱，如 "suppliers"
-  title: string;                   // 頁面標題
-  children: React.ReactNode;       // 表單內容（由各模組傳入）
-  successMessage?: string;         // 自訂成功提示
-  errorMessage?: string;           // 自訂錯誤提示
-  width?: string;                  // 可選：表單寬度
+  resource: string;
+  title: string;
+  children: React.ReactNode;
+  successMessage?: string;
+  errorMessage?: string;
+  width?: string;
 }
 
 const CustomToolbar = ({
@@ -64,13 +64,11 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const [update] = useUpdate();
 
   const handleSubmit = async (values: any) => {
-    // ✅ React-Admin 的 values 會包含 id，需在送出前移除
     const { id, ...dataWithoutId } = values;
-
     try {
       await update(
         resource,
-        { id, data: dataWithoutId }, // id 作為更新目標，但不包含在 data payload 裡
+        { id, data: dataWithoutId },
         {
           onSuccess: () => {
             notify(successMessage, { type: "success" });
@@ -90,24 +88,30 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "calc(100vh - 64px)",
-        backgroundColor: "background.default",
-      }}
-    >
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: width,
-          backgroundColor: "background.paper",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-          padding: "2rem 3rem",
-        }}
-      >
+          sx={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            minHeight: "calc(100vh - 64px)",
+            backgroundColor: "background.default",
+            py: 6,
+            px: 2,
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              width: width,                // ✅ 改成固定寬度，而不是 100%
+              maxWidth: width,             // ✅ 讓不同頁面內容不影響外框大小
+              backgroundColor: "background.paper",
+              borderRadius: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+              padding: "2rem 3rem",
+              mb: 8,
+            }}
+          >
         <Edit title={title} actions={false}>
           <SimpleForm
             toolbar={<CustomToolbar onBack={() => redirect("list", resource)} />}
