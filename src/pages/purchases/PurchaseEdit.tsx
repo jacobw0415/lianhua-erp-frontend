@@ -6,18 +6,17 @@ import {
   SimpleFormIterator,
   SelectInput,
   useRecordContext,
+  NumberField,
+  DateField,
+  TextField,
 } from "react-admin";
 import {
   Box,
   Typography,
   Alert,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
 } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
+import { StyledDatagrid } from "@/components/StyledDatagrid";
 
 export const PurchaseEdit: React.FC = () => (
   <GenericEditPage
@@ -52,17 +51,17 @@ const PurchaseFormFields: React.FC = () => {
       >
         {/* ===== 左半部 ===== */}
         <Box>
-     
-
           {/* 💰 歷史付款紀錄 */}
           <Box
             sx={{
               border: "1px solid #e0e0e0",
               borderRadius: "10px",
-              p: 2,
-              mb: 3,
-          
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              p: 1.5,
+              mb: 1.5,
+              transition: "box-shadow 0.2s ease",
+              "&:hover": {
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              },
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
@@ -70,26 +69,43 @@ const PurchaseFormFields: React.FC = () => {
             </Typography>
 
             {record.payments?.length ? (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>金額</TableCell>
-                    <TableCell>付款日期</TableCell>
-                    <TableCell>付款方式</TableCell>
-                    <TableCell>備註</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {record.payments.map((p: any, idx: number) => (
-                    <TableRow key={idx}>
-                      <TableCell>${p.amount?.toFixed(2)}</TableCell>
-                      <TableCell>{p.payDate}</TableCell>
-                      <TableCell>{p.method}</TableCell>
-                      <TableCell>{p.note || ""}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <StyledDatagrid
+                data={record.payments}
+                rowClick={false}
+                bulkActionButtons={false}
+                // ✅ 若超過 2 筆才滾動，否則全展開
+                maxHeight={record.payments.length > 2 ? "105px" : "auto"}
+                sx={{
+                  "& .MuiTable-root": {
+                    tableLayout: "auto",
+                    width: "100%",
+                    borderCollapse: "separate",
+                    borderSpacing: 0,
+                  },
+                  "& .MuiTableCell-root": {
+                    py: 0.8,
+                    px: 1.5,
+                    whiteSpace: "nowrap",
+                  },
+                  "& .column-amount": { minWidth: "100px" },
+                  "& .column-payDate": { minWidth: "120px", },
+                  "& .column-method": { minWidth: "100px" },
+                  "& .column-note": { minWidth: "140px" },
+                }}
+              >
+                <NumberField
+                  source="amount"
+                  label="金額"
+                  options={{
+                    style: "currency",
+                    currency: "TWD",
+                    minimumFractionDigits: 0,
+                  }}
+                />
+                <DateField source="payDate" label="付款日期" />
+                <TextField source="method" label="付款方式" />
+                <TextField source="note" label="備註" />
+              </StyledDatagrid>
             ) : (
               <Typography color="text.secondary">目前尚無付款紀錄</Typography>
             )}
@@ -100,9 +116,11 @@ const PurchaseFormFields: React.FC = () => {
             sx={{
               border: "1px solid #e0e0e0",
               borderRadius: "10px",
-              p: 2,
-          
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              p: 1,
+              transition: "box-shadow 0.2s ease",
+              "&:hover": {
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              },
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
@@ -140,8 +158,10 @@ const PurchaseFormFields: React.FC = () => {
             border: "1px dashed #bdbdbd",
             borderRadius: "10px",
             p: 2.5,
-         
-            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            transition: "box-shadow 0.2s ease",
+            "&:hover": {
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+            },
           }}
         >
           <Typography
@@ -159,7 +179,6 @@ const PurchaseFormFields: React.FC = () => {
 
           <ArrayInput source="newPayments" label="">
             <SimpleFormIterator
-          
               sx={{
                 "& .RaSimpleFormIterator-line": {
                   display: "flex",

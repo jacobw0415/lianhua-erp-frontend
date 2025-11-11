@@ -41,7 +41,7 @@ const StyledDatagridRoot = styled(Datagrid, {
     textAlign: "left",
     whiteSpace: "nowrap",
     padding: "10px 16px",
-    backgroundColor: theme.palette.grey[100],
+ 
     borderBottom: `1px solid ${
       theme.palette.mode === "dark"
         ? theme.palette.grey[800]
