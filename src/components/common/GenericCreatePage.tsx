@@ -79,16 +79,12 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
   return (
     <Box
       sx={{
-        position: "relative",
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
-        minHeight: "calc(100vh - 64px)",
+        paddingTop: "50px",
+        height: "calc(100vh - 64px)",
         backgroundColor: "background.default",
-        py: 6,
-        px: 2,
-        overflowY: "auto",
-        overflowX: "hidden",
       }}
     >
       <Box

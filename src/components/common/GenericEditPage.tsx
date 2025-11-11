@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Edit,
   SimpleForm,
@@ -10,7 +11,6 @@ import {
 } from "react-admin";
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import React from "react";
 
 interface GenericEditPageProps {
   resource: string;
@@ -55,63 +55,87 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   resource,
   title,
   children,
-  successMessage = "✅ 修改成功",
-  errorMessage = "❌ 修改失敗",
   width = "700px",
 }) => {
   const notify = useNotify();
   const redirect = useRedirect();
   const [update] = useUpdate();
 
+  /**
+   * 🧩 handleSubmit 統一提交邏輯：
+   * - 自動過濾唯讀欄位
+   * - 過濾 newPayments 陣列中無效資料
+   * - 成功後顯示通知並導回列表
+   */
   const handleSubmit = async (values: any) => {
-    const { id, ...dataWithoutId } = values;
-    try {
-      await update(
-        resource,
-        { id, data: dataWithoutId },
-        {
-          onSuccess: () => {
-            notify(successMessage, { type: "success" });
-            setTimeout(() => redirect("list", resource), 1000);
-          },
-          onError: (error: any) => {
-            notify(`${errorMessage}：${error.message || "未知錯誤"}`, {
-              type: "error",
-            });
-          },
-        }
-      );
-    } catch (error: any) {
-      notify(`${errorMessage}：${error.message || error}`, { type: "error" });
-    }
-  };
+  const { id, newPayments, ...rest } = values;
+
+  // 1️⃣ 移除不屬於後端 DTO 的唯讀欄位
+  const payload = { ...rest };
+  delete payload.supplierName;
+  delete payload.item;
+  delete payload.totalAmount;
+  delete payload.paidAmount;
+  delete payload.balance;
+  delete payload.status;
+
+  // 2️⃣ 處理付款資料
+  if (newPayments && newPayments.length > 0) {
+    const cleanedPayments = newPayments
+      .filter((p: any) => p.amount && p.payDate && p.method)
+      .map((p: any) => ({
+        amount: p.amount,
+        payDate: p.payDate,
+        method: p.method,
+        // ⚠️ 不要傳 id 給後端
+      }));
+
+    payload.payments = cleanedPayments;
+  }
+
+  try {
+    await update(
+      resource,
+      { id, data: payload },
+      {
+        onSuccess: () => {
+          notify("✅ 修改成功", { type: "success" });
+          redirect("list", resource);
+        },
+        onError: (error: any) => {
+          notify(`❌ 修改失敗：${error.message || "未知錯誤"}`, {
+            type: "error",
+          });
+        },
+      }
+    );
+  } catch (error: any) {
+    notify(`❌ 修改失敗：${error.message || error}`, { type: "error" });
+  }
+};
 
   return (
     <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            minHeight: "calc(100vh - 64px)",
-            backgroundColor: "background.default",
-            py: 6,
-            px: 2,
-            overflowY: "auto",
-            overflowX: "hidden",
-          }}
-        >
-          <Box
-            sx={{
-              width: width,                // ✅ 改成固定寬度，而不是 100%
-              maxWidth: width,             // ✅ 讓不同頁面內容不影響外框大小
-              backgroundColor: "background.paper",
-              borderRadius: "12px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-              padding: "2rem 3rem",
-              mb: 8,
-            }}
-          >
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        paddingTop: "50px",
+        height: "calc(100vh - 64px)",
+        backgroundColor: "background.default",
+      }}
+    >
+      <Box
+        sx={{
+          width: width,
+          maxWidth: width,
+          backgroundColor: "background.paper",
+          borderRadius: "12px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+          padding: "2rem 3rem",
+          mb: 8,
+        }}
+      >
         <Edit title={title} actions={false}>
           <SimpleForm
             toolbar={<CustomToolbar onBack={() => redirect("list", resource)} />}

@@ -1,6 +1,6 @@
 import React from "react";
 import { TextInput, SelectInput } from "react-admin";
-import { Typography, Box, Divider, Paper } from "@mui/material";
+import { Typography,} from "@mui/material";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 
 export const SupplierCreate: React.FC = () => (
