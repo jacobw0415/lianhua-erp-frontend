@@ -16,41 +16,42 @@ const PaymentSubList = () => {
   const record = useRecordContext();
   if (!record?.payments?.length) return null;
 
+  const payments = record.payments || [];
+
+  // ✅ 當筆數多於 2 筆才出現滾輪
+  const enableScroll = payments.length > 2;
+  const maxHeight = enableScroll ? "120px" : "auto";
+
   return (
     <Box sx={{ ml: 6, mb: 2 }}>
-      <Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 1, fontWeight: 600 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ color: "text.secondary", mb: 1, fontWeight: 600 }}
+      >
         💰 付款紀錄
       </Typography>
+
       <StyledDatagrid
-        data={record.payments}
+        data={payments}
         rowClick={false}
         bulkActionButtons={false}
+        maxHeight={maxHeight}
         sx={{
           "& .MuiTable-root": {
-            // ❌ 移除固定寬度與固定布局
             tableLayout: "auto",
             width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: 0,
           },
           "& .MuiTableCell-root": {
             py: 1,
             px: 2,
-            overflow: "visible", // ✅ 改為 visible 以防止數字被截斷
-            textOverflow: "unset",
-            whiteSpace: "nowrap", // ✅ 保持數字與貨幣符號在同一行
+            whiteSpace: "nowrap",
           },
-          "& .column-amount": {
-            minWidth: "240px",
-            textAlign: "left",
-            paddingLeft: 2,
-          },
-          "& .column-amount span": {
-            display: "inline-block",
-            textAlign: 'left'
-          },
-
-          "& .column-payDate": { minWidth: "30px" },
-          "& .column-method": { minWidth: "200px" },
-          "& .column-note": { minWidth: "190px" },
+          "& .column-amount": { minWidth: "180px", textAlign: "left" },
+          "& .column-payDate": { minWidth: "100px" },
+          "& .column-method": { minWidth: "120px" },
+          "& .column-note": { minWidth: "160px" },
         }}
       >
         <NumberField
@@ -81,12 +82,10 @@ export const PurchaseList = () => (
     <StyledDatagrid
       expand={<PaymentSubList />}
       sx={{
-        // ✅ 只在 PurchaseList 中生效
         "& .RaDatagrid-cell:first-of-type, & .RaDatagrid-headerCell:first-of-type": {
           width: "64px !important",
           minWidth: "64px !important",
           overflow: "visible !important",
- 
           textAlign: "left",
         },
       }}
