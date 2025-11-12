@@ -10,7 +10,7 @@ import {
   DateField,
   TextField,
 } from "react-admin";
-import { useWatch } from "react-hook-form"; // ✅ 改這裡
+import { useWatch } from "react-hook-form";
 import { Box, Typography, Alert } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { StyledDatagrid } from "@/components/StyledDatagrid";
@@ -30,6 +30,10 @@ export const PurchaseEdit: React.FC = () => (
 const PurchaseFormFields: React.FC = () => {
   const record = useRecordContext();
   if (!record) return <Typography>載入中...</Typography>;
+
+  const payments = record.payments || [];
+  const enableScroll = payments.length > 2;
+  const maxHeight = enableScroll ? "140px" : "auto";
 
   return (
     <Box>
@@ -65,18 +69,16 @@ const PurchaseFormFields: React.FC = () => {
               💰 歷史付款紀錄
             </Typography>
 
-            {record.payments?.length ? (
+            {payments.length ? (
               <StyledDatagrid
-                data={record.payments}
+                data={payments}
                 rowClick={false}
                 bulkActionButtons={false}
-                maxHeight={record.payments.length > 2 ? "105px" : "auto"}
+                maxHeight={maxHeight} // ✅ 多筆時固定框高並可滾動
                 sx={{
                   "& .MuiTable-root": {
                     tableLayout: "auto",
                     width: "100%",
-                    borderCollapse: "separate",
-                    borderSpacing: 0,
                   },
                   "& .MuiTableCell-root": {
                     py: 0.8,
@@ -173,7 +175,7 @@ const PurchaseFormFields: React.FC = () => {
             ➕ 新增付款紀錄
           </Typography>
 
-          {/* ✅ 抽離的動態控制表單 */}
+          {/* ✅ 動態控制表單 */}
           <PaymentArrayInput />
         </Box>
       </Box>
@@ -192,8 +194,8 @@ const PaymentArrayInput: React.FC = () => {
   return (
     <ArrayInput source="newPayments" label="">
       <SimpleFormIterator
-        disableAdd={hasPayment} // ✅ 若已有一筆則隱藏 +
-        disableRemove={false} // ✅ 可刪除
+        disableAdd={hasPayment}
+        disableRemove={false}
         getItemLabel={() => ""}
         sx={{
           "& .RaSimpleFormIterator-line": {
@@ -203,7 +205,7 @@ const PaymentArrayInput: React.FC = () => {
             mb: 1,
           },
           "& .RaSimpleFormIterator-add": {
-            display: hasPayment ? "none" : "flex", // ✅ 動態隱藏 +
+            display: hasPayment ? "none" : "flex",
           },
         }}
       >
