@@ -10,11 +10,8 @@ import {
   DateField,
   TextField,
 } from "react-admin";
-import {
-  Box,
-  Typography,
-  Alert,
-} from "@mui/material";
+import { useWatch } from "react-hook-form"; // ✅ 改這裡
+import { Box, Typography, Alert } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { StyledDatagrid } from "@/components/StyledDatagrid";
 
@@ -24,7 +21,7 @@ export const PurchaseEdit: React.FC = () => (
     title="編輯進貨紀錄"
     successMessage="✅ 進貨資料已成功修改"
     errorMessage="❌ 修改失敗，請確認欄位或伺服器狀態"
-    width="1100px" // ✅ 與 PurchaseCreate 一致
+    width="1100px"
   >
     <PurchaseFormFields />
   </GenericEditPage>
@@ -73,7 +70,6 @@ const PurchaseFormFields: React.FC = () => {
                 data={record.payments}
                 rowClick={false}
                 bulkActionButtons={false}
-                // ✅ 若超過 2 筆才滾動，否則全展開
                 maxHeight={record.payments.length > 2 ? "105px" : "auto"}
                 sx={{
                   "& .MuiTable-root": {
@@ -88,7 +84,7 @@ const PurchaseFormFields: React.FC = () => {
                     whiteSpace: "nowrap",
                   },
                   "& .column-amount": { minWidth: "100px" },
-                  "& .column-payDate": { minWidth: "120px", },
+                  "& .column-payDate": { minWidth: "120px" },
                   "& .column-method": { minWidth: "100px" },
                   "& .column-note": { minWidth: "140px" },
                 }}
@@ -177,34 +173,54 @@ const PurchaseFormFields: React.FC = () => {
             ➕ 新增付款紀錄
           </Typography>
 
-          <ArrayInput source="newPayments" label="">
-            <SimpleFormIterator
-              sx={{
-                "& .RaSimpleFormIterator-line": {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  mb: 1,
-                },
-              }}
-            >
-              <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />
-              <DateInput source="payDate" label="付款日期" sx={{ flex: 1 }} />
-              <SelectInput
-                source="method"
-                label="付款方式"
-                choices={[
-                  { id: "CASH", name: "現金" },
-                  { id: "TRANSFER", name: "轉帳" },
-                  { id: "CARD", name: "刷卡" },
-                  { id: "CHECK", name: "支票" },
-                ]}
-                sx={{ flex: 1 }}
-              />
-            </SimpleFormIterator>
-          </ArrayInput>
+          {/* ✅ 抽離的動態控制表單 */}
+          <PaymentArrayInput />
         </Box>
       </Box>
     </Box>
+  );
+};
+
+/**
+ * ✅ PaymentArrayInput 子元件
+ * 使用 useWatch 動態監聽輸入狀態，自動控制「＋」按鈕顯示。
+ */
+const PaymentArrayInput: React.FC = () => {
+  const payments = useWatch({ name: "newPayments" });
+  const hasPayment = Array.isArray(payments) && payments.length > 0;
+
+  return (
+    <ArrayInput source="newPayments" label="">
+      <SimpleFormIterator
+        disableAdd={hasPayment} // ✅ 若已有一筆則隱藏 +
+        disableRemove={false} // ✅ 可刪除
+        getItemLabel={() => ""}
+        sx={{
+          "& .RaSimpleFormIterator-line": {
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            mb: 1,
+          },
+          "& .RaSimpleFormIterator-add": {
+            display: hasPayment ? "none" : "flex", // ✅ 動態隱藏 +
+          },
+        }}
+      >
+        <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />
+        <DateInput source="payDate" label="付款日期" sx={{ flex: 1 }} />
+        <SelectInput
+          source="method"
+          label="付款方式"
+          choices={[
+            { id: "CASH", name: "現金" },
+            { id: "TRANSFER", name: "轉帳" },
+            { id: "CARD", name: "刷卡" },
+            { id: "CHECK", name: "支票" },
+          ]}
+          sx={{ flex: 1 }}
+        />
+      </SimpleFormIterator>
+    </ArrayInput>
   );
 };
