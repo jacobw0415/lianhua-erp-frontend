@@ -50,12 +50,6 @@ export const CustomMenu = () => {
         primaryText="進貨紀錄"
         leftIcon={<LocalShippingIcon />}
       />
-      <MenuItemLink
-        to="/payments"
-        primaryText="付款紀錄"
-        leftIcon={<PaidIcon />}
-      />
-
       {/* 銷售與收款 */}
       <MenuItemLink
         to="/sales"

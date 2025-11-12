@@ -7,7 +7,6 @@ import { CustomLayout } from "@/layout/CustomLayout";
 import { LianhuaLightTheme, LianhuaDarkTheme } from "@/theme/LianhuaTheme";
 import { SupplierList } from "@/pages/suppliers/SupplierList";
 import { PurchaseList } from "@/pages/purchases/PurchaseList";
-import { PaymentList } from "@/pages/payments/PaymentList";
 import { SaleList } from "@/pages/sales/SaleList";
 import { PurchaseCreate } from '@/pages/purchases/PurchaseCreate';
 import { PurchaseEdit } from '@/pages/purchases/PurchaseEdit';
@@ -38,7 +37,6 @@ const App = () => {
         >
             <Resource name="suppliers" list={SupplierList} create={SupplierCreate} edit={SupplierEdit}/>
             <Resource name="purchases" list={PurchaseList} create={PurchaseCreate} edit={PurchaseEdit} />
-            <Resource name="payments" list={PaymentList} />
             <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />

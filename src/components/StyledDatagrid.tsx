@@ -1,18 +1,15 @@
-// 📄 src/components/StyledDatagrid.tsx
 import { Datagrid, type DatagridProps } from "react-admin";
 import { styled } from "@mui/material/styles";
 import { Box } from "@mui/material";
 
-// ✅ 擴充 props 支援 maxHeight
 interface StyledDatagridProps extends DatagridProps {
   maxHeight?: string;
 }
 
 /**
  * ✅ StyledDatagridRoot
- * - 提供固定框高與內部滾動
- * - 支援 sticky header
- * - 美觀滾輪樣式
+ * - 統一表格樣式（固定高 + sticky header + 滾動）
+ * - 提供一致欄寬與滾輪體驗
  */
 const StyledDatagridRoot = styled(Datagrid, {
   shouldForwardProp: (prop) => prop !== "maxHeight",
@@ -21,19 +18,17 @@ const StyledDatagridRoot = styled(Datagrid, {
   overflow: "hidden",
   position: "relative",
 
-  // ✅ 限制高度 + 允許滾動
   ...(maxHeight && {
     maxHeight,
     overflowY: "auto",
   }),
 
   "& .RaDatagrid-table": {
-    tableLayout: "fixed",
+    tableLayout: "fixed", // ✅ 固定欄寬
     width: "100%",
     borderCollapse: "collapse",
   },
 
-  // ✅ 固定表頭 (sticky header)
   "& thead": {
     position: "sticky",
     top: 0,
@@ -45,7 +40,7 @@ const StyledDatagridRoot = styled(Datagrid, {
   "& .RaDatagrid-headerCell": {
     fontWeight: 600,
     fontSize: "0.95rem",
-    textAlign: "left",
+
     whiteSpace: "nowrap",
     padding: "10px 16px",
     borderBottom: `1px solid ${
@@ -70,7 +65,7 @@ const StyledDatagridRoot = styled(Datagrid, {
     verticalAlign: "middle",
   },
 
-  // ✅ 備註欄寬放大允許換行
+  // ✅ 備註欄（最後一欄）允許換行
   "& .RaDatagrid-cell:last-of-type, & .RaDatagrid-headerCell:last-of-type": {
     whiteSpace: "normal",
     overflow: "visible",
@@ -80,7 +75,7 @@ const StyledDatagridRoot = styled(Datagrid, {
     minWidth: "160px",
   },
 
-  // ✅ 數字欄靠右（調整邏輯方向）
+  // ✅ 修正：數字欄靠右對齊
   "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
     textAlign: "left",
   },
@@ -101,11 +96,11 @@ const StyledDatagridRoot = styled(Datagrid, {
 
 /**
  * ✅ StyledDatagrid Component
- * - 通用表格組件，支援 maxHeight 屬性
- * - 預設 rowClick="edit"、隱藏批次按鈕
+ * - 通用表格組件（maxHeight 可調）
+ * - 預設 rowClick="edit"，隱藏批次操作按鈕
  */
 export const StyledDatagrid = (props: StyledDatagridProps) => {
-  const { maxHeight = "550px", ...rest } = props; // 預設高度
+  const { maxHeight = "550px", ...rest } = props;
   return (
     <Box
       sx={{

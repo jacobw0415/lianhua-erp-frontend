@@ -3,8 +3,7 @@ import {
   TextField,
   NumberField,
   DateField,
-  EditButton,
-  DeleteButton,
+  FunctionField,
   TopToolbar,
   CreateButton,
   useRecordContext,
@@ -12,6 +11,7 @@ import {
 } from "react-admin";
 import { StyledDatagrid } from "@/components/StyledDatagrid";
 import { Box, Typography } from "@mui/material";
+import { ActionColumns } from "@/components/common/ActionColumns";
 
 /**
  * 💰 子表：顯示付款紀錄（滾動獨立，不影響主表）
@@ -28,7 +28,7 @@ const PaymentSubList = () => {
     <Box
       sx={{
         ml: 6,
-        mb: 2,
+        mb: 3,
         p: 1,
         border: "1px solid #eee",
         borderRadius: 2,
@@ -47,31 +47,18 @@ const PaymentSubList = () => {
         }}
       >
         💰 付款紀錄
-      </Typography>
+            </Typography>
 
-      {/* ✅ 子表內獨立滾動 */}
       <StyledDatagrid
         data={payments}
         rowClick={false}
         bulkActionButtons={false}
         maxHeight={maxHeight}
-        sx={{
-          "& .MuiTable-root": { tableLayout: "auto", width: "100%" },
-          "& .MuiTableCell-root": { py: 1, px: 2, whiteSpace: "nowrap" },
-          "& .column-amount": { textAlign: "left", minWidth: "160px" },
-          "& .column-payDate": { minWidth: "100px" },
-          "& .column-method": { minWidth: "120px" },
-          "& .column-note": { minWidth: "160px" },
-        }}
       >
         <NumberField
           source="amount"
           label="金額"
-          options={{
-            style: "currency",
-            currency: "TWD",
-            minimumFractionDigits: 0,
-          }}
+          options={{ style: "currency", currency: "TWD", minimumFractionDigits: 0 }}
         />
         <DateField source="payDate" label="付款日期" />
         <TextField source="method" label="付款方式" />
@@ -103,7 +90,7 @@ export const PurchaseList = () => (
     <Box
       sx={{
         width: "100%",
-        height: "650px",           // ✅ 主表固定高度
+        height: "550px",           // ✅ 主表固定高度
         overflowY: "auto",          // ✅ 主表在框內滾動
         border: "1px solid #ddd",
         borderRadius: 2,
@@ -111,45 +98,54 @@ export const PurchaseList = () => (
       }}
     >
       <StyledDatagrid
-        expand={<PaymentSubList />} // ✅ 子表展開
-        maxHeight="650px"
-        sx={{
-          "& .RaDatagrid-cell:first-of-type, & .RaDatagrid-headerCell:first-of-type": {
-            width: "64px !important",
-            minWidth: "64px !important",
-            overflow: "visible !important",
+      expand={<PaymentSubList />} // ✅ 子表展開
+      maxHeight="550px"
+      sx={{
+        "& .RaDatagrid-headerCell:last-of-type, & .RaDatagrid-cell:last-of-type": {
+          minWidth: "160px", // ✅ 備註欄
+        },
+        "& .RaDatagrid-headerCell:nth-of-type(1), & .RaDatagrid-cell:nth-of-type(1)": {
+          width: "100px", // ✅ 供應商欄稍寬
+        },
+        // ✅ 固定操作欄寬度，防止擠壓
+          "& .column-action": {
+            width: "170px",
             textAlign: "left",
+            flexShrink: 0,
           },
-        }}
-      >
-        <TextField source="supplierName" label="供應商" />
-        <TextField source="item" label="品項" />
-        <NumberField source="qty" label="數量" />
-        <NumberField
-          source="unitPrice"
-          label="單價"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <NumberField
-          source="totalAmount"
-          label="總金額"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <NumberField
-          source="paidAmount"
-          label="已付款"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <NumberField
-          source="balance"
-          label="餘額"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <TextField source="status" label="狀態" />
-        <DateField source="purchaseDate" label="進貨日期" />
-        <TextField source="note" label="備註" />
-        <EditButton label="編輯" />
-        <DeleteButton label="刪除" />
+      }}
+    >
+      <TextField source="supplierName" label="供應商" />
+      <TextField source="item" label="品項" />
+      <NumberField source="qty" label="數量" />
+      <NumberField
+        source="unitPrice"
+        label="單價"
+        options={{ style: "currency", currency: "TWD" }}
+      />
+      <NumberField
+        source="totalAmount"
+        label="總金額"
+        options={{ style: "currency", currency: "TWD" }}
+      />
+      <NumberField
+        source="paidAmount"
+        label="已付款"
+        options={{ style: "currency", currency: "TWD" }}
+      />
+      <NumberField
+        source="balance"
+        label="餘額"
+        options={{ style: "currency", currency: "TWD" }}
+      />
+      <TextField source="status" label="狀態" />
+      <DateField source="purchaseDate" label="進貨日期" />
+      <TextField source="note" label="備註" />
+      <FunctionField
+              source="action"
+              label="操作"
+              render={() => <ActionColumns />}
+            />
       </StyledDatagrid>
     </Box>
   </List>
