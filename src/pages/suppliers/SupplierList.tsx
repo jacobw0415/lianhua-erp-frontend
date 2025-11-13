@@ -41,12 +41,6 @@ export const SupplierList = () => (
             minWidth: "140px !important",
     
           },
-         // ✅ 固定操作欄寬度，防止擠壓
-          "& .column-action": {
-            width: "170px",
-            textAlign: "left",
-            flexShrink: 0,
-          },
         }}
       >
         <TextField source="name" label="供應商名稱" />

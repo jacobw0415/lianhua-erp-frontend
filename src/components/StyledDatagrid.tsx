@@ -92,6 +92,12 @@ const StyledDatagridRoot = styled(Datagrid, {
   "&::-webkit-scrollbar-thumb:hover": {
     backgroundColor: "#999",
   },
+    // ✅ 固定操作編輯刪除欄寬度，防止擠壓
+  "& .column-action": {
+    width: "170px",
+    textAlign: "left",
+    flexShrink: 0,
+  },    
 }));
 
 /**

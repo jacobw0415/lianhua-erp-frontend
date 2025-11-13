@@ -105,14 +105,8 @@ export const PurchaseList = () => (
           minWidth: "160px", // ✅ 備註欄
         },
         "& .RaDatagrid-headerCell:nth-of-type(1), & .RaDatagrid-cell:nth-of-type(1)": {
-          width: "100px", // ✅ 供應商欄稍寬
+          width: "70px", // ✅ 供應商欄稍寬
         },
-        // ✅ 固定操作欄寬度，防止擠壓
-          "& .column-action": {
-            width: "170px",
-            textAlign: "left",
-            flexShrink: 0,
-          },
       }}
     >
       <TextField source="supplierName" label="供應商" />
