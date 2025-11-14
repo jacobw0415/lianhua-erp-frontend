@@ -5,18 +5,29 @@ import {
   TextField,
   MenuItem,
   Button,
+  IconButton,
+  Popover,
+  Typography,
 } from "@mui/material";
+
 import {
-  useListContext,
+  useListFilterContext,
   useCreatePath,
   useResourceContext,
 } from "react-admin";
 
 import AddIcon from "@mui/icons-material/Add";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import DownloadIcon from "@mui/icons-material/Download";
 
+import { SearchChipsCompact } from "./SearchChipsCompact";
+import { formatFilters } from "@/utils/formatFilters";
+
+/* ----------------------------
+   🧩 FilterOption + Props 定義
+----------------------------- */
 interface FilterOption {
-  type: "text" | "select" | "reference" | "dateRange" | "numberRange";
+  type: "text" | "select" | "dateRange" | "numberRange";
   source: string;
   label: string;
   choices?: { id: any; name: string }[];
@@ -25,40 +36,47 @@ interface FilterOption {
 interface GenericFilterBarProps {
   quickFilters?: FilterOption[];
   advancedFilters?: FilterOption[];
-  popoverWidth?: number | string;
 
-  /** 🔥 新增 + 匯出 控制 */
   enableCreate?: boolean;
   enableExport?: boolean;
   createLabel?: string;
-  onExport?: () => void; // ⭐ 匯出 callback（從 StyledListWrapper 傳入）
+  onExport?: () => void;
 }
 
+/* ----------------------------
+   🧩 主元件（新版：使用 RA FilterContext）
+----------------------------- */
 export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   quickFilters = [],
   advancedFilters = [],
-  popoverWidth = 420,
-
   enableCreate = true,
   enableExport = false,
   createLabel = "新增資料",
   onExport,
 }) => {
-  const { setFilters } = useListContext();
-  const [localFilters, setLocalFilters] = useState<Record<string, any>>({});
+  const { filterValues, setFilters } = useListFilterContext();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
-  const createPath = useCreatePath();
   const resource = useResourceContext();
+  const createPath = useCreatePath();
 
-  const updateValue = (src: string, value: any) =>
-    setLocalFilters((prev) => ({ ...prev, [src]: value }));
-
-  const applyFilters = () => setFilters(localFilters);
-  const clearFilters = () => {
-    setLocalFilters({});
-    setFilters({});
+  /* ----------------------------
+     🧩 更新 filter 值（直接更新 RA Context）
+  ----------------------------- */
+  const updateValue = (key: string, value: any) => {
+    setFilters({ ...filterValues, [key]: value });
   };
 
+  const applyFilters = () => setAnchor(null);
+
+  const clearFilters = () => {
+    setFilters({});
+    setAnchor(null);
+  };
+
+  /* ----------------------------
+     🧩 Filter UI 渲染器
+  ----------------------------- */
   const renderFilter = (f: FilterOption) => {
     switch (f.type) {
       case "text":
@@ -66,7 +84,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           <TextField
             label={f.label}
             fullWidth
-            value={localFilters[f.source] ?? ""}
+            value={filterValues[f.source] ?? ""}
             onChange={(e) => updateValue(f.source, e.target.value)}
           />
         );
@@ -77,7 +95,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             label={f.label}
             select
             fullWidth
-            value={localFilters[f.source] ?? ""}
+            value={filterValues[f.source] ?? ""}
             onChange={(e) => updateValue(f.source, e.target.value)}
           >
             {f.choices?.map((c) => (
@@ -88,11 +106,54 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           </TextField>
         );
 
+      case "dateRange":
+        return (
+          <Stack direction="row" spacing={1}>
+            <TextField
+              type="date"
+              label="開始"
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              value={filterValues[`${f.source}Start`] || ""}
+              onChange={(e) => updateValue(`${f.source}Start`, e.target.value)}
+            />
+            <TextField
+              type="date"
+              label="結束"
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              value={filterValues[`${f.source}End`] || ""}
+              onChange={(e) => updateValue(`${f.source}End`, e.target.value)}
+            />
+          </Stack>
+        );
+
       default:
         return null;
     }
   };
 
+  /* ----------------------------
+     🧩 Chips（使用 formatter → 正確顯示中文 / 值）
+  ----------------------------- */
+  const chips = formatFilters(filterValues);
+
+  const removeFilter = (key: string) => {
+    const updated = { ...filterValues };
+
+    // 日期區間成對刪除
+    if (updated[key + "Start"] || updated[key + "End"]) {
+      delete updated[key + "Start"];
+      delete updated[key + "End"];
+    }
+
+    delete updated[key];
+    setFilters(updated);
+  };
+
+  /* ----------------------------
+     🧩 UI Layout（關鍵修復）
+  ----------------------------- */
   return (
     <Box
       sx={{
@@ -101,24 +162,28 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         borderRadius: 2,
         border: "1px solid #ddd",
         display: "flex",
+        flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: "center", // ⭐避免按鈕被擠壓變形
+        gap: 2,
       }}
     >
-      {/* 左邊篩選區 */}
+      {/* 左側：篩選器們 */}
       <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
-        {quickFilters.map((filter, idx) => (
+        {quickFilters.map((f, idx) => (
           <Box key={idx} sx={{ minWidth: 220 }}>
-            {renderFilter(filter)}
+            {renderFilter(f)}
           </Box>
         ))}
 
-        {/* 進階篩選 —— ⭐ 原本缺少！補上後 UI 就會出現 */}
-        {advancedFilters.map((filter, idx) => (
-          <Box key={idx} sx={{ minWidth: 220 }}>
-            {renderFilter(filter)}
-          </Box>
-        ))}
+        {advancedFilters.length > 0 && (
+          <IconButton
+            onClick={(e) => setAnchor(e.currentTarget)}
+           
+          >
+            <FilterListIcon />
+          </IconButton>
+        )}
 
         <Button variant="contained" onClick={applyFilters}>
           搜尋
@@ -129,14 +194,16 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         </Button>
       </Stack>
 
-      {/* 右側功能按鈕：新增＋匯出 */}
-      <Stack direction="row" spacing={1}>
+      {/* 右側：Chips + 新增 + 匯出 */}
+      <Stack direction="row" spacing={1} alignItems="center">
+        <SearchChipsCompact chips={chips} onRemove={removeFilter} />
+
         {enableCreate && (
           <Button
             variant="contained"
             color="success"
             startIcon={<AddIcon />}
-            href={`#${createPath({ resource, type: "create" })}`}   // ⭐⭐ 加 #
+            href={`#${createPath({ resource, type: "create" })}`}
           >
             {createLabel}
           </Button>
@@ -152,6 +219,35 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           </Button>
         )}
       </Stack>
+
+      {/* Popover 進階篩選 */}
+      <Popover
+        open={Boolean(anchor)}
+        anchorEl={anchor}
+        onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <Box sx={{ width: 350, p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            更多篩選條件
+          </Typography>
+
+          <Stack spacing={2}>
+            {advancedFilters.map((f, idx) => (
+              <Box key={idx}>{renderFilter(f)}</Box>
+            ))}
+          </Stack>
+
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button fullWidth variant="contained" onClick={applyFilters}>
+              套用
+            </Button>
+            <Button fullWidth variant="outlined" color="error" onClick={clearFilters}>
+              清除
+            </Button>
+          </Stack>
+        </Box>
+      </Popover>
     </Box>
   );
 };
