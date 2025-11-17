@@ -40,28 +40,27 @@ const dataProvider: DataProvider = {
 
         const query = new URLSearchParams();
 
-        // --- 分頁參數 ---
-        query.set("page", String(page - 1));
+        // --- 分頁 ---
+        query.set("page", String(page - 1)); // RA 是 1-based, Spring 是 0-based
         query.set("size", String(perPage));
 
         // --- 排序 ---
         query.set("sort", `${field},${order.toLowerCase()}`);
 
-        // --- 搜尋條件處理 ---
+        // --- 搜尋 ---
         let hasSearch = false;
 
         Object.entries(filters).forEach(([key, value]) => {
             if (value !== "" && value !== undefined && value !== null) {
                 hasSearch = true;
 
-                // 前端 source → 後端參數名稱
                 const backendKey = mapping[key] ?? key;
 
                 query.append(backendKey, String(value));
             }
         });
 
-        // --- 決定 API basePath ---
+        // --- API 路徑 ---
         const basePath =
             hasSearch && rules.search
                 ? `${apiUrl}/${resource}/search`
@@ -69,9 +68,14 @@ const dataProvider: DataProvider = {
 
         const url = `${basePath}?${query.toString()}`;
 
-        // --- 呼叫 API ---
         return httpClient(url).then(({ json }) => {
-            const { data, total } = normalizeListResponse(json);
+
+            // --- ApiResponseDto 包裝格式 ---
+            const payload = json?.data ?? json;
+
+            // --- Pageable 格式 ---
+            const data = payload?.content ?? [];  // 供應商資料陣列
+            const total = payload?.totalElements ?? data.length;
 
             return {
                 data,
@@ -79,8 +83,6 @@ const dataProvider: DataProvider = {
             };
         });
     },
-
-
 
     getOne: (resource, params) =>
         httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
