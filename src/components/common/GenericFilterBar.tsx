@@ -23,11 +23,8 @@ import DownloadIcon from "@mui/icons-material/Download";
 import { SearchChipsCompact } from "./SearchChipsCompact";
 import { formatFilters } from "@/utils/formatFilters";
 
-/* ----------------------------
-   🧩 FilterOption + Props 定義
------------------------------ */
 interface FilterOption {
-  type: "text" | "select" | "dateRange" | "numberRange";
+  type: "text" | "select" | "dateRange";
   source: string;
   label: string;
   choices?: { id: any; name: string }[];
@@ -36,16 +33,12 @@ interface FilterOption {
 interface GenericFilterBarProps {
   quickFilters?: FilterOption[];
   advancedFilters?: FilterOption[];
-
   enableCreate?: boolean;
   enableExport?: boolean;
   createLabel?: string;
   onExport?: () => void;
 }
 
-/* ----------------------------
-   🧩 主元件（新版：使用 RA FilterContext）
------------------------------ */
 export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   quickFilters = [],
   advancedFilters = [],
@@ -55,105 +48,206 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   onExport,
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
+
+  const [localInputValues, setLocalInputValues] =
+    useState<Record<string, string>>({});
+  const [isComposing, setIsComposing] = useState(false);
+
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
   const resource = useResourceContext();
   const createPath = useCreatePath();
 
-  /* ----------------------------
-     🧩 更新 filter 值（直接更新 RA Context）
-  ----------------------------- */
-  const updateValue = (key: string, value: any) => {
-    setFilters({ ...filterValues, [key]: value });
+  /* ------------------------------------------------------------
+     ⭐ 安全搜尋 → 不覆蓋使用者輸入、不清空輸入框
+  ------------------------------------------------------------ */
+    const handleSearch = () => {
+    const hasAny = Object.values(localInputValues)
+      .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
+
+    if (!hasAny) {
+      // 無任何搜尋欄位輸入 → 顯示全部
+      setFilters({}, null, false);
+      return;
+    }
+
+    // 否則有條件 → 搜尋
+    setFilters({ ...localInputValues }, null, false);
   };
 
-  const applyFilters = () => setAnchor(null);
-
+  /* ------------------------------------------------------------
+     ⭐ 安全清除
+  ------------------------------------------------------------ */
   const clearFilters = () => {
-    setFilters({});
-    setAnchor(null);
+    setLocalInputValues({});
+    setFilters({}, null, false);
   };
 
-  /* ----------------------------
-     🧩 Filter UI 渲染器
-  ----------------------------- */
+  /* ------------------------------------------------------------
+     ⭐ 安全取得 event.value（避免 null / div.target）
+  ------------------------------------------------------------ */
+  const safeGetValue = (e: any): string | undefined => {
+    const target = e.target as HTMLInputElement | null;
+    if (!target) return undefined;
+    if (typeof target.value !== "string") return undefined;
+    return target.value;
+  };
+
+  /* ------------------------------------------------------------
+     ⭐ Text Input（完全支援中文 & Enter）
+  ------------------------------------------------------------ */
+  const renderTextInput = (f: FilterOption) => {
+    const key = f.source;
+    const value = localInputValues[key] ?? "";
+
+    return (
+      <TextField
+        label={f.label}
+        fullWidth
+        value={value}
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={(e) => {
+          setIsComposing(false);
+
+          const val = safeGetValue(e);
+          if (val === undefined) return;
+
+          setLocalInputValues((prev) => ({
+            ...prev,
+            [key]: val,
+          }));
+        }}
+        onChange={(e) => {
+          const val = safeGetValue(e);
+          if (val === undefined) return;
+
+          setLocalInputValues((prev) => ({
+            ...prev,
+            [key]: val,
+          }));
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !isComposing) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSearch();
+          }
+        }}
+      />
+    );
+  };
+
+  /* ------------------------------------------------------------
+     ⭐ Select Input（完全安全）
+  ------------------------------------------------------------ */
+  const renderSelectInput = (f: FilterOption) => {
+    const key = f.source;
+    const value = localInputValues[key] ?? "";
+
+    return (
+      <TextField
+        select
+        label={f.label}
+        fullWidth
+        value={value}
+        onChange={(e) => {
+          const val = safeGetValue(e);
+          if (val === undefined) return;
+
+          setLocalInputValues((prev) => ({
+            ...prev,
+            [key]: val,
+          }));
+        }}
+      >
+        {f.choices?.map((c) => (
+          <MenuItem key={c.id} value={c.id}>
+            {c.name}
+          </MenuItem>
+        ))}
+      </TextField>
+    );
+  };
+
+  /* ------------------------------------------------------------
+     ⭐ 日期區間（完全安全）
+  ------------------------------------------------------------ */
+  const renderDateRange = (f: FilterOption) => {
+    const startKey = `${f.source}Start`;
+    const endKey = `${f.source}End`;
+
+    return (
+      <Stack direction="row" spacing={1}>
+        <TextField
+          type="date"
+          label="開始"
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+          value={localInputValues[startKey] ?? ""}
+          onChange={(e) => {
+            const val = safeGetValue(e);
+            if (val === undefined) return;
+            setLocalInputValues((prev) => ({ ...prev, [startKey]: val }));
+          }}
+        />
+        <TextField
+          type="date"
+          label="結束"
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+          value={localInputValues[endKey] ?? ""}
+          onChange={(e) => {
+            const val = safeGetValue(e);
+            if (val === undefined) return;
+            setLocalInputValues((prev) => ({ ...prev, [endKey]: val }));
+          }}
+        />
+      </Stack>
+    );
+  };
+
+  /* ------------------------------------------------------------
+     ⭐ 判斷並渲染欄位
+  ------------------------------------------------------------ */
   const renderFilter = (f: FilterOption) => {
     switch (f.type) {
       case "text":
-        return (
-          <TextField
-            label={f.label}
-            fullWidth
-            value={filterValues[f.source] ?? ""}
-            onChange={(e) => updateValue(f.source, e.target.value)}
-          />
-        );
-
+        return renderTextInput(f);
       case "select":
-        return (
-          <TextField
-            label={f.label}
-            select
-            fullWidth
-            value={filterValues[f.source] ?? ""}
-            onChange={(e) => updateValue(f.source, e.target.value)}
-          >
-            {f.choices?.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.name}
-              </MenuItem>
-            ))}
-          </TextField>
-        );
-
+        return renderSelectInput(f);
       case "dateRange":
-        return (
-          <Stack direction="row" spacing={1}>
-            <TextField
-              type="date"
-              label="開始"
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              value={filterValues[`${f.source}Start`] || ""}
-              onChange={(e) => updateValue(`${f.source}Start`, e.target.value)}
-            />
-            <TextField
-              type="date"
-              label="結束"
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              value={filterValues[`${f.source}End`] || ""}
-              onChange={(e) => updateValue(`${f.source}End`, e.target.value)}
-            />
-          </Stack>
-        );
-
+        return renderDateRange(f);
       default:
         return null;
     }
   };
 
-  /* ----------------------------
-     🧩 Chips（使用 formatter → 正確顯示中文 / 值）
-  ----------------------------- */
+  /* ------------------------------------------------------------
+     ⭐ Chips（安全同步 state）
+  ------------------------------------------------------------ */
   const chips = formatFilters(filterValues);
 
   const removeFilter = (key: string) => {
     const updated = { ...filterValues };
 
-    // 日期區間成對刪除
-    if (updated[key + "Start"] || updated[key + "End"]) {
-      delete updated[key + "Start"];
-      delete updated[key + "End"];
-    }
-
     delete updated[key];
-    setFilters(updated);
+    delete updated[key + "Start"];
+    delete updated[key + "End"];
+
+    setFilters(updated, null, false);
+
+    setLocalInputValues((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      delete next[key + "Start"];
+      delete next[key + "End"];
+      return next;
+    });
   };
 
-  /* ----------------------------
-     🧩 UI Layout（關鍵修復）
-  ----------------------------- */
+  /* ------------------------------------------------------------
+     ⭐ UI Layout（與你原本完全一致）
+  ------------------------------------------------------------ */
   return (
     <Box
       sx={{
@@ -162,13 +256,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         borderRadius: 2,
         border: "1px solid #ddd",
         display: "flex",
-        flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center", // ⭐避免按鈕被擠壓變形
+        alignItems: "center",
         gap: 2,
       }}
     >
-      {/* 左側：篩選器們 */}
+      {/* 左側的搜尋區 */}
       <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
         {quickFilters.map((f, idx) => (
           <Box key={idx} sx={{ minWidth: 220 }}>
@@ -177,15 +270,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         ))}
 
         {advancedFilters.length > 0 && (
-          <IconButton
-            onClick={(e) => setAnchor(e.currentTarget)}
-           
-          >
+          <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
             <FilterListIcon />
           </IconButton>
         )}
 
-        <Button variant="contained" onClick={applyFilters}>
+        <Button variant="contained" onClick={handleSearch}>
           搜尋
         </Button>
 
@@ -194,7 +284,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         </Button>
       </Stack>
 
-      {/* 右側：Chips + 新增 + 匯出 */}
+      {/* 右側區塊：Chips、建立、匯出 */}
       <Stack direction="row" spacing={1} alignItems="center">
         <SearchChipsCompact chips={chips} onRemove={removeFilter} />
 
@@ -220,7 +310,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         )}
       </Stack>
 
-      {/* Popover 進階篩選 */}
+      {/* 進階搜尋 Popover */}
       <Popover
         open={Boolean(anchor)}
         anchorEl={anchor}
@@ -239,7 +329,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           </Stack>
 
           <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-            <Button fullWidth variant="contained" onClick={applyFilters}>
+            <Button fullWidth variant="contained" onClick={handleSearch}>
               套用
             </Button>
             <Button fullWidth variant="outlined" color="error" onClick={clearFilters}>

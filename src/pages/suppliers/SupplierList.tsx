@@ -13,6 +13,8 @@ export const SupplierList = () => (
   <List
     title="供應商清單"
     actions={false}
+    filters={[]}
+    empty={false}
     pagination={<Pagination rowsPerPageOptions={[10, 25, 50]} />}
     perPage={10}
   >
@@ -32,8 +34,6 @@ export const SupplierList = () => (
           ],
         },
       ]}
-      
-      // ⭐⭐ 關鍵：告訴 StyledListWrapper 你要匯出
       exportConfig={{
         filename: "supplier_export",
         format: "excel",

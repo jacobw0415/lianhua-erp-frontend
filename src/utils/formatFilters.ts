@@ -6,20 +6,34 @@ export const formatFilters = (filters: Record<string, any>) => {
   const used = new Set<string>();
 
   for (const key of Object.keys(filters)) {
-    if (!filters[key]) continue;
+    const rawValue = filters[key];
+
+    // 🛡️ Ignore undefined / null / empty-string / whitespace
+    if (
+      rawValue === undefined ||
+      rawValue === null ||
+      (typeof rawValue === "string" && rawValue.trim() === "")
+    ) {
+      continue;
+    }
+
     if (used.has(key)) continue;
 
-    const value = filters[key];
+    const value = rawValue;
     const label = filterLabelMap[key] || "";
 
     /* -------------------------
-       📌 1. 日期區間："DateStart" + "DateEnd"
+       📌 1. 日期區間："Start" + "End"
     -------------------------- */
     if (key.endsWith("Start")) {
       const base = key.replace("Start", "");
       const endKey = `${base}End`;
 
-      if (filters[endKey]) {
+      if (
+        filters[endKey] &&
+        typeof filters[endKey] === "string" &&
+        filters[endKey].trim() !== ""
+      ) {
         used.add(key);
         used.add(endKey);
 
@@ -28,13 +42,15 @@ export const formatFilters = (filters: Record<string, any>) => {
           key: base,
           display: label ? `${label}: ${display}` : display,
         });
+
         continue;
       }
     }
+
     if (key.endsWith("End")) continue;
 
     /* -------------------------
-       📌 2. 數字金額區間："Min" + "Max"
+       📌 2. 數字區間 Min / Max
     -------------------------- */
     if (key.endsWith("Min")) {
       const base = key.replace("Min", "");
@@ -45,50 +61,63 @@ export const formatFilters = (filters: Record<string, any>) => {
         used.add(maxKey);
 
         const display = `${fmtNum(value)} – ${fmtNum(filters[maxKey])}`;
+
         chips.push({
           key: base,
           display: label ? `${label}: ${display}` : display,
         });
+
         continue;
       }
     }
+
     if (key.endsWith("Max")) continue;
 
     /* -------------------------
-       📌 3. ENUM / SELECT 中文化
+       📌 3. ENUM / SELECT mapping
     -------------------------- */
     if (enumValueMap[key]) {
-      const translated = enumValueMap[key][value] || value;
+      const map = enumValueMap[key];
+      const translated = map[value] || value; // 🛡️ fallback
+
       chips.push({
         key,
-        display: label ? `${label}: ${translated}` : translated,
+        display: label ? `${label}: ${translated}` : `${translated}`,
       });
+
       continue;
     }
 
     /* -------------------------
        📌 4. 多選陣列
     -------------------------- */
-    if (Array.isArray(value)) {
+    if (Array.isArray(value) && value.length > 0) {
       const display = value.join("、");
+
       chips.push({
         key,
         display: label ? `${label}: ${display}` : display,
       });
+
       continue;
     }
 
     /* -------------------------
-       📌 5. 單值 → value only
+       📌 5. 單值（安全版本）
     -------------------------- */
-    chips.push({
-      key,
-      display: label ? `${label}: ${value}` : `${value}`,
-    });
+    const safeValue = typeof value === "string" ? value.trim() : value;
+
+    if (safeValue !== "") {
+      chips.push({
+        key,
+        display: label ? `${label}: ${safeValue}` : `${safeValue}`,
+      });
+    }
   }
+
   return chips;
 };
 
 /* Utilities */
-const fmtDate = (d: string) => d?.replace(/-/g, "/") || "";
+const fmtDate = (d: string) => (d ? d.replace(/-/g, "/") : "");
 const fmtNum = (n: any) => Number(n).toLocaleString();

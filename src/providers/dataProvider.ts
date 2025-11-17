@@ -1,10 +1,10 @@
 import {
     fetchUtils,
-    type GetListParams,
-    type GetListResult,
-    type RaRecord,
+
     type DataProvider,
 } from 'react-admin';
+import { apiRules } from "@/config/apiRules";
+import { filterMapping } from "@/config/filterMapping";
 
 const apiUrl: string = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
@@ -29,15 +29,58 @@ const normalizeListResponse = (json: any) => {
 };
 
 const dataProvider: DataProvider = {
-    // Keep simple GET for compatibility; compute total client-side if needed
-    getList: (resource: string, _params: GetListParams): Promise<GetListResult<RaRecord>> =>
-        httpClient(`${apiUrl}/${resource}`).then(({ json, headers }) => {
+
+    getList(resource, params) {
+        const rules = apiRules[resource] ?? {};
+        const mapping = filterMapping[resource] ?? {};
+
+        const { page = 1, perPage = 25 } = params.pagination || {};
+        const { field = "id", order = "ASC" } = params.sort || {};
+        const filters = params.filter || {};
+
+        const query = new URLSearchParams();
+
+        // --- 分頁參數 ---
+        query.set("page", String(page - 1));
+        query.set("size", String(perPage));
+
+        // --- 排序 ---
+        query.set("sort", `${field},${order.toLowerCase()}`);
+
+        // --- 搜尋條件處理 ---
+        let hasSearch = false;
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== "" && value !== undefined && value !== null) {
+                hasSearch = true;
+
+                // 前端 source → 後端參數名稱
+                const backendKey = mapping[key] ?? key;
+
+                query.append(backendKey, String(value));
+            }
+        });
+
+        // --- 決定 API basePath ---
+        const basePath =
+            hasSearch && rules.search
+                ? `${apiUrl}/${resource}/search`
+                : `${apiUrl}/${resource}`;
+
+        const url = `${basePath}?${query.toString()}`;
+
+        // --- 呼叫 API ---
+        return httpClient(url).then(({ json }) => {
             const { data, total } = normalizeListResponse(json);
-            // Prefer Content-Range if backend provides
-            const contentRange = headers?.get('content-range');
-            const totalFromHeader = contentRange ? parseInt(contentRange.split('/').pop() || '0', 10) : undefined;
-            return { data, total: totalFromHeader ?? total };
-        }),
+
+            return {
+                data,
+                total,
+            };
+        });
+    },
+
+
 
     getOne: (resource, params) =>
         httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({

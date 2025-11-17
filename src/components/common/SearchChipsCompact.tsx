@@ -1,18 +1,37 @@
 import React, { useState } from "react";
 import { Box, Chip, Popover, Typography, useTheme } from "@mui/material";
 
+interface ChipItem {
+  key: string;
+  display: string | undefined | null;
+}
+
 interface Props {
-  chips: { key: string; display: string }[];
+  chips: ChipItem[];
   onRemove: (key: string) => void;
 }
 
 export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
   const theme = useTheme();
-  if (!chips || chips.length === 0) return null;
+
+  /* 🛡 防呆：確保 chips 是陣列 */
+  if (!Array.isArray(chips)) return null;
+
+  /* 🛡 過濾掉任何 display 無效的 chip */
+  const safeChips = chips.filter(
+    (chip) =>
+      chip &&
+      typeof chip.display === "string" &&
+      chip.display.trim() !== "" &&
+      typeof chip.key === "string" &&
+      chip.key.trim() !== ""
+  );
+
+  if (safeChips.length === 0) return null;
 
   const visibleCount = 3;
-  const visible = chips.slice(0, visibleCount);
-  const hidden = chips.slice(visibleCount);
+  const visible = safeChips.slice(0, visibleCount);
+  const hidden = safeChips.slice(visibleCount);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -29,7 +48,7 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
       {visible.map((chip) => (
         <Chip
           key={chip.key}
-          label={chip.display}  // ⭐⭐ 關鍵在這
+          label={chip.display}
           size="small"
           onDelete={() => onRemove(chip.key)}
           sx={{
@@ -58,7 +77,11 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
             }}
           />
 
-          <Popover open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={() => setAnchorEl(null)}>
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={() => setAnchorEl(null)}
+          >
             <Box sx={{ p: 2, maxWidth: 260 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 其他篩選條件
@@ -67,7 +90,7 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
               {hidden.map((chip) => (
                 <Chip
                   key={chip.key}
-                  label={chip.display}  // ⭐⭐ 這裡也要
+                  label={chip.display}
                   size="small"
                   onDelete={() => onRemove(chip.key)}
                   sx={{
