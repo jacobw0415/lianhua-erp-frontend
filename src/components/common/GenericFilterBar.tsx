@@ -63,21 +63,6 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   /** ⭐ 全域彈窗 */
   const alert = useGlobalAlert();
 
-  // ⭐ 全域 Enter 搜尋（最終解法）
-  React.useEffect(() => {
-    const handleEnter = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !isComposing) {
-        if (document.activeElement instanceof HTMLInputElement) {
-          e.preventDefault();
-          handleSearch();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleEnter);
-    return () => window.removeEventListener("keydown", handleEnter);
-  }, [localInputValues, isComposing]);
-
   /* ------------------------------------------------------------
      ⭐ 安全搜尋 → 不覆蓋使用者輸入、不清空輸入框
   ------------------------------------------------------------ */

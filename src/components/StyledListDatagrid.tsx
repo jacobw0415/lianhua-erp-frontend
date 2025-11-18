@@ -1,6 +1,7 @@
 import { Datagrid, type DatagridProps } from "react-admin";
 import { styled } from "@mui/material/styles";
 import { Box } from "@mui/material";
+import { EmptyPlaceholder } from "@/components/common/EmptyPlaceholder";
 
 interface StyledDatagridProps extends DatagridProps {
   maxHeight?: string;
@@ -117,6 +118,7 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
       }}
     >
       <StyledDatagridRoot
+      empty={<EmptyPlaceholder />}
         rowClick="edit"
         bulkActionButtons={false}
         size="small"
