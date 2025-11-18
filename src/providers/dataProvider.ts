@@ -40,27 +40,20 @@ const dataProvider: DataProvider = {
 
         const query = new URLSearchParams();
 
-        // --- 分頁 ---
-        query.set("page", String(page - 1)); // RA 是 1-based, Spring 是 0-based
+        query.set("page", String(page - 1));
         query.set("size", String(perPage));
-
-        // --- 排序 ---
         query.set("sort", `${field},${order.toLowerCase()}`);
 
-        // --- 搜尋 ---
         let hasSearch = false;
 
         Object.entries(filters).forEach(([key, value]) => {
             if (value !== "" && value !== undefined && value !== null) {
                 hasSearch = true;
-
                 const backendKey = mapping[key] ?? key;
-
                 query.append(backendKey, String(value));
             }
         });
 
-        // --- API 路徑 ---
         const basePath =
             hasSearch && rules.search
                 ? `${apiUrl}/${resource}/search`
@@ -68,20 +61,31 @@ const dataProvider: DataProvider = {
 
         const url = `${basePath}?${query.toString()}`;
 
-        return httpClient(url).then(({ json }) => {
+        // ⭐⭐ 重點：包 try/catch 攔截後端查無資料 400/404 錯誤
+        return httpClient(url)
+            .then(({ json }) => {
+                const payload = json?.data ?? json;
+                const data = payload?.content ?? [];
+                const total = payload?.totalElements ?? data.length;
 
-            // --- ApiResponseDto 包裝格式 ---
-            const payload = json?.data ?? json;
+                return { data, total };
+            })
+            .catch((error) => {
 
-            // --- Pageable 格式 ---
-            const data = payload?.content ?? [];  // 供應商資料陣列
-            const total = payload?.totalElements ?? data.length;
+                // ⭐【關鍵邏輯】攔截後端的查無資料錯誤訊息
+                const msg = error?.body?.message || error?.message || "";
 
-            return {
-                data,
-                total,
-            };
-        });
+                if (msg.includes("查無匹配")) {
+                    // ⚠️ 返回「空列表」，而不是錯誤
+                    return {
+                        data: [],
+                        total: 0,
+                    };
+                }
+
+                // ⭐ 若是其他錯誤（500 / DB error / validation）則正常丟給 React-Admin
+                throw error;
+            });
     },
 
     getOne: (resource, params) =>

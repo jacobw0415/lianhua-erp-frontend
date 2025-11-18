@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box } from "@mui/material";
-import { useListContext } from "react-admin";
+import { useListContext, ListContextProvider, type ListControllerResult } from "react-admin";
+
 import { GenericFilterBar } from "./GenericFilterBar";
+import { useListEnhancer } from "@/hooks/useListEnhancer";
+import { useGlobalAlert } from "@/hooks/useGlobalAlert";
+import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 
 import { exportExcel } from "@/utils/exportExcel";
 import { exportCsv } from "@/utils/exportCsv";
@@ -23,47 +27,86 @@ interface StyledListWrapperProps {
   quickFilters?: any[];
   advancedFilters?: any[];
   popoverWidth?: number | string;
-  exportConfig?: ExportConfig; // ⭐ 匯出格式（每頁自行設定）
+  exportConfig?: ExportConfig;
 }
 
-/**
- * 🌟 StyledListWrapper
- * - 統一顯示 GenericFilterBar（搜尋 + 新增 + 匯出）
- * - 不同頁面可自行設定 exportConfig
- */
 export const StyledListWrapper: React.FC<StyledListWrapperProps> = ({
   children,
   quickFilters = [],
   advancedFilters = [],
   exportConfig,
 }) => {
-  const { data } = useListContext();
+  /** ⭐ 讀取增強後的列表狀態（查無資料 + 最後有效資料） */
+  const { datagridData, hasNoResult, resetFilters } = useListEnhancer();
 
-  /** 📤 匯出資料（Excel / CSV） */
+  /** ⭐ React-Admin 原始 ListContext */
+  const raListCtx = useListContext();
+
+  /** ⭐ 全域彈窗控制 */
+  const alert = useGlobalAlert();
+
+  /** ❗ 查無資料 → 跳提示框 */
+  useEffect(() => {
+    if (hasNoResult) {
+      alert.trigger("查無匹配的資料，請重新輸入搜尋條件");
+    }
+  }, [hasNoResult]);
+
+  /** 📤 匯出 */
   const handleExport = () => {
-    if (!data || !exportConfig) return;
+    if (!raListCtx.data || !exportConfig) return;
 
     const { filename, format = "excel", columns } = exportConfig;
 
     if (format === "excel") {
-      exportExcel(data, filename, columns);
+      exportExcel(raListCtx.data, filename, columns);
     } else {
-      exportCsv(data, filename);
+      exportCsv(raListCtx.data, filename);
     }
+  };
+
+  /**
+   * ⭐⭐⭐ 重點：建立「乾淨且完整」的 ListControllerResult
+   *      不能改 useListContext() 傳回的物件（會 TS 爆炸）
+   *      必須自己組一份合法型別。
+   */
+    const enhancedListContext: Partial<ListControllerResult<any>> = {
+    ...raListCtx,
+    data: datagridData,
+    total: datagridData?.length ?? 0,
+    isLoading: false,
+    isFetching: false,
+    isPending: false,
+    isPlaceholderData: false,
+    error: null,
   };
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* 🔍 搜尋 + 新增 + 匯出 */}
       <GenericFilterBar
         quickFilters={quickFilters}
         advancedFilters={advancedFilters}
-        enableExport={!!exportConfig}            // ⭐ 只有 exportConfig 才顯示匯出
+        enableExport={!!exportConfig}
         onExport={exportConfig ? handleExport : undefined}
       />
 
-      {/* 📄 Datagrid / ListView */}
-      {children}
+      {/* ⭐ 用強制斷言讓 TS 接受 ListControllerResult */}
+      <ListContextProvider
+        value={enhancedListContext as ListControllerResult<any>}
+      >
+        {children}
+      </ListContextProvider>
+
+      <GlobalAlertDialog
+        open={alert.open}
+        message={alert.message}
+        onClose={() => {
+          alert.close();
+          resetFilters();
+        }}
+      />
     </Box>
   );
 };
+
+export default StyledListWrapper;
