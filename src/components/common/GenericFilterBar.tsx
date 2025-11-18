@@ -22,6 +22,8 @@ import DownloadIcon from "@mui/icons-material/Download";
 
 import { SearchChipsCompact } from "./SearchChipsCompact";
 import { formatFilters } from "@/utils/formatFilters";
+import { useGlobalAlert } from "@/hooks/useGlobalAlert";
+import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 
 interface FilterOption {
   type: "text" | "select" | "dateRange";
@@ -58,20 +60,36 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   const resource = useResourceContext();
   const createPath = useCreatePath();
 
+  /** ⭐ 全域彈窗 */
+  const alert = useGlobalAlert();
+
+  // ⭐ 全域 Enter 搜尋（最終解法）
+  React.useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !isComposing) {
+        if (document.activeElement instanceof HTMLInputElement) {
+          e.preventDefault();
+          handleSearch();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleEnter);
+    return () => window.removeEventListener("keydown", handleEnter);
+  }, [localInputValues, isComposing]);
+
   /* ------------------------------------------------------------
      ⭐ 安全搜尋 → 不覆蓋使用者輸入、不清空輸入框
   ------------------------------------------------------------ */
-    const handleSearch = () => {
+  const handleSearch = () => {
     const hasAny = Object.values(localInputValues)
       .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
 
     if (!hasAny) {
-      // 無任何搜尋欄位輸入 → 顯示全部
-      setFilters({}, null, false);
+      alert.trigger("請輸入搜尋條件");
       return;
     }
 
-    // 否則有條件 → 搜尋
     setFilters({ ...localInputValues }, null, false);
   };
 
@@ -94,7 +112,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   };
 
   /* ------------------------------------------------------------
-     ⭐ Text Input（完全支援中文 & Enter）
+     ⭐ Text Input（支援中文 & Enter）
   ------------------------------------------------------------ */
   const renderTextInput = (f: FilterOption) => {
     const key = f.source;
@@ -138,7 +156,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   };
 
   /* ------------------------------------------------------------
-     ⭐ Select Input（完全安全）
+     ⭐ Select Input
   ------------------------------------------------------------ */
   const renderSelectInput = (f: FilterOption) => {
     const key = f.source;
@@ -170,7 +188,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   };
 
   /* ------------------------------------------------------------
-     ⭐ 日期區間（完全安全）
+     ⭐ 日期區間
   ------------------------------------------------------------ */
   const renderDateRange = (f: FilterOption) => {
     const startKey = `${f.source}Start`;
@@ -246,98 +264,118 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   };
 
   /* ------------------------------------------------------------
-     ⭐ UI Layout（與你原本完全一致）
+     ⭐ UI Layout
   ------------------------------------------------------------ */
   return (
-    <Box
-      sx={{
-        p: 2,
-        mb: 2,
-        borderRadius: 2,
-        border: "1px solid #ddd",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 2,
-      }}
-    >
-      {/* 左側的搜尋區 */}
-      <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
-        {quickFilters.map((f, idx) => (
-          <Box key={idx} sx={{ minWidth: 220 }}>
-            {renderFilter(f)}
-          </Box>
-        ))}
-
-        {advancedFilters.length > 0 && (
-          <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
-            <FilterListIcon />
-          </IconButton>
-        )}
-
-        <Button variant="contained" onClick={handleSearch}>
-          搜尋
-        </Button>
-
-        <Button variant="outlined" color="error" onClick={clearFilters}>
-          清除
-        </Button>
-      </Stack>
-
-      {/* 右側區塊：Chips、建立、匯出 */}
-      <Stack direction="row" spacing={1} alignItems="center">
-        <SearchChipsCompact chips={chips} onRemove={removeFilter} />
-
-        {enableCreate && (
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<AddIcon />}
-            href={`#${createPath({ resource, type: "create" })}`}
-          >
-            {createLabel}
-          </Button>
-        )}
-
-        {enableExport && onExport && (
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={onExport}
-          >
-            匯出資料
-          </Button>
-        )}
-      </Stack>
-
-      {/* 進階搜尋 Popover */}
-      <Popover
-        open={Boolean(anchor)}
-        anchorEl={anchor}
-        onClose={() => setAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+    <>
+      <Box
+        sx={{
+          p: 2,
+          mb: 2,
+          borderRadius: 2,
+          border: "1px solid #ddd",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 2,
+        }}
       >
-        <Box sx={{ width: 350, p: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            更多篩選條件
-          </Typography>
+        {/* 左側的搜尋區 */}
+        <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
+          {quickFilters.map((f, idx) => (
+            <Box key={idx} sx={{ minWidth: 220 }}>
+              {renderFilter(f)}
+            </Box>
+          ))}
 
-          <Stack spacing={2}>
-            {advancedFilters.map((f, idx) => (
-              <Box key={idx}>{renderFilter(f)}</Box>
-            ))}
-          </Stack>
+          {advancedFilters.length > 0 && (
+            <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
+              <FilterListIcon />
+            </IconButton>
+          )}
 
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-            <Button fullWidth variant="contained" onClick={handleSearch}>
-              套用
+          <Button variant="contained" onClick={handleSearch}>
+            搜尋
+          </Button>
+
+          <Button variant="outlined" color="error" onClick={clearFilters}>
+            清除
+          </Button>
+        </Stack>
+
+        {/* 右側區塊：Chips、建立、匯出 */}
+        <Stack direction="row" spacing={1} alignItems="center">
+          <SearchChipsCompact chips={chips} onRemove={removeFilter} />
+
+          {enableCreate && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<AddIcon />}
+              href={`#${createPath({ resource, type: "create" })}`}
+            >
+              {createLabel}
             </Button>
-            <Button fullWidth variant="outlined" color="error" onClick={clearFilters}>
-              清除
+          )}
+
+          {enableExport && onExport && (
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={onExport}
+            >
+              匯出資料
             </Button>
-          </Stack>
-        </Box>
-      </Popover>
-    </Box>
+          )}
+        </Stack>
+
+        {/* 進階搜尋 Popover */}
+        <Popover
+          open={Boolean(anchor)}
+          anchorEl={anchor}
+          onClose={() => setAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <Box sx={{ width: 350, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              更多篩選條件
+            </Typography>
+
+            <Stack spacing={2}>
+              {advancedFilters.map((f, idx) => (
+                <Box key={idx}>{renderFilter(f)}</Box>
+              ))}
+            </Stack>
+
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Button 
+                fullWidth 
+                variant="contained" 
+                onClick={(e) => {
+                  (e.currentTarget as HTMLButtonElement).blur(); 
+                  handleSearch();
+                }}>
+                套用
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="error"
+                onClick={clearFilters}
+              >
+                清除
+              </Button>
+            </Stack>
+          </Box>
+        </Popover>
+      </Box>
+
+      {/* ⭐ 全域搜尋提示 */}
+      <GlobalAlertDialog
+        open={alert.open}
+        message={alert.message}
+        onClose={alert.close}
+      />
+    </>
   );
 };

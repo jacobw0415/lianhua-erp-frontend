@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,36 +10,54 @@ import {
 interface Props {
   open: boolean;
   message: string;
-  onClose: () => void;   
+  onClose: () => void;
 }
 
-export const GlobalAlertDialog = ({ open, message, onClose }: Props) => (
-  <Dialog
-    open={open}
-    onClose={onClose}        
-    maxWidth="xs"
-    fullWidth
-    PaperProps={{
-      sx: { borderRadius: 2, p: 2 }
-    }}
-  >
-    <DialogContent>
-      <Typography
-        variant="h6"
-        sx={{ mb: 1, textAlign: "center", fontWeight: 600 }}
-      >
-        提示
-      </Typography>
+export const GlobalAlertDialog = ({ open, message, onClose }: Props) => {
 
-      <Typography variant="body1" sx={{ textAlign: "center" }}>
-        {message}
-      </Typography>
-    </DialogContent>
+  /** ⭐ 監聽 Enter → 關閉 Dialog */
+  useEffect(() => {
+    if (!open) return;
 
-    <DialogActions sx={{ justifyContent: "center" }}>
-      <Button variant="contained" color="primary" onClick={onClose}>
-        確定
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEnter);
+    return () => window.removeEventListener("keydown", handleEnter);
+  }, [open, onClose]);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 2, p: 2 }
+      }}
+    >
+      <DialogContent>
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, textAlign: "center", fontWeight: 600 }}
+        >
+          提示
+        </Typography>
+
+        <Typography variant="body1" sx={{ textAlign: "center" }}>
+          {message}
+        </Typography>
+      </DialogContent>
+
+      <DialogActions sx={{ justifyContent: "center" }}>
+        <Button variant="contained" color="primary" onClick={onClose}>
+          確定
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
