@@ -67,16 +67,21 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
      ⭐ 安全搜尋 → 不覆蓋使用者輸入、不清空輸入框
   ------------------------------------------------------------ */
   const handleSearch = () => {
-    const hasAny = Object.values(localInputValues)
-      .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
+  const hasAny = Object.values(localInputValues)
+    .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
 
-    if (!hasAny) {
-      alert.trigger("請輸入搜尋條件");
-      return;
-    }
+  if (!hasAny) {
+    alert.trigger("請輸入搜尋條件");
+    // ⭐ 重要：把 Enter 造成的焦點全部移除
+    (document.activeElement as HTMLElement)?.blur();
+    return;
+  }
 
-    setFilters({ ...localInputValues }, null, false);
-  };
+  setFilters({ ...localInputValues }, null, false);
+
+  // ⭐ 任何搜尋後都自動 blur，避免「搜尋」按鍵保持黑色
+  (document.activeElement as HTMLElement)?.blur();
+};
 
   /* ------------------------------------------------------------
      ⭐ 安全清除
@@ -84,6 +89,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   const clearFilters = () => {
     setLocalInputValues({});
     setFilters({}, null, false);
+    (document.activeElement as HTMLElement)?.blur();
   };
 
   /* ------------------------------------------------------------
@@ -274,7 +280,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           ))}
 
           {advancedFilters.length > 0 && (
-            <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
+            <IconButton onClick={(e) => {
+              setAnchor(e.currentTarget);
+              (document.activeElement as HTMLElement)?.blur();   // ⭐ 避免 icon 變黑
+            }}>
               <FilterListIcon />
             </IconButton>
           )}
