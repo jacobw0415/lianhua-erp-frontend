@@ -13,7 +13,7 @@ import {
 import { useWatch } from "react-hook-form";
 import { Box, Typography, Alert } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { StyledDatagrid } from "@/components/StyledDatagrid";
 
 export const PurchaseEdit: React.FC = () => (
   <GenericEditPage
@@ -70,7 +70,7 @@ const PurchaseFormFields: React.FC = () => {
             </Typography>
 
             {payments.length ? (
-              <StyledListDatagrid
+              <StyledDatagrid
                 data={payments}
                 rowClick={false}
                 bulkActionButtons={false}
@@ -103,7 +103,7 @@ const PurchaseFormFields: React.FC = () => {
                 <DateField source="payDate" label="付款日期" />
                 <TextField source="method" label="付款方式" />
                 <TextField source="note" label="備註" />
-              </StyledListDatagrid>
+              </StyledDatagrid>
             ) : (
               <Typography color="text.secondary">目前尚無付款紀錄</Typography>
             )}

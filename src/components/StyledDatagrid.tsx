@@ -1,7 +1,6 @@
 import { Datagrid, type DatagridProps } from "react-admin";
 import { styled } from "@mui/material/styles";
 import { Box } from "@mui/material";
-import { EmptyPlaceholder } from "@/components/common/EmptyPlaceholder";
 
 interface StyledDatagridProps extends DatagridProps {
   maxHeight?: string;
@@ -44,10 +43,11 @@ const StyledDatagridRoot = styled(Datagrid, {
 
     whiteSpace: "nowrap",
     padding: "10px 16px",
-    borderBottom: `1px solid ${theme.palette.mode === "dark"
+    borderBottom: `1px solid ${
+      theme.palette.mode === "dark"
         ? theme.palette.grey[800]
         : theme.palette.grey[300]
-      }`,
+    }`,
   },
 
   "& .RaDatagrid-cell": {
@@ -56,10 +56,11 @@ const StyledDatagridRoot = styled(Datagrid, {
     textOverflow: "ellipsis",
     padding: "8px 16px",
     fontSize: "0.9rem",
-    borderBottom: `1px solid ${theme.palette.mode === "dark"
+    borderBottom: `1px solid ${
+      theme.palette.mode === "dark"
         ? theme.palette.grey[800]
         : theme.palette.grey[200]
-      }`,
+    }`,
     color: theme.palette.text.primary,
     verticalAlign: "middle",
   },
@@ -91,12 +92,12 @@ const StyledDatagridRoot = styled(Datagrid, {
   "&::-webkit-scrollbar-thumb:hover": {
     backgroundColor: "#999",
   },
-  // ✅ 固定操作編輯刪除欄寬度，防止擠壓
+    // ✅ 固定操作編輯刪除欄寬度，防止擠壓
   "& .column-action": {
     width: "170px",
     textAlign: "left",
     flexShrink: 0,
-  },
+  },    
 }));
 
 /**
@@ -104,21 +105,19 @@ const StyledDatagridRoot = styled(Datagrid, {
  * - 通用表格組件（maxHeight 可調）
  * - 預設 rowClick="edit"，隱藏批次操作按鈕
  */
-export const StyledListDatagrid = (props: StyledDatagridProps) => {
+export const StyledDatagrid = (props: StyledDatagridProps) => {
   const { maxHeight = "550px", ...rest } = props;
   return (
     <Box
       sx={{
         width: "100%",
-        height: "600px",
-        overflowY: "fixed",
         border: "1px solid #ddd",
         borderRadius: 2,
-        bgcolor: "background.paper",
+        overflowY: "fixed",
+        backgroundColor: "background.paper",
       }}
     >
       <StyledDatagridRoot
-      empty={<EmptyPlaceholder />}
         rowClick="edit"
         bulkActionButtons={false}
         size="small"
