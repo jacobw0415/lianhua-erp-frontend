@@ -9,7 +9,7 @@ import {
   useRecordContext,
   Pagination,
 } from "react-admin";
-import { StyledDatagrid } from "@/components/StyledDatagrid";
+import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { Box, Typography } from "@mui/material";
 import { ActionColumns } from "@/components/common/ActionColumns";
 
@@ -49,7 +49,7 @@ const PaymentSubList = () => {
         💰 付款紀錄
       </Typography>
 
-      <StyledDatagrid
+      <StyledListDatagrid
         data={payments}
         rowClick={false}
         bulkActionButtons={false}
@@ -63,7 +63,7 @@ const PaymentSubList = () => {
         <DateField source="payDate" label="付款日期" />
         <TextField source="method" label="付款方式" />
         <TextField source="note" label="備註" />
-      </StyledDatagrid>
+      </StyledListDatagrid>
     </Box>
   );
 };
@@ -87,15 +87,7 @@ export const PurchaseList = () => (
     pagination={<Pagination rowsPerPageOptions={[5, 10, 25, 50]} />}
     perPage={10}
   >
-    <Box
-      sx={{
-        height: "600px",           // ✅ 主表固定高度
-        border: "1px solid #ddd",
-        borderRadius: 2,
-        bgcolor: "background.paper",
-      }}
-    >
-      <StyledDatagrid
+      <StyledListDatagrid
         expand={<PaymentSubList />} // ✅ 子表展開
         maxHeight="600px"
         sx={{
@@ -138,7 +130,7 @@ export const PurchaseList = () => (
           label="操作"
           render={() => <ActionColumns />}
         />
-      </StyledDatagrid>
-    </Box>
+      </StyledListDatagrid>
+   
   </List>
 );

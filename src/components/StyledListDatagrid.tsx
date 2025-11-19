@@ -105,12 +105,11 @@ const StyledDatagridRoot = styled(Datagrid, {
  * - 預設 rowClick="edit"，隱藏批次操作按鈕
  */
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
-  const { maxHeight = "550px", ...rest } = props;
+  const { maxHeight = "600px", ...rest } = props;
   return (
     <Box
       sx={{
         width: "100%",
-        height: "600px",
         overflowY: "fixed",
         border: "1px solid #ddd",
         borderRadius: 2,
