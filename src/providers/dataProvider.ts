@@ -35,14 +35,48 @@ const dataProvider: DataProvider = {
         const mapping = filterMapping[resource] ?? {};
 
         const { page = 1, perPage = 25 } = params.pagination || {};
-        const { field = "id", order = "ASC" } = params.sort || {};
+        const { field, order } = params.sort || {};
         const filters = params.filter || {};
 
         const query = new URLSearchParams();
 
         query.set("page", String(page - 1));
         query.set("size", String(perPage));
-        query.set("sort", `${field},${order.toLowerCase()}`);
+
+        //  白名單允許排序欄位（依你的後端可排序的 fields 設定）
+        const allowedSortFields = [
+            // === 通用 ===
+            "id",
+            "createdAt",
+            "updatedAt",
+
+            // === Supplier (供應商) ===
+            "name",
+            "contact",
+            "phone",
+            "billingCycle",
+
+            // === Purchase (進貨單) ===
+            "purchaseDate",
+            "supplierId",
+            "supplierName",   // DTO 中可能有
+            "accountingPeriod",
+            "item",
+            "qty",
+            "unitPrice",
+            "taxRate",
+            "taxAmount",
+            "totalAmount",
+            "paidAmount",
+            "balance",
+            "status",
+        ];
+
+        //  只有欄位在白名單時才加入 sort
+        if (field && allowedSortFields.includes(field)) {
+            query.set("sort", `${field},${(order || "ASC").toLowerCase()}`);
+        }
+        // ❗ 若欄位不在白名單 → 不送 sort → 後端會 fallback 用 id 排序
 
         let hasSearch = false;
 
@@ -61,7 +95,6 @@ const dataProvider: DataProvider = {
 
         const url = `${basePath}?${query.toString()}`;
 
-        // ⭐⭐ 重點：包 try/catch 攔截後端查無資料 400/404 錯誤
         return httpClient(url)
             .then(({ json }) => {
                 const payload = json?.data ?? json;
@@ -71,22 +104,19 @@ const dataProvider: DataProvider = {
                 return { data, total };
             })
             .catch((error) => {
-
-                // ⭐【關鍵邏輯】攔截後端的查無資料錯誤訊息
                 const msg = error?.body?.message || error?.message || "";
 
                 if (msg.includes("查無匹配")) {
-                    // ⚠️ 返回「空列表」，而不是錯誤
                     return {
                         data: [],
                         total: 0,
                     };
                 }
 
-                // ⭐ 若是其他錯誤（500 / DB error / validation）則正常丟給 React-Admin
                 throw error;
             });
     },
+
 
     getOne: (resource, params) =>
         httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
