@@ -282,7 +282,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           {advancedFilters.length > 0 && (
             <IconButton onClick={(e) => {
               setAnchor(e.currentTarget);
-              (document.activeElement as HTMLElement)?.blur();   // ⭐ 避免 icon 變黑
+              (e.currentTarget as HTMLButtonElement).blur(); 
             }}>
               <FilterListIcon />
             </IconButton>
