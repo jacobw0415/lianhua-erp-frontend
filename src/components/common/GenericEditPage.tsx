@@ -1,32 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Edit,
   SimpleForm,
   Toolbar,
   SaveButton,
-  DeleteButton,
   useNotify,
   useRedirect,
   useUpdate,
+  useRecordContext,
+  useDataProvider,
 } from "react-admin";
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 
 interface GenericEditPageProps {
   resource: string;
   title: string;
   children: React.ReactNode;
-  successMessage?: string;
-  errorMessage?: string;
   width?: string;
 }
 
 const CustomToolbar = ({
   onBack,
-  showDelete = true,
+  onDelete,
 }: {
   onBack: () => void;
-  showDelete?: boolean;
+  onDelete: () => void;
 }) => (
   <Toolbar
     sx={{
@@ -44,8 +44,11 @@ const CustomToolbar = ({
     >
       返回
     </Button>
+
     <Box sx={{ display: "flex", gap: 2 }}>
-      {showDelete && <DeleteButton label="刪除" mutationMode="pessimistic" />}
+      <Button variant="contained" color="error" onClick={onDelete}>
+        刪除
+      </Button>
       <SaveButton label="儲存" color="success" />
     </Box>
   </Toolbar>
@@ -61,90 +64,132 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const redirect = useRedirect();
   const [update] = useUpdate();
 
-  /**
-   * 🧩 handleSubmit 統一提交邏輯：
-   * - 自動過濾唯讀欄位
-   * - 過濾 newPayments 陣列中無效資料
-   * - 成功後顯示通知並導回列表
-   */
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+
+  /** ⭐ 表單提交邏輯（保留你的原本流程） */
   const handleSubmit = async (values: any) => {
-  const { id, newPayments, ...rest } = values;
+    const { id, newPayments, ...rest } = values;
 
-  // 1️⃣ 移除不屬於後端 DTO 的唯讀欄位
-  const payload = { ...rest };
-  delete payload.supplierName;
-  delete payload.item;
-  delete payload.totalAmount;
-  delete payload.paidAmount;
-  delete payload.balance;
-  delete payload.status;
+    const payload = { ...rest };
 
-  // 2️⃣ 處理付款資料
-  if (newPayments && newPayments.length > 0) {
-    const cleanedPayments = newPayments
-      .filter((p: any) => p.amount && p.payDate && p.method)
-      .map((p: any) => ({
-        amount: p.amount,
-        payDate: p.payDate,
-        method: p.method,
-        // ⚠️ 不要傳 id 給後端
-      }));
+    // 移除唯讀欄位
+    delete payload.supplierName;
+    delete payload.item;
+    delete payload.totalAmount;
+    delete payload.paidAmount;
+    delete payload.balance;
+    delete payload.status;
 
-    payload.payments = cleanedPayments;
-  }
+    // 處理付款資料
+    if (Array.isArray(newPayments)) {
+      payload.payments = newPayments
+        .filter((p: any) => p.amount && p.payDate && p.method)
+        .map((p: any) => ({
+          amount: p.amount,
+          payDate: p.payDate,
+          method: p.method,
+        }));
+    }
 
-  try {
-    await update(
-      resource,
-      { id, data: payload },
-      {
-        onSuccess: () => {
-          notify("✅ 修改成功", { type: "success" });
-          redirect("list", resource);
-        },
-        onError: (error: any) => {
-          notify(`❌ 修改失敗：${error.message || "未知錯誤"}`, {
-            type: "error",
-          });
-        },
-      }
-    );
-  } catch (error: any) {
-    notify(`❌ 修改失敗：${error.message || error}`, { type: "error" });
-  }
-};
+    try {
+      await update(
+        resource,
+        { id, data: payload },
+        {
+          onSuccess: () => {
+            notify("✅ 修改成功", { type: "success" });
+            redirect("list", resource);
+          },
+          onError: (error: any) =>
+            notify(`❌ 修改失敗：${error.message || "未知錯誤"}`, {
+              type: "error",
+            }),
+        }
+      );
+    } catch (e: any) {
+      notify(`❌ 修改失敗：${e.message}`, { type: "error" });
+    }
+  };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        paddingTop: "50px",
-        height: "calc(100vh - 64px)",
-        backgroundColor: "background.default",
-      }}
-    >
+    <Box sx={{ pt: "50px", display: "flex", justifyContent: "center" }}>
       <Box
         sx={{
-          width: width,
-          maxWidth: width,
+          width,
           backgroundColor: "background.paper",
           borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
           padding: "2rem 3rem",
-          mb: 8,
         }}
       >
         <Edit title={title} actions={false}>
-          <SimpleForm
-            toolbar={<CustomToolbar onBack={() => redirect("list", resource)} />}
+          <EditContent
+            resource={resource}
             onSubmit={handleSubmit}
+            openDeleteConfirm={openDeleteConfirm}
+            setOpenDeleteConfirm={setOpenDeleteConfirm}
           >
             {children}
-          </SimpleForm>
+          </EditContent>
         </Edit>
       </Box>
     </Box>
+  );
+};
+
+/** ⭐ Edit 子組件（可取到 record） */
+const EditContent = ({
+  children,
+  resource,
+  onSubmit,
+  openDeleteConfirm,
+  setOpenDeleteConfirm,
+}: any) => {
+  const notify = useNotify();
+  const redirect = useRedirect();
+  const dataProvider = useDataProvider();
+  const record = useRecordContext();
+
+  /** ⭐ TS 正確防護：record 尚未載入時不渲染頁面 */
+  if (!record) return null;
+
+  /** ⭐ 刪除邏輯 */
+  const handleDelete = async () => {
+    try {
+      await dataProvider.delete(resource, { id: record.id });
+      notify("🗑️ 已成功刪除", { type: "success" });
+      redirect("list", resource);
+    } catch (err: any) {
+      notify(`❌ 刪除失敗：${err.message}`, { type: "error" });
+    }
+  };
+
+  return (
+    <>
+      <SimpleForm
+        onSubmit={onSubmit}
+        toolbar={
+          <CustomToolbar
+            onBack={() => redirect("list", resource)}
+            onDelete={() => setOpenDeleteConfirm(true)}
+          />
+        }
+      >
+        {children}
+      </SimpleForm>
+
+      <GlobalAlertDialog
+        open={openDeleteConfirm}
+        title="確認刪除"
+        description={`確定要刪除「${record.name ?? "這筆資料"}」嗎？`}
+        severity="error"
+        confirmLabel="刪除"
+        cancelLabel="取消"
+        onClose={() => setOpenDeleteConfirm(false)}
+        onConfirm={() => {
+          setOpenDeleteConfirm(false);
+          handleDelete();
+        }}
+      />
+    </>
   );
 };

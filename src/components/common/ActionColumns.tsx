@@ -11,6 +11,7 @@ import type { RaRecord } from "react-admin";
 import { useState } from "react";
 
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
+import { Button } from "@mui/material";
 
 export const ActionColumns = () => {
   const record = useRecordContext<RaRecord>();
@@ -58,24 +59,28 @@ export const ActionColumns = () => {
         {/* 刪除 */}
         <Tooltip title="刪除" arrow>
           <span>
-            <div
-              style={{
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation(); // 防止觸發 rowClick
+                setOpenConfirm(true);
+              }}
+              sx={{
                 minWidth: "70px",
                 padding: "6px 8px",
                 fontSize: "0.8rem",
-                borderRadius: 4,
-                color: "#fff",
-                backgroundColor: "#d32f2f",
+                borderRadius: "6px",
                 textAlign: "center",
-                cursor: "pointer",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenConfirm(true);
+                boxShadow: "none", // 與你的 div 更接近：無高光
+                "&:hover": {
+                  boxShadow: "none",
+                },
               }}
             >
               刪除
-            </div>
+            </Button>
           </span>
         </Tooltip>
       </Box>
