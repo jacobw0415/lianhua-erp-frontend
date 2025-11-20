@@ -111,8 +111,6 @@ export const StyledDatagrid = (props: StyledDatagridProps) => {
     <Box
       sx={{
         width: "100%",
-        border: "1px solid #ddd",
-        borderRadius: 2,
         overflowY: "fixed",
         backgroundColor: "background.paper",
       }}

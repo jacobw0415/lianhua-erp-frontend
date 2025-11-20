@@ -7,32 +7,36 @@ export const useListEnhancer = () => {
   /** ⭐ 保存最後一次成功載入的資料 */
   const lastValidData = useRef<RaRecord[]>([]);
 
-  /** ⭐ 是否查無結果 */
+  /** ⭐ 是否查無結果（查詢 + 0 筆資料） */
   const [hasNoResult, setHasNoResult] = useState(false);
 
-  /** ⭐ 是否已經成功載入過至少一次資料（避免第一次閃爍 No Data） */
+  /** ⭐ 是否已經成功載入過至少一次資料（避免初次閃爍） */
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    /** 若開始重新 loading（例如刪除 → refresh 觸發），先重置 hasNoResult */
+    if (isLoading) {
+      setHasNoResult(false);
+      return;
+    }
 
     /** 是否有搜尋條件 */
     const hasFilters =
-      Object.values(filterValues ?? {}).some(v => v !== null && v !== "");
+      Object.values(filterValues ?? {}).some((v) => v !== null && v !== "");
 
-    /** 是否查無結果（必須：有搜尋條件 + data 為空） */
-    const noResult = hasFilters && (!data || data.length === 0);
+    /** 是否搜尋條件下找不到資料 */
+    const isSearchNoResult = hasFilters && (!data || data.length === 0);
 
-    setHasNoResult(noResult);
+    setHasNoResult(isSearchNoResult);
 
-    if (!noResult && data && data.length > 0) {
-      // ✔ 有有效資料 → 保存起來
-      lastValidData.current = data;
+    /** ⭐ 只有在「不是查無結果」且有資料時，才更新快取 */
+    if (!isSearchNoResult && data) {
+      lastValidData.current = data; // ← 正常刷新 / 刪除後都會正確更新
       setHasLoadedOnce(true);
     }
   }, [data, isLoading, filterValues]);
 
-  /** ⭐ 清除搜尋 — 回到 page=1 + 清空 filterValues */
+  /** ⭐ 清除搜尋條件 */
   const resetFilters = () => {
     setFilters({}, null);
     setPage(1);
