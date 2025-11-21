@@ -19,7 +19,7 @@ interface GlobalAlertDialogProps {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
-
+  hideCancel?: boolean;
   onClose: () => void;
   onConfirm?: () => void;   // 若不傳 → 單按鈕模式
 }

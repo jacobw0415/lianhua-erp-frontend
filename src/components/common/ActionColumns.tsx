@@ -24,17 +24,26 @@ export const ActionColumns = () => {
   const notify = useNotify();
 
   const [openConfirm, setOpenConfirm] = useState(false);
+  const [openErrorDialog, setOpenErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [buttonTarget, setButtonTarget] = useState<HTMLElement | null>(null);
 
   const handleDelete = async () => {
     try {
       await dataProvider.delete(resource, { id: safeRecord.id });
+
       notify("🗑️ 已成功刪除", { type: "success" });
       refresh();
     } catch (err: any) {
-      notify(`❌ 刪除失敗：${err.message || "伺服器錯誤"}`, {
-        type: "error",
-      });
+      // 取得後端錯誤訊息（符合 Spring ResponseStatusException 格式）
+      const backendMessage =
+        err?.body?.message ||
+        err?.message ||
+        "不可刪除該筆供應商，因供應商具有進貨單資料";
+
+      // ★ 改成彈出錯誤 Dialog（不是 notify）
+      setErrorMessage(backendMessage);
+      setOpenErrorDialog(true);
     }
   };
 
@@ -44,7 +53,7 @@ export const ActionColumns = () => {
     <>
       <Stack direction="row" spacing={1} alignItems="center">
         
-        {/* ✔ 編輯：Icon + 文字 */}
+        {/* ✔ 編輯按鈕 */}
         <Button
           size="small"
           color="primary"
@@ -63,7 +72,7 @@ export const ActionColumns = () => {
           編輯
         </Button>
 
-        {/* ✔ 刪除：Icon + 文字 */}
+        {/* ✔ 刪除按鈕 */}
         <Button
           size="small"
           color="error"
@@ -85,7 +94,7 @@ export const ActionColumns = () => {
 
       </Stack>
 
-      {/* 刪除確認彈窗 */}
+      {/* ✔ 刪除確認彈窗 */}
       <GlobalAlertDialog
         open={openConfirm}
         title="確認刪除"
@@ -104,6 +113,18 @@ export const ActionColumns = () => {
           setOpenConfirm(false);
           handleDelete();
         }}
+      />
+
+      {/* ❗ 若供應商具有進貨單 → 彈出此錯誤 Dialog */}
+      <GlobalAlertDialog
+        open={openErrorDialog}
+        title="無法刪除"
+        description={errorMessage || "不可刪除該筆供應商，因供應商具有進貨單資料"}
+        severity="warning"
+        confirmLabel="確定"
+        hideCancel
+        onConfirm={() => setOpenErrorDialog(false)}
+        onClose={() => setOpenErrorDialog(false)}
       />
     </>
   );
