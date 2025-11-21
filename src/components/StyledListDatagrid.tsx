@@ -63,14 +63,15 @@ const StyledDatagridRoot = styled(Datagrid, {
   },
 
   /** ▌讓每個欄位平均寬（關鍵） */
-  "& .RaDatagrid-row > td": {
-    width: "1%", // ⭐ 自動平分
+   "& .RaDatagrid-row > td:not(.column-action)": {
+    width: "auto",
+    maxWidth: "1px",    // ⭐ 利用 overflow 讓欄位均分
     verticalAlign: "middle",
   },
 
   /** ▌最後一欄避免爆框（操作欄） */
   "& .RaDatagrid-cell:last-of-type, & .RaDatagrid-headerCell:last-of-type": {
-    minWidth: "130px", // ⭐ 從你原本 160 改到 130 → 不爆框
+    minWidth: "130px", 
     maxWidth: "140px",
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -79,9 +80,12 @@ const StyledDatagridRoot = styled(Datagrid, {
 
   /** ▌操作欄固定寬度 */
   "& .column-action": {
-    width: "170px",
-    textAlign: "left",
-    flexShrink: 0,
+    minWidth: "170px",
+    maxWidth: "170px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    flexShrink: 0,     // ⭐ 阻止被壓縮
   },
 
   /** ▌客製化 scrollbar */
@@ -108,6 +112,7 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
     <Box
       sx={{
         width: "100%",
+        flex: 1,   
         height: "510px", // ⭐ 可放 10 行 + header 剛好
         overflow: "hidden",
         border: "1px solid #ddd",
