@@ -106,7 +106,7 @@ const StyledDatagridRoot = styled(Datagrid, {
  * - 預設 rowClick="edit"，隱藏批次操作按鈕
  */
 export const StyledDatagrid = (props: StyledDatagridProps) => {
-  const { maxHeight = "550px", ...rest } = props;
+  const {  rowClick = false, maxHeight = "550px", ...rest } = props;
   return (
     <Box
       sx={{
@@ -116,10 +116,10 @@ export const StyledDatagrid = (props: StyledDatagridProps) => {
       }}
     >
       <StyledDatagridRoot
-        rowClick="edit"
         bulkActionButtons={false}
         size="small"
         maxHeight={maxHeight}
+        rowClick={rowClick}
         {...rest}
       />
     </Box>

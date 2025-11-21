@@ -56,8 +56,20 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      //  阻止點擊背景事件傳遞
+      slotProps={{
+        backdrop: {
+          onClick: (e) => {
+            e.stopPropagation();
+          },
+        },
+      }}
       PaperProps={{
         sx: { borderRadius: 2, p: 2 },
+        // 重點中的重點：阻止所有彈窗內部 click 事件往下傳遞
+        onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+          e.stopPropagation();
+        },
       }}
     >
       <DialogContent>
