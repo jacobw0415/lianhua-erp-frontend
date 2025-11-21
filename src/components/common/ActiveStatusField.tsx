@@ -17,7 +17,7 @@ export const ActiveStatusField: React.FC<ActiveStatusFieldProps> = ({
   return (
     <Chip
       size="small"
-      label={isActive ? "合作" : "停用"}
+      label={isActive ? "合作" : "終止"}
       color={isActive ? "success" : "default"}
       variant="outlined"
       sx={{ fontSize: "0.75rem" }}
