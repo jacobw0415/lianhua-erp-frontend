@@ -89,7 +89,7 @@ export const StyledListWrapper: React.FC<{
   };
 
   return (
-    <Box sx={{ width: "100%", padding: "16px 16px", height: "100%", boxSizing: "border-box", }}>
+    <Box sx={{ width: "100%", padding: "16px 16px", height: "605px", boxSizing: "border-box", }}>
       <GenericFilterBar
         quickFilters={quickFilters}
         advancedFilters={advancedFilters}

@@ -114,6 +114,13 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         label={f.label}
         fullWidth
         value={value}
+        size="small"
+        sx={{
+          "& .MuiInputBase-root": {
+            height: 40, // ⭐ 緊湊模式（原本 48–56px）
+            fontSize: "0.85rem",
+          },
+        }}
         onCompositionStart={() => setIsComposing(true)}
         onCompositionEnd={(e) => {
           setIsComposing(false);
@@ -159,6 +166,14 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         label={f.label}
         fullWidth
         value={value}
+        sx={{
+        "& .MuiInputBase-root": {
+          fontSize: "1.5rem",
+        },
+        "& .MuiSelect-select": {
+          padding: "10px 14px",      // ⭐ 正確方式：自然對齊
+        },
+      }}
         onChange={(e) => {
           const val = safeGetValue(e);
           if (val === undefined) return;
@@ -191,6 +206,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           type="date"
           label="開始"
           InputLabelProps={{ shrink: true }}
+          size="small"
+          sx={{
+            "& .MuiInputBase-root": {
+              height: 40,
+            },
+          }}
           fullWidth
           value={localInputValues[startKey] ?? ""}
           onChange={(e) => {
@@ -203,6 +224,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           type="date"
           label="結束"
           InputLabelProps={{ shrink: true }}
+          size="small"
+          sx={{
+            "& .MuiInputBase-root": {
+              height: 40,
+            },
+          }}
           fullWidth
           value={localInputValues[endKey] ?? ""}
           onChange={(e) => {
@@ -261,14 +288,15 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     <>
       <Box
         sx={{
-          p: 2,
-          mb: 2,
-          borderRadius: 2,
+          p: "6px 10px",              // ⭐ 上下從 16px → 6px（縮短搜尋欄高度的關鍵）
+          mb: 1,                     // ⭐ 與下方 Datagrid 間距從 16px → 8px
+          borderRadius: 1.2,
           border: "1px solid #ddd",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          gap: 2,
+          gap: 1.5,
+          minHeight: "60px",         // ⭐ 保證不壓扁但高度合理
         }}
       >
         {/* 左側的搜尋區 */}
@@ -288,17 +316,33 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             </IconButton>
           )}
 
-          <Button variant="contained" onClick={handleSearch}>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ height: 32 }}
+            onClick={handleSearch}
+          >
             搜尋
           </Button>
 
-          <Button variant="outlined" color="error" onClick={clearFilters}>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            sx={{ height: 32 }}
+            onClick={clearFilters}
+          >
             清除
           </Button>
         </Stack>
 
         {/* 右側區塊：Chips、建立、匯出 */}
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack
+          direction="row"
+          spacing={1.5}
+          flexWrap="wrap"
+          alignItems="center"
+        >
           <SearchChipsCompact chips={chips} onRemove={removeFilter} />
 
           {enableCreate && (
@@ -307,6 +351,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               color="success"
               startIcon={<AddIcon />}
               href={`#${createPath({ resource, type: "create" })}`}
+              sx={{
+              height: 32,              // ⭐ 你要求的固定高度
+              minWidth: 90,            // ⭐ 避免按鈕太扁導致文字換行
+              padding: "0 12px",       // ⭐ 讓按鈕左右看起來更平衡
+              fontSize: "0.85rem",     // ⭐ ERP UI 常見字體大小
+            }}
             >
               {createLabel}
             </Button>
@@ -316,6 +366,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}
+              sx={{ height: 32 }}
               onClick={onExport}
             >
               匯出資料
