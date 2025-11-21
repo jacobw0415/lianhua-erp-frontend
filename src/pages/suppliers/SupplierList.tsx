@@ -8,6 +8,8 @@ import {
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
+import { SupplierStatusToggle } from "./SupplierStatusToggle";
+import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 
 export const SupplierList = () => (
   <List
@@ -51,6 +53,13 @@ export const SupplierList = () => (
         <TextField source="phone" label="電話" />
         <TextField source="billingCycle" label="結帳週期" />
         <TextField source="note" label="備註" />
+
+        <ActiveStatusField source="active" label="狀態" />
+
+        <FunctionField
+          label="切換狀態"
+          render={() => <SupplierStatusToggle />}
+        />
 
         <FunctionField
           source="action"
