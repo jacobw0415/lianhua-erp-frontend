@@ -19,6 +19,8 @@ interface GenericEditPageProps {
   title: string;
   children: React.ReactNode;
   width?: string;
+  successMessage?: string;
+  errorMessage?: string;
 }
 
 const CustomToolbar = ({
