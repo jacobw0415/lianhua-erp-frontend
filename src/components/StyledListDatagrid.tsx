@@ -8,24 +8,24 @@ interface StyledDatagridProps extends DatagridProps {
 }
 
 /**
- * ⭐ 最終版不爆框 StyledDatagrid
- * - 完整欄位等比
- * - row 高度不壓 UI
- * - 切換、Chip、按鈕全部垂直置中
- * - 不會超出匡框
+ * ⭐ 最終版不爆框 StyledDatagrid（統一高度 + 完整等比）
+ * - row 高度一致（所有頁表完全統一）
+ * - Chip、Switch、Icon、按鈕 全部垂直置中
+ * - 固定欄位寬與操作欄不爆框
+ * - 10 行剛好填滿
  */
 const StyledDatagridRoot = styled(Datagrid, {
   shouldForwardProp: (prop) => prop !== "maxHeight",
 })<StyledDatagridProps>(({ theme }) => ({
   borderRadius: 12,
-  overflowX: "hidden", // ⭐ 防止超出右側
+  overflowX: "hidden",
   overflowY: "hidden",
   position: "relative",
-  maxWidth: "100%", // ⭐ 表格不可比外層更寬
+  maxWidth: "100%",
 
   /** ▌表格基礎設定 */
   "& .RaDatagrid-table": {
-    tableLayout: "fixed", // ⭐ 固定欄寬，等比例
+    tableLayout: "fixed",
     width: "100%",
     maxWidth: "100%",
     borderCollapse: "collapse",
@@ -43,49 +43,55 @@ const StyledDatagridRoot = styled(Datagrid, {
   /** ▌Header Cell */
   "& .MuiTableCell-head": {
     padding: "4px 8px",
-    height: 30,
-    lineHeight: "30px",
+    height: 32,
+    lineHeight: "32px",
     fontSize: "0.8rem",
     fontWeight: 600,
     whiteSpace: "nowrap",
   },
 
+  /** ▌統一 Row 高度（關鍵） */
+  "& .RaDatagrid-row": {
+    height: "18px",
+    maxHeight: "25px",
+  },
+
   /** ▌Body Cell */
   "& .MuiTableCell-body": {
-    padding: "4px 8px",
-    height: 30,
-    lineHeight: "30px",
+    padding: "0 8px !important",
+    height: "48px",
     fontSize: "0.8rem",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-    verticalAlign: "middle", // ⭐ 全部置中
-  },
-
-  /** ▌讓每個欄位平均寬（關鍵） */
-   "& .RaDatagrid-row > td:not(.column-action)": {
-    width: "auto",
-    maxWidth: "1px",    // ⭐ 利用 overflow 讓欄位均分
     verticalAlign: "middle",
   },
 
-  /** ▌最後一欄避免爆框（操作欄） */
-  "& .RaDatagrid-cell:last-of-type, & .RaDatagrid-headerCell:last-of-type": {
-    minWidth: "130px", 
-    maxWidth: "140px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+  /** ▌統一內容置中 Wrapper（Chip / Switch / Button / Icon） */
+  "& .cell-centered": {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "left",
+    height: "100%",
+    width: "100%",
+    padding: 0,
   },
 
-  /** ▌操作欄固定寬度 */
+  /** ▌每個欄位平均寬，但保留操作欄例外 */
+  "& .RaDatagrid-row > td:not(.column-action)": {
+    width: "auto",
+    maxWidth: "1px",
+    verticalAlign: "middle",
+  },
+
+  /** ▌操作欄固定寬度（避免爆框） */
   "& .column-action": {
-    minWidth: "170px",
-    maxWidth: "170px",
+    width: "150px",
+    maxWidth: "150px",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-    flexShrink: 0,     // ⭐ 阻止被壓縮
+    flexShrink: 0,
   },
 
   /** ▌客製化 scrollbar */
@@ -100,20 +106,24 @@ const StyledDatagridRoot = styled(Datagrid, {
   "&::-webkit-scrollbar-thumb:hover": {
     backgroundColor: "#888",
   },
+  "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
+  textAlign: "left",
+  },
+
 }));
 
 /**
- * ⭐ 外層容器（10 筆剛好填滿）
+ * ⭐ 外層框（固定 10 行高度）
  */
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
-  const { rowClick = false, maxHeight = "510px", ...rest } = props;
+  const { rowClick = false, maxHeight = "520px", ...rest } = props;
 
   return (
     <Box
       sx={{
         width: "100%",
-        flex: 1,   
-        height: "510px", // ⭐ 可放 10 行 + header 剛好
+        flex: 1,
+        height: "520px",
         overflow: "hidden",
         border: "1px solid #ddd",
         borderRadius: 2,

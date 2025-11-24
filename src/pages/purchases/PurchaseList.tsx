@@ -47,7 +47,7 @@ export const PurchaseList = () => {
       >
           <StyledListDatagrid
           >
-            <TextField source="supplierName" label="供應商" />
+            <TextField source="supplierName" label="供應商名稱" />
             <TextField source="item" label="品項" />
             <NumberField source="qty" label="數量" />
             <NumberField
@@ -77,6 +77,7 @@ export const PurchaseList = () => {
             {/* ⭐ 查看付款紀錄 (取代展開方式) */}
             <FunctionField
               label="付款"
+              className="cell-centered"
               render={(record) => (
                 <IconButton size="small" onClick={() => handleOpen(record)}>
                   <VisibilityIcon fontSize="small" />
@@ -87,6 +88,7 @@ export const PurchaseList = () => {
             {/* ⭐ 原本的操作欄位 */}
             <FunctionField
               source="action"
+              className="column-action"
               label="操作"
               render={() => <ActionColumns />}
             />

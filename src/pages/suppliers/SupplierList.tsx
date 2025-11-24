@@ -48,24 +48,35 @@ export const SupplierList = () => (
       }}
     >
       <StyledListDatagrid>
+
         <TextField source="name" label="供應商名稱" />
         <TextField source="contact" label="聯絡人" />
         <TextField source="phone" label="電話" />
         <TextField source="billingCycle" label="結帳週期" />
         <TextField source="note" label="備註" />
 
-        <ActiveStatusField source="active" label="狀態" />
+        {/* 🔥 統一高度 + 置中 */}
+        <FunctionField
+          label="狀態"
+          className="cell-centered"
+          render={() => <ActiveStatusField />}
+        />
 
+        {/* 🔥 Switch 完美置中 */}
         <FunctionField
           label="切換狀態"
+          className="cell-centered"
           render={() => <SupplierStatusToggle />}
         />
 
+        {/* 🔥 操作欄固定寬度 + 置中 */}
         <FunctionField
-          source="action"
           label="操作"
+          source="action"
+          className="column-action"
           render={() => <ActionColumns />}
         />
+
       </StyledListDatagrid>
     </StyledListWrapper>
   </List>
