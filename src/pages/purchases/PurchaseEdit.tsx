@@ -6,34 +6,42 @@ import {
   SimpleFormIterator,
   SelectInput,
   useRecordContext,
-  NumberField,
-  DateField,
-  TextField,
 } from "react-admin";
 import { useWatch } from "react-hook-form";
 import { Box, Typography, Alert } from "@mui/material";
-import { GenericEditPage } from "@/components/common/GenericEditPage";
-import { StyledDatagrid } from "@/components/StyledDatagrid";
 
+import { GenericEditPage } from "@/components/common/GenericEditPage";
+import { GenericSubTablePanel } from "@/components/common/GenericSubTablePanel";
+import { CustomClearButton } from "@/components/forms/CustomClearButton";
+
+
+/**
+ * ================================
+ * 📄 PurchaseEdit 主頁
+ * ================================
+ */
 export const PurchaseEdit: React.FC = () => (
   <GenericEditPage
     resource="purchases"
     title="編輯進貨紀錄"
     successMessage="✅ 進貨資料已成功修改"
     errorMessage="❌ 修改失敗，請確認欄位或伺服器狀態"
-    width="1100px"
+    width="970px"
   >
     <PurchaseFormFields />
   </GenericEditPage>
 );
 
+/**
+ * ================================
+ * 📌 主內容區：左右雙欄
+ * ================================
+ */
 const PurchaseFormFields: React.FC = () => {
   const record = useRecordContext();
   if (!record) return <Typography>載入中...</Typography>;
 
   const payments = record.payments || [];
-  const enableScroll = payments.length > 2;
-  const maxHeight = enableScroll ? "140px" : "auto";
 
   return (
     <Box>
@@ -41,84 +49,41 @@ const PurchaseFormFields: React.FC = () => {
         📦 編輯進貨資訊
       </Typography>
 
-      {/* 🧱 雙欄配置 */}
+      {/* =======================
+          🧱 雙欄佈局（左固定寬度）
+         ======================= */}
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "400px 1fr", // ⭐ 左側固定寬度、右側自適應
           gap: 4,
           alignItems: "start",
         }}
       >
-        {/* ===== 左半部 ===== */}
-        <Box>
+        {/* =======================
+            📌 左側：歷史紀錄 + 狀態區
+           ======================= */}
+        <Box sx={{ width: "100%" }}>
           {/* 💰 歷史付款紀錄 */}
-          <Box
-            sx={{
-              border: "1px solid #e0e0e0",
-              borderRadius: "10px",
-              p: 1.5,
-              mb: 1.5,
-              transition: "box-shadow 0.2s ease",
-              "&:hover": {
-                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-              },
-            }}
-          >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              💰 歷史付款紀錄
-            </Typography>
-
-            {payments.length ? (
-              <StyledDatagrid
-                data={payments}
-                rowClick={false}
-                bulkActionButtons={false}
-                maxHeight={maxHeight} // ✅ 多筆時固定框高並可滾動
-                sx={{
-                  "& .MuiTable-root": {
-                    tableLayout: "auto",
-                    width: "100%",
-                  },
-                  "& .MuiTableCell-root": {
-                    py: 0.8,
-                    px: 1.5,
-                    whiteSpace: "nowrap",
-                  },
-                  "& .column-amount": { minWidth: "100px" },
-                  "& .column-payDate": { minWidth: "120px" },
-                  "& .column-method": { minWidth: "100px" },
-                  "& .column-note": { minWidth: "140px" },
-                }}
-              >
-                <NumberField
-                  source="amount"
-                  label="金額"
-                  options={{
-                    style: "currency",
-                    currency: "TWD",
-                    minimumFractionDigits: 0,
-                  }}
-                />
-                <DateField source="payDate" label="付款日期" />
-                <TextField source="method" label="付款方式" />
-                <TextField source="note" label="備註" />
-              </StyledDatagrid>
-            ) : (
-              <Typography color="text.secondary">目前尚無付款紀錄</Typography>
-            )}
-          </Box>
+          <GenericSubTablePanel
+            title="💰 歷史付款紀錄"
+            rows={payments}
+            columns={[
+              { source: "amount", label: "金額", type: "currency" },
+              { source: "payDate", label: "付款日期", type: "date" },
+              { source: "method", label: "付款方式", type: "text" },
+              { source: "note", label: "備註", type: "text" },
+            ]}
+          />
 
           {/* 💡 目前付款狀況 */}
           <Box
             sx={{
               border: "1px solid #e0e0e0",
               borderRadius: "10px",
-              p: 1,
-              transition: "box-shadow 0.2s ease",
-              "&:hover": {
-                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-              },
+              p: 2,
+              mt: 2,
+              background: "rgba(255,255,255,0.03)",
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
@@ -140,8 +105,8 @@ const PurchaseFormFields: React.FC = () => {
                 record.status === "PAID"
                   ? "success"
                   : record.status === "PARTIAL"
-                  ? "warning"
-                  : "info"
+                    ? "warning"
+                    : "info"
               }
               sx={{ mt: 1 }}
             >
@@ -150,16 +115,17 @@ const PurchaseFormFields: React.FC = () => {
           </Box>
         </Box>
 
-        {/* ===== 右半部：新增付款紀錄 ===== */}
+        {/* =======================
+            📌 右側：新增付款紀錄
+           ======================= */}
         <Box
           sx={{
-            border: "1px dashed #bdbdbd",
+            width: "400px",
+            border: "1px solid #e0e0e0",
             borderRadius: "10px",
-            p: 2.5,
-            transition: "box-shadow 0.2s ease",
-            "&:hover": {
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-            },
+            p: 3,
+            minHeight: "425px",
+            background: "rgba(255,255,255,0.02)",
           }}
         >
           <Typography
@@ -175,7 +141,6 @@ const PurchaseFormFields: React.FC = () => {
             ➕ 新增付款紀錄
           </Typography>
 
-          {/* ✅ 動態控制表單 */}
           <PaymentArrayInput />
         </Box>
       </Box>
@@ -184,8 +149,9 @@ const PurchaseFormFields: React.FC = () => {
 };
 
 /**
- * ✅ PaymentArrayInput 子元件
- * 使用 useWatch 動態監聽輸入狀態，自動控制「＋」按鈕顯示。
+ * ================================
+ * 🔧 新增付款紀錄輸入區
+ * ================================
  */
 const PaymentArrayInput: React.FC = () => {
   const payments = useWatch({ name: "newPayments" });
@@ -195,7 +161,7 @@ const PaymentArrayInput: React.FC = () => {
     <ArrayInput source="newPayments" label="">
       <SimpleFormIterator
         disableAdd={hasPayment}
-        disableRemove={false}
+        disableRemove={true}
         getItemLabel={() => ""}
         sx={{
           "& .RaSimpleFormIterator-line": {
@@ -222,6 +188,14 @@ const PaymentArrayInput: React.FC = () => {
           ]}
           sx={{ flex: 1 }}
         />
+        <CustomClearButton
+          onClear={({ setValue }) => {
+            setValue("newPayments.0.amount", "");
+            setValue("newPayments.0.payDate", null);
+            setValue("newPayments.0.method", "");
+          }}
+        />
+
       </SimpleFormIterator>
     </ArrayInput>
   );

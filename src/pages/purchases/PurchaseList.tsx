@@ -6,67 +6,15 @@ import {
   FunctionField,
   TopToolbar,
   CreateButton,
-  useRecordContext,
   Pagination,
 } from "react-admin";
-import { StyledDatagrid } from "@/components/StyledDatagrid";
-import { Box, Typography } from "@mui/material";
+import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { IconButton } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+import { useState } from "react";
+import { PaymentDrawer } from "./PaymentDrawer";
 import { ActionColumns } from "@/components/common/ActionColumns";
-
-/**
- * 💰 子表：顯示付款紀錄（滾動獨立，不影響主表）
- */
-const PaymentSubList = () => {
-  const record = useRecordContext();
-  if (!record?.payments?.length) return null;
-
-  const payments = record.payments || [];
-  const enableScroll = payments.length > 2;
-  const maxHeight = enableScroll ? "150px" : "auto";
-
-  return (
-    <Box
-      sx={{
-        ml: 6,
-        mb: 3,
-        p: 1,
-        border: "1px solid #eee",
-        borderRadius: 2,
-        backgroundColor: "background.default",
-      }}
-    >
-      <Typography
-        variant="subtitle2"
-        sx={{
-          color: "text.secondary",
-          mb: 1,
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        💰 付款紀錄
-      </Typography>
-
-      <StyledDatagrid
-        data={payments}
-        rowClick={false}
-        bulkActionButtons={false}
-        maxHeight={maxHeight}
-      >
-        <NumberField
-          source="amount"
-          label="金額"
-          options={{ style: "currency", currency: "TWD", minimumFractionDigits: 0 }}
-        />
-        <DateField source="payDate" label="付款日期" />
-        <TextField source="method" label="付款方式" />
-        <TextField source="note" label="備註" />
-      </StyledDatagrid>
-    </Box>
-  );
-};
 
 /**
  * 📦 List 頁面上方工具列
@@ -78,67 +26,79 @@ const ListActions = () => (
 );
 
 /**
- * 📋 主表：進貨紀錄清單（具分頁、獨立滾動框）
+ * 📋 主表：進貨紀錄清單（右側 Drawer 子表版本）
  */
-export const PurchaseList = () => (
-  <List
-    title="進貨紀錄"
-    actions={<ListActions />}
-    pagination={<Pagination rowsPerPageOptions={[5, 10, 25, 50]} />}
-    perPage={10}
-  >
-    <Box
-      sx={{
-        height: "600px",           // ✅ 主表固定高度
-        border: "1px solid #ddd",
-        borderRadius: 2,
-        bgcolor: "background.paper",
-      }}
-    >
-      <StyledDatagrid
-        expand={<PaymentSubList />} // ✅ 子表展開
-        maxHeight="600px"
-        sx={{
-          "& .RaDatagrid-headerCell:last-of-type, & .RaDatagrid-cell:last-of-type": {
-            minWidth: "160px", // ✅ 備註欄
-          },
-          "& .RaDatagrid-headerCell:nth-of-type(1), & .RaDatagrid-cell:nth-of-type(1)": {
-            width: "80px", // ✅ 供應商欄稍寬
-          },
-        }}
+export const PurchaseList = () => {
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
+
+  const handleOpen = (record: any) => {
+    setSelectedPurchase(record);
+    setOpenDrawer(true);
+  };
+
+  return (
+    <>
+      <List
+        title="進貨紀錄"
+        actions={<ListActions />}
+        pagination={<Pagination rowsPerPageOptions={[5, 10, 25, 50]} />}
+        perPage={10}
       >
-        <TextField source="supplierName" label="供應商" />
-        <TextField source="item" label="品項" />
-        <NumberField source="qty" label="數量" />
-        <NumberField
-          source="unitPrice"
-          label="單價"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <NumberField
-          source="totalAmount"
-          label="總金額"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <NumberField
-          source="paidAmount"
-          label="已付款"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <NumberField
-          source="balance"
-          label="餘額"
-          options={{ style: "currency", currency: "TWD" }}
-        />
-        <TextField source="status" label="狀態" />
-        <DateField source="purchaseDate" label="進貨日期" />
-        <TextField source="note" label="備註" />
-        <FunctionField
-          source="action"
-          label="操作"
-          render={() => <ActionColumns />}
-        />
-      </StyledDatagrid>
-    </Box>
-  </List>
-);
+          <StyledListDatagrid
+          >
+            <TextField source="supplierName" label="供應商" />
+            <TextField source="item" label="品項" />
+            <NumberField source="qty" label="數量" />
+            <NumberField
+              source="unitPrice"
+              label="單價"
+              options={{ style: "currency", currency: "TWD" }}
+            />
+            <NumberField
+              source="totalAmount"
+              label="總金額"
+              options={{ style: "currency", currency: "TWD" }}
+            />
+            <NumberField
+              source="paidAmount"
+              label="已付款"
+              options={{ style: "currency", currency: "TWD" }}
+            />
+            <NumberField
+              source="balance"
+              label="餘額"
+              options={{ style: "currency", currency: "TWD" }}
+            />
+            <TextField source="status" label="狀態" />
+            <DateField source="purchaseDate" label="進貨日期" />
+            <TextField source="note" label="備註" />
+
+            {/* ⭐ 查看付款紀錄 (取代展開方式) */}
+            <FunctionField
+              label="付款"
+              render={(record) => (
+                <IconButton size="small" onClick={() => handleOpen(record)}>
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              )}
+            />
+
+            {/* ⭐ 原本的操作欄位 */}
+            <FunctionField
+              source="action"
+              label="操作"
+              render={() => <ActionColumns />}
+            />
+          </StyledListDatagrid>
+      </List>
+
+      {/* ⭐ 右側 Drawer */}
+      <PaymentDrawer
+        open={openDrawer}
+        onClose={() => setOpenDrawer(false)}
+        purchase={selectedPurchase}
+      />
+    </>
+  );
+};

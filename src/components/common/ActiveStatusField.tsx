@@ -20,7 +20,6 @@ export const ActiveStatusField: React.FC<ActiveStatusFieldProps> = ({
       label={isActive ? "合作" : "終止"}
       color={isActive ? "success" : "default"}
       variant="outlined"
-      sx={{ fontSize: "0.75rem" }}
     />
   );
 };
