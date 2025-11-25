@@ -15,6 +15,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useState } from "react";
 import { PaymentDrawer } from "./PaymentDrawer";
 import { ActionColumns } from "@/components/common/ActionColumns";
+import { CurrencyField } from "@/components/money/CurrencyField";
+
 
 /**
  * 📦 List 頁面上方工具列
@@ -50,26 +52,10 @@ export const PurchaseList = () => {
             <TextField source="supplierName" label="供應商名稱" />
             <TextField source="item" label="品項" />
             <NumberField source="qty" label="數量" />
-            <NumberField
-              source="unitPrice"
-              label="單價"
-              options={{ style: "currency", currency: "TWD" }}
-            />
-            <NumberField
-              source="totalAmount"
-              label="總金額"
-              options={{ style: "currency", currency: "TWD" }}
-            />
-            <NumberField
-              source="paidAmount"
-              label="已付款"
-              options={{ style: "currency", currency: "TWD" }}
-            />
-            <NumberField
-              source="balance"
-              label="餘額"
-              options={{ style: "currency", currency: "TWD" }}
-            />
+            <CurrencyField source="unitPrice" label="單價" />
+            <CurrencyField source="totalAmount" label="總金額" />
+            <CurrencyField source="paidAmount" label="已付款" />
+            <CurrencyField source="balance" label="餘額" />
             <TextField source="status" label="狀態" />
             <DateField source="purchaseDate" label="進貨日期" />
             <TextField source="note" label="備註" />
