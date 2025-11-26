@@ -48,7 +48,14 @@ const CustomToolbar = ({
     </Button>
 
     <Box sx={{ display: "flex", gap: 2 }}>
-      <Button variant="contained" color="error" onClick={onDelete}>
+      <Button
+        variant="contained"
+        color="error"
+        onClick={(e) => {
+          e.currentTarget.blur();    
+          onDelete();
+        }}
+      >
         刪除
       </Button>
       <SaveButton label="儲存" color="success" />

@@ -68,7 +68,11 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
       maxWidth="xs"
       fullWidth
       slotProps={{
-        backdrop: { onClick: (e) => e.stopPropagation() },
+        backdrop: {
+          onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+            e.stopPropagation();
+          },
+        },
       }}
       PaperProps={{
         sx: {
@@ -78,7 +82,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
           color: "white",
           minWidth: 360,
         },
-        onClick: (e) => e.stopPropagation(),
+        onClick: (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation(),
       }}
     >
       <DialogContent sx={{ textAlign: "center" }}>
@@ -102,6 +106,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
             color="inherit"
             onClick={(e) => {
               e.stopPropagation();
+              e.currentTarget.blur();
               onClose();
             }}
             sx={{
@@ -118,6 +123,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
             variant="contained"
             onClick={(e) => {
               e.stopPropagation();
+              e.currentTarget.blur();
               onConfirm?.();
             }}
             sx={{
