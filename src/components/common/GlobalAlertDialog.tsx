@@ -9,11 +9,7 @@ import {
 
 interface GlobalAlertDialogProps {
   open: boolean;
-
-  /** 舊版：只顯示訊息 */
   message?: string;
-
-  /** 新版：刪除確認模式 */
   title?: string;
   severity?: "error" | "warning" | "info" | "success";
   description?: string;
@@ -21,13 +17,14 @@ interface GlobalAlertDialogProps {
   cancelLabel?: string;
   hideCancel?: boolean;
   onClose: () => void;
-  onConfirm?: () => void;   // 若不傳 → 單按鈕模式
+  onConfirm?: () => void;
 }
 
 export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   open,
   message,
   title = "提示",
+  severity = "info",
   description,
   confirmLabel = "確定",
   cancelLabel = "取消",
@@ -35,7 +32,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   onConfirm,
 }) => {
 
-  /** ⭐ Enter 鍵關閉 */
+  /** 🔥 Enter 觸發 */
   useEffect(() => {
     if (!open) return;
 
@@ -50,74 +47,100 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
     return () => window.removeEventListener("keydown", handleEnter);
   }, [open, onClose, onConfirm]);
 
+  /** ⭐ 按鈕顏色依 severity 切換 */
+  const confirmButtonColor =
+    severity === "error"
+      ? {
+        bgcolor: "#D32F2F",
+        color: "white",
+        "&:hover": { bgcolor: "#B71C1C", color: "white" },
+      }
+      : {
+        bgcolor: "#4CAF50",
+        color: "white",
+        "&:hover": { bgcolor: "#45A049", color: "white" },
+      };
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
       maxWidth="xs"
       fullWidth
-      //  阻止點擊背景事件傳遞
       slotProps={{
-        backdrop: {
-          onClick: (e) => {
-            e.stopPropagation();
-          },
-        },
+        backdrop: { onClick: (e) => e.stopPropagation() },
       }}
       PaperProps={{
-        sx: { borderRadius: 2, p: 2 },
-        // 重點中的重點：阻止所有彈窗內部 click 事件往下傳遞
-        onClick: (e: React.MouseEvent<HTMLDivElement>) => {
-          e.stopPropagation();
+        sx: {
+          borderRadius: 3,
+          p: 3,
+          bgcolor: "#2F2F2F",
+          color: "white",
+          minWidth: 360,
         },
+        onClick: (e) => e.stopPropagation(),
       }}
     >
-      <DialogContent>
-        {/* 標題 */}
+      <DialogContent sx={{ textAlign: "center" }}>
         <Typography
           variant="h6"
-          sx={{ mb: 1, textAlign: "center", fontWeight: 600 }}
+          sx={{ mb: 1.5, fontWeight: 700, color: "white" }}
         >
           {title}
         </Typography>
 
-        {/* 文字內容 */}
-        <Typography variant="body1" sx={{ textAlign: "center" }}>
+        <Typography variant="body1" sx={{ opacity: 0.9, color: "#ddd" }}>
           {description || message}
         </Typography>
       </DialogContent>
 
-      {/* 🔥 若有 onConfirm → 顯示兩個按鈕（取消 / 確定） */}
+      {/* ⭐ 雙按鈕模式 */}
       {onConfirm ? (
-        <DialogActions sx={{ justifyContent: "center" }}>
-          {/* 取消按鈕 */}
+        <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
           <Button
             variant="outlined"
             color="inherit"
-            onClick={(event) => {
-              event.stopPropagation();  // ⛔ 防止 rowClick=edit
+            onClick={(e) => {
+              e.stopPropagation();
               onClose();
+            }}
+            sx={{
+              borderColor: "#777",
+              color: "#ddd",
+              "&:hover": { borderColor: "#aaa", color: "#fff" },
+              minWidth: 90,
             }}
           >
             {cancelLabel}
           </Button>
 
-          {/* 刪除按鈕 */}
           <Button
             variant="contained"
-            color="error"
-            onClick={(event) => {
-              event.stopPropagation();  // ⛔ 防止 rowClick=edit
-              onConfirm && onConfirm();
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfirm?.();
+            }}
+            sx={{
+              minWidth: 90,
+              fontWeight: 700,
+              ...confirmButtonColor, // ⭐ 動態套用顏色
             }}
           >
             {confirmLabel}
           </Button>
         </DialogActions>
       ) : (
-        /* 原本單按鈕提示模式 */
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button variant="contained" color="primary" onClick={onClose}>
+        /* 單按鈕模式 */
+        <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
+          <Button
+            variant="contained"
+            onClick={onClose}
+            sx={{
+              minWidth: 100,
+              fontWeight: 700,
+              ...confirmButtonColor,
+            }}
+          >
             確定
           </Button>
         </DialogActions>

@@ -9,12 +9,15 @@ import { filterMapping } from "@/config/filterMapping";
 const apiUrl: string =
     import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
-/**
- * ⭐ dataProvider 工廠函式
- * 由 ErrorHandlerProvider 注入 handleApiError
- */
-export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any) => void }): DataProvider => {
+export const createDataProvider = ({
+    handleApiError,
+}: {
+    handleApiError: (e: any) => void;
+}): DataProvider => {
 
+    /** --------------------------------------------------------
+     * 原始 httpClient
+     * --------------------------------------------------------*/
     const httpClient = (url: string, options: fetchUtils.Options = {}) => {
         const headers = new Headers(options.headers || {});
         headers.set("Accept", "application/json");
@@ -32,17 +35,46 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
         return fetchUtils.fetchJson(url, { ...options, headers });
     };
 
-    /** ⭐ 安全包一層，統一攔截錯誤 */
+    /** --------------------------------------------------------
+     *  httpClientSafe：只攔截「後端錯誤」，不攔截前端錯誤
+     * --------------------------------------------------------*/
     const httpClientSafe = async (url: string, options: fetchUtils.Options = {}) => {
         try {
             return await httpClient(url, options);
-        } catch (error) {
-            handleApiError(error);
-            throw error;   // RA 還需要錯誤往外拋
+
+        } catch (error: any) {
+            const msg = error?.body?.message || error?.message || "";
+
+            /**  特殊處理：查無匹配 → 不當錯誤 */
+            if (msg.includes("查無匹配")) {
+                return {
+                    json: {
+                        data: {
+                            content: [],
+                            totalElements: 0,
+                        },
+                    },
+                };
+            }
+
+            /**  判斷是否是後端錯誤：避免前端錯誤被攔截 */
+            const isBackendError =
+                typeof error?.status === "number" ||
+                error?.body;
+
+            if (isBackendError) {
+                handleApiError(error);
+            } else {
+                console.warn("🚫 前端錯誤（不由 dataProvider 處理）:", error);
+            }
+
+            throw error;
         }
     };
 
-    /** ⭐ 整理 List 回傳格式 */
+    /** --------------------------------------------------------
+     * 用於 getManyReference
+     * --------------------------------------------------------*/
     const normalizeListResponse = (json: any) => {
         const data = Array.isArray(json?.data)
             ? json.data
@@ -56,10 +88,13 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
         return { data, total };
     };
 
+    /** --------------------------------------------------------
+     *  dataProvider 主體
+     * --------------------------------------------------------*/
     return {
-        /** =====================================
-         *  list（包含所有你的 rule / filter / mapping）
-         * ======================================*/
+        /** ====================================================
+         * getList
+         * ==================================================== */
         getList(resource, params) {
             const rules = apiRules[resource] ?? {};
             const mapping = filterMapping[resource] ?? {};
@@ -73,6 +108,7 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
             query.set("page", String(page - 1));
             query.set("size", String(perPage));
 
+            /** ⭐ 允許排序欄位白名單 */
             const allowedSortFields = [
                 "id",
                 "createdAt",
@@ -97,10 +133,7 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
             ];
 
             if (field && allowedSortFields.includes(field)) {
-                query.set(
-                    "sort",
-                    `${field},${(order || "ASC").toLowerCase()}`
-                );
+                query.set("sort", `${field},${(order || "ASC").toLowerCase()}`);
             }
 
             let hasSearch = false;
@@ -131,25 +164,12 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                     const total = payload?.totalElements ?? data.length;
 
                     return { data, total };
-                })
-                .catch((error) => {
-                    const msg =
-                        error?.body?.message || error?.message || "";
-
-                    if (msg.includes("查無匹配")) {
-                        return {
-                            data: [],
-                            total: 0,
-                        };
-                    }
-
-                    throw error;
                 });
         },
 
-        /** =====================================
+        /** ====================================================
          * getOne
-         * ======================================*/
+         * ==================================================== */
         getOne: (resource, params) =>
             httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(
                 ({ json }) => ({
@@ -157,9 +177,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                 })
             ),
 
-        /** =====================================
+        /** ====================================================
          * getMany
-         * ======================================*/
+         * ==================================================== */
         getMany: (resource, params) =>
             Promise.all(
                 params.ids.map((id) =>
@@ -169,9 +189,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                 )
             ).then((records) => ({ data: records })),
 
-        /** =====================================
+        /** ====================================================
          * getManyReference
-         * ======================================*/
+         * ==================================================== */
         getManyReference: async (resource, params) => {
             const { json } = await httpClientSafe(
                 `${apiUrl}/${resource}`
@@ -193,7 +213,8 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                 const bv = b?.[field];
 
                 if (av === bv) return 0;
-                return (av > bv ? 1 : -1) * (order === "ASC" ? 1 : -1);
+                return (av > bv ? 1 : -1) *
+                    (order === "ASC" ? 1 : -1);
             });
 
             const { page, perPage } =
@@ -207,9 +228,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
             };
         },
 
-        /** =====================================
-         * update （含 activate / deactivate）
-         * ======================================*/
+        /** ====================================================
+         * update (含 activate / deactivate)
+         * ==================================================== */
         update: (resource, params) => {
             const endpoint = params.meta?.endpoint;
 
@@ -239,9 +260,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
             }));
         },
 
-        /** =====================================
+        /** ====================================================
          * updateMany
-         * ======================================*/
+         * ==================================================== */
         updateMany: (resource, params) =>
             Promise.all(
                 params.ids.map((id) =>
@@ -255,9 +276,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                 )
             ).then((ids) => ({ data: ids })),
 
-        /** =====================================
+        /** ====================================================
          * create
-         * ======================================*/
+         * ==================================================== */
         create: (resource, params) =>
             httpClientSafe(`${apiUrl}/${resource}`, {
                 method: "POST",
@@ -266,9 +287,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                 data: json?.data ?? json,
             })),
 
-        /** =====================================
+        /** ====================================================
          * delete
-         * ======================================*/
+         * ==================================================== */
         delete: (resource, params) =>
             httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {
                 method: "DELETE",
@@ -276,9 +297,9 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
                 data: (json?.data ?? params.previousData) as any,
             })),
 
-        /** =====================================
+        /** ====================================================
          * get
-         * ======================================*/
+         * ==================================================== */
         get(resource: string) {
             const url = `${apiUrl}/${resource}`;
             return httpClientSafe(url).then(({ json }) => ({
@@ -286,16 +307,15 @@ export const createDataProvider = ({ handleApiError }: { handleApiError: (e: any
             }));
         },
 
-        /** =====================================
+        /** ====================================================
          * deleteMany
-         * ======================================*/
+         * ==================================================== */
         deleteMany: (resource, params) =>
             Promise.all(
                 params.ids.map((id) =>
-                    httpClientSafe(
-                        `${apiUrl}/${resource}/${id}`,
-                        { method: "DELETE" }
-                    ).then(() => id)
+                    httpClientSafe(`${apiUrl}/${resource}/${id}`, {
+                        method: "DELETE",
+                    }).then(() => id)
                 )
             ).then((ids) => ({ data: ids })),
     };
