@@ -69,9 +69,6 @@ const StyledDatagridRoot = styled(Datagrid, {
 
   /** ▌統一內容置中 Wrapper（Chip / Switch / Button / Icon） */
   "& .cell-centered": {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "left",
     height: "100%",
     width: "100%",
     padding: 0,
@@ -107,32 +104,24 @@ const StyledDatagridRoot = styled(Datagrid, {
     backgroundColor: "#888",
   },
   "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
-  textAlign: "left",
+    textAlign: "left",
   },
 
-    /** ▌供應商名稱寬度 (source="supplierName") */
+  /** ▌供應商名稱寬度 (source="supplierName") */
   "& td.column-supplierName, & th.column-supplierName": {
     width: "120px",
   },
 
   /** ▌備註欄寬度 (source="note") */
   "& td.column-note, & th.column-note": {
-    width: "120px",
+    width: "140px",
   },
 
   /** ▌移除 IconButton focus */
   "& .MuiButtonBase-root:focus, & .MuiButtonBase-root:focus-visible": {
     outline: "none !important",
     boxShadow: "none !important",
-  },
-
- /** 🔥 完全移除 Pagination 的藍色 focus 圈 */
-  "& .MuiPaginationItem-root.Mui-focusVisible": {
-    outline: "none !important",
-    boxShadow: "none !important",
-    border: "none !important",
-  },
-
+  }, 
 }));
 
 /**

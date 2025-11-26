@@ -129,6 +129,36 @@ export const LianhuaLightTheme = createTheme({
         },
       },
     },
+    MuiPaginationItem: {
+      styleOverrides: {
+        root: {
+          outline: "none !important",
+          boxShadow: "none !important",
+
+          "&:focus": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
+          "&.Mui-focusVisible": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
+          "& button": {
+            outline: "none !important",
+            boxShadow: "none !important",
+
+            "&:focus": {
+              outline: "none !important",
+              boxShadow: "none !important",
+            },
+            "&.Mui-focusVisible": {
+              outline: "none !important",
+              boxShadow: "none !important",
+            }
+          }
+        }
+      }
+    },
   },
 });
 
@@ -242,6 +272,36 @@ export const LianhuaDarkTheme = createTheme({
           fontWeight: 500,
         },
       },
+    },
+    MuiPaginationItem: {
+      styleOverrides: {
+        root: {
+          outline: "none !important",
+          boxShadow: "none !important",
+
+          "&:focus": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
+          "&.Mui-focusVisible": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
+          "& button": {
+            outline: "none !important",
+            boxShadow: "none !important",
+
+            "&:focus": {
+              outline: "none !important",
+              boxShadow: "none !important",
+            },
+            "&.Mui-focusVisible": {
+              outline: "none !important",
+              boxShadow: "none !important",
+            }
+          }
+        }
+      }
     },
   },
 });
