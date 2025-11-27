@@ -1,12 +1,9 @@
-// ✅ src/components/common/GenericCreatePage.tsx
 import {
   Create,
   SimpleForm,
   Toolbar,
   SaveButton,
-  useNotify,
   useRedirect,
-  useCreate,
 } from "react-admin";
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -16,8 +13,8 @@ interface GenericCreatePageProps {
   resource: string;
   title: string;
   children: React.ReactNode;
-  successMessage?: string;
-  errorMessage?: string;
+  onSuccess?: (data: any) => void;   // ⭐ 新增
+  onError?: (error: any) => void;    // ⭐ 新增
   width?: string;
 }
 
@@ -46,35 +43,11 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
   resource,
   title,
   children,
-  successMessage = "✅ 資料已成功新增",
-  errorMessage = "❌ 新增失敗",
+  onSuccess,
+  onError,
   width = "700px",
 }) => {
-  const notify = useNotify();
   const redirect = useRedirect();
-  const [create] = useCreate();
-
-  const handleSubmit = async (values: any) => {
-    try {
-      await create(
-        resource,
-        { data: values },
-        {
-          onSuccess: () => {
-            notify(successMessage, { type: "success" });
-            setTimeout(() => redirect("list", resource), 1000);
-          },
-          onError: (error: any) => {
-            notify(`${errorMessage}：${error.message || "未知錯誤"}`, {
-              type: "error",
-            });
-          },
-        }
-      );
-    } catch (error: any) {
-      notify(`${errorMessage}：${error.message || error}`, { type: "error" });
-    }
-  };
 
   return (
     <Box
@@ -89,8 +62,8 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
     >
       <Box
         sx={{
-          width: width,                // ✅ 改成固定寬度，而不是 100%
-          maxWidth: width,             // ✅ 讓不同頁面內容不影響外框大小
+          width: width,
+          maxWidth: width,
           backgroundColor: "background.paper",
           borderRadius: "12px",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
@@ -98,16 +71,24 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
           mb: 8,
         }}
       >
-        <Create title={title} actions={false}>
-          <SimpleForm
-            toolbar={<CustomToolbar onBack={() => redirect("list", resource)} />}
-            onSubmit={handleSubmit}
-          >
+        <Create
+          title={title}
+          actions={false}
+          mutationOptions={{
+            onSuccess: async (data) => {
+              if (onSuccess) onSuccess(data);
+              else redirect("list", resource);   // ⭐ 預設行為
+            },
+            onError: (error) => {
+              if (onError) onError(error);
+            },
+          }}
+        >
+          <SimpleForm toolbar={<CustomToolbar onBack={() => redirect("list", resource)} />}>
             {children}
           </SimpleForm>
         </Create>
       </Box>
     </Box>
-
   );
 };

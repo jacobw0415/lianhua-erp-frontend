@@ -12,8 +12,7 @@ import { PurchaseList } from "@/pages/purchases/PurchaseList";
 import { PurchaseCreate } from '@/pages/purchases/PurchaseCreate';
 import { PurchaseEdit } from '@/pages/purchases/PurchaseEdit';
 import { SaleList } from "@/pages/sales/SaleList";
-
-// ⭐ 引入全域錯誤處理 Provider（前一個回合我給你的）
+import { GlobalAlertProvider } from "@/contexts/GlobalAlertContext";
 import { ErrorHandlerProvider, useErrorHandler } from "@/context/ErrorHandlerContext";
 
 
@@ -23,7 +22,9 @@ import { ErrorHandlerProvider, useErrorHandler } from "@/context/ErrorHandlerCon
 const AppWithProvider = () => {
     return (
         <ErrorHandlerProvider>
-            <App />
+           <GlobalAlertProvider>
+                <App />
+            </GlobalAlertProvider>
         </ErrorHandlerProvider>
     );
 };
