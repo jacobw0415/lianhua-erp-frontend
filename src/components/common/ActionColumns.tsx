@@ -2,7 +2,6 @@ import { Stack, Button } from "@mui/material";
 import {
   useRecordContext,
   useDataProvider,
-  useNotify,
   useListContext,
   useRefresh,
 } from "react-admin";
@@ -21,27 +20,43 @@ export const ActionColumns = () => {
   const safeRecord: RaRecord = record ?? { id: "placeholder" };
 
   const dataProvider = useDataProvider();
-  const notify = useNotify();
 
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openErrorDialog, setOpenErrorDialog] = useState(false);
+  const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+
   const [errorMessage, setErrorMessage] = useState("");
   const [buttonTarget, setButtonTarget] = useState<HTMLElement | null>(null);
 
+  /** ⭐ 統一顯示名稱（避免 undefined） */
+  const displayName =
+    safeRecord?.name ||
+    safeRecord?.item ||
+    safeRecord?.productName ||
+    safeRecord?.title ||
+    `#${safeRecord?.id}`;
+
+
+  /** ⭐ 刪除邏輯 */
   const handleDelete = async () => {
     try {
       await dataProvider.delete(resource, { id: safeRecord.id });
 
-      notify("🗑️ 已成功刪除", { type: "success" });
-      refresh();
+      // 顯示成功彈窗
+      setOpenSuccessDialog(true);
+
+      // 自動關閉（不需 hideConfirm）
+      setTimeout(() => {
+        setOpenSuccessDialog(false);
+        refresh();
+      }, 800);
+
     } catch (err: any) {
-      // 取得後端錯誤訊息（符合 Spring ResponseStatusException 格式）
       const backendMessage =
         err?.body?.message ||
         err?.message ||
-        "不可刪除該筆供應商，因供應商具有進貨單資料";
+        "不可刪除該筆資料，因為具有關聯紀錄。";
 
-      // ★ 改成彈出錯誤 Dialog（不是 notify）
       setErrorMessage(backendMessage);
       setOpenErrorDialog(true);
     }
@@ -52,8 +67,7 @@ export const ActionColumns = () => {
   return (
     <>
       <Stack direction="row" spacing={1} alignItems="center">
-        
-        {/* ✔ 編輯按鈕 */}
+        {/* 編輯 */}
         <Button
           size="small"
           color="primary"
@@ -64,15 +78,12 @@ export const ActionColumns = () => {
             (e.currentTarget as HTMLButtonElement).blur();
             window.location.href = `#/${resource}/${safeRecord.id}`;
           }}
-          sx={{
-            minWidth: "60px",
-            textTransform: "none",
-          }}
+          sx={{ minWidth: "60px", textTransform: "none" }}
         >
           編輯
         </Button>
 
-        {/* ✔ 刪除按鈕 */}
+        {/* 刪除 */}
         <Button
           size="small"
           color="error"
@@ -84,21 +95,17 @@ export const ActionColumns = () => {
             setButtonTarget(e.currentTarget);
             setOpenConfirm(true);
           }}
-          sx={{
-            minWidth: "60px",
-            textTransform: "none",
-          }}
+          sx={{ minWidth: "60px", textTransform: "none" }}
         >
           刪除
         </Button>
-
       </Stack>
 
-      {/* ✔ 刪除確認彈窗 */}
+      {/* 🟥 刪除確認彈窗（保持雙按鈕模式） */}
       <GlobalAlertDialog
         open={openConfirm}
         title="確認刪除"
-        description={`確定要刪除「${safeRecord?.name || "此筆資料"}」嗎？`}
+        description={`確定要刪除「${displayName}」嗎？`}
         severity="error"
         confirmLabel="刪除"
         cancelLabel="取消"
@@ -115,16 +122,25 @@ export const ActionColumns = () => {
         }}
       />
 
-      {/* ❗ 若供應商具有進貨單 → 彈出此錯誤 Dialog */}
+      {/*  錯誤彈窗單按鈕模式 */}
       <GlobalAlertDialog
         open={openErrorDialog}
-        title="無法刪除"
-        description={errorMessage || "不可刪除該筆供應商，因供應商具有進貨單資料"}
+        title="操作失敗"
+        description={errorMessage}
         severity="warning"
         confirmLabel="確定"
-        hideCancel
-        onConfirm={() => setOpenErrorDialog(false)}
-        onClose={() => setOpenErrorDialog(false)}
+        onClose={() => setOpenErrorDialog(false)}   //  單按鈕模式
+      // ❌ 不給 onConfirm（避免進到雙按鈕模式）
+      />
+
+      {/*  刪除成功 彈窗：單按鈕 + 自動關閉 */}
+      <GlobalAlertDialog
+        open={openSuccessDialog}
+        title="刪除成功"
+        description={`「${displayName}」已成功刪除`}
+        severity="success"
+        hideButtons   
+        onClose={() => { }}
       />
     </>
   );

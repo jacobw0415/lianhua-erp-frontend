@@ -63,7 +63,7 @@ const SupplierFormFields: React.FC = () => {
       <TextInput source="name" label="供應商名稱" fullWidth required />
       <TextInput source="contact" label="聯絡人" fullWidth />
       <TextInput source="phone" label="電話" fullWidth />
-      <TextInput source="note" label="備註" fullWidth multiline rows={3} />
+      <TextInput source="note" label="備註" fullWidth multiline/>
     </>
   );
 };

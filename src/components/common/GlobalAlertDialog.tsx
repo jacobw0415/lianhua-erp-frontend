@@ -16,6 +16,7 @@ interface GlobalAlertDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   hideCancel?: boolean;
+  hideButtons?: boolean;
   onClose: () => void;
   onConfirm?: () => void;
 }
@@ -28,6 +29,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   description,
   confirmLabel = "確定",
   cancelLabel = "取消",
+  hideButtons,
   onClose,
   onConfirm,
 }) => {
@@ -98,58 +100,59 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
         </Typography>
       </DialogContent>
 
-      {/* ⭐ 雙按鈕模式 */}
-      {onConfirm ? (
-        <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.currentTarget.blur();
-              onClose();
-            }}
-            sx={{
-              borderColor: "#777",
-              color: "#ddd",
-              "&:hover": { borderColor: "#aaa", color: "#fff" },
-              minWidth: 90,
-            }}
-          >
-            {cancelLabel}
-          </Button>
+      {/* ⭐ 若 hideButtons → 完全不顯示按鈕 */}
+      {!hideButtons && (
+        onConfirm ? (
+          <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.currentTarget.blur();
+                onClose();
+              }}
+              sx={{
+                borderColor: "#777",
+                color: "#ddd",
+                "&:hover": { borderColor: "#aaa", color: "#fff" },
+                minWidth: 90,
+              }}
+            >
+              {cancelLabel}
+            </Button>
 
-          <Button
-            variant="contained"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.currentTarget.blur();
-              onConfirm?.();
-            }}
-            sx={{
-              minWidth: 90,
-              fontWeight: 700,
-              ...confirmButtonColor, // ⭐ 動態套用顏色
-            }}
-          >
-            {confirmLabel}
-          </Button>
-        </DialogActions>
-      ) : (
-        /* 單按鈕模式 */
-        <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
-          <Button
-            variant="contained"
-            onClick={onClose}
-            sx={{
-              minWidth: 100,
-              fontWeight: 700,
-              ...confirmButtonColor,
-            }}
-          >
-            確定
-          </Button>
-        </DialogActions>
+            <Button
+              variant="contained"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.currentTarget.blur();
+                onConfirm?.();
+              }}
+              sx={{
+                minWidth: 90,
+                fontWeight: 700,
+                ...confirmButtonColor,
+              }}
+            >
+              {confirmLabel}
+            </Button>
+          </DialogActions>
+        ) : (
+          <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={onClose}
+              sx={{
+                minWidth: 100,
+                fontWeight: 700,
+                ...confirmButtonColor,
+              }}
+            >
+              確定
+            </Button>
+          </DialogActions>
+        )
       )}
     </Dialog>
   );
