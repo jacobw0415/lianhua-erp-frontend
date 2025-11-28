@@ -4,12 +4,12 @@ import {
   SimpleForm,
   Toolbar,
   SaveButton,
+  useNotify,
   useRedirect,
   useUpdate,
   useRecordContext,
   useDataProvider,
 } from "react-admin";
-
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
@@ -19,13 +19,10 @@ interface GenericEditPageProps {
   title: string;
   children: React.ReactNode;
   width?: string;
-  onSuccess?: (data: any) => void;
-  onDeleteSuccess?: (record: any) => void;
+  successMessage?: string;
+  errorMessage?: string;
 }
 
-/* -------------------------------------------------------
- * ⭐ Custom Toolbar（保持與 GenericCreatePage 完全一致的 UX）
- * ------------------------------------------------------- */
 const CustomToolbar = ({
   onBack,
   onDelete,
@@ -55,7 +52,7 @@ const CustomToolbar = ({
         variant="contained"
         color="error"
         onClick={(e) => {
-          e.currentTarget.blur();
+          e.currentTarget.blur();    
           onDelete();
         }}
       >
@@ -66,30 +63,25 @@ const CustomToolbar = ({
   </Toolbar>
 );
 
-/* -------------------------------------------------------
- * ⭐ 主組件（含 update 最新資料取得）
- * ------------------------------------------------------- */
 export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   resource,
   title,
   children,
   width = "700px",
-  onSuccess,
-  onDeleteSuccess,
 }) => {
+  const notify = useNotify();
   const redirect = useRedirect();
   const [update] = useUpdate();
-  const dataProvider = useDataProvider();
+
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
-  /* ---------------------------------------------------
-   *  提交邏輯（自動重新抓最新資料）
-   * --------------------------------------------------- */
+  /** ⭐ 表單提交邏輯（保留你的原本流程） */
   const handleSubmit = async (values: any) => {
     const { id, newPayments, ...rest } = values;
+
     const payload = { ...rest };
 
-    //  移除唯讀欄位（依你的資料庫）
+    // 移除唯讀欄位
     delete payload.supplierName;
     delete payload.item;
     delete payload.totalAmount;
@@ -97,7 +89,7 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
     delete payload.balance;
     delete payload.status;
 
-    //  paymenets 資料處理
+    // 處理付款資料
     if (Array.isArray(newPayments)) {
       payload.payments = newPayments
         .filter((p: any) => p.amount && p.payDate && p.method)
@@ -108,21 +100,24 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
         }));
     }
 
-    await update(
-      resource,
-      { id, data: payload },
-      {
-        onSuccess: async (result: any) => {
-          const newId = result?.data?.id ?? id;
-
-          // 一律重新抓最新資料 → 外層永遠拿到「完整 record」
-          const latest = await dataProvider.getOne(resource, { id: newId });
-
-          if (onSuccess) onSuccess(latest.data);
-          else redirect("list", resource);
-        },
-      }
-    );
+    try {
+      await update(
+        resource,
+        { id, data: payload },
+        {
+          onSuccess: () => {
+            notify("✅ 修改成功", { type: "success" });
+            redirect("list", resource);
+          },
+          onError: (error: any) =>
+            notify(`❌ 修改失敗：${error.message || "未知錯誤"}`, {
+              type: "error",
+            }),
+        }
+      );
+    } catch (e: any) {
+      notify(`❌ 修改失敗：${e.message}`, { type: "error" });
+    }
   };
 
   return (
@@ -141,7 +136,6 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
             onSubmit={handleSubmit}
             openDeleteConfirm={openDeleteConfirm}
             setOpenDeleteConfirm={setOpenDeleteConfirm}
-            onDeleteSuccess={onDeleteSuccess}
           >
             {children}
           </EditContent>
@@ -151,34 +145,31 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   );
 };
 
-/* -------------------------------------------------------
- *  EditContent（處理刪除 + 刪除確認彈窗）
- * ------------------------------------------------------- */
+/** ⭐ Edit 子組件（可取到 record） */
 const EditContent = ({
   children,
   resource,
   onSubmit,
   openDeleteConfirm,
   setOpenDeleteConfirm,
-  onDeleteSuccess,
 }: any) => {
+  const notify = useNotify();
   const redirect = useRedirect();
   const dataProvider = useDataProvider();
   const record = useRecordContext();
 
+  /** ⭐ TS 正確防護：record 尚未載入時不渲染頁面 */
   if (!record) return null;
 
-  /* ---------------------------------------------------
-   *  刪除邏輯（自動回傳完整 record）
-   * --------------------------------------------------- */
+  /** ⭐ 刪除邏輯 */
   const handleDelete = async () => {
-    await dataProvider.delete(resource, {
-      id: record.id,
-      previousData: record,
-    });
-
-    if (onDeleteSuccess) onDeleteSuccess(record);
-    else redirect("list", resource);
+    try {
+      await dataProvider.delete(resource, { id: record.id });
+      notify("🗑️ 已成功刪除", { type: "success" });
+      redirect("list", resource);
+    } catch (err: any) {
+      notify(`❌ 刪除失敗：${err.message}`, { type: "error" });
+    }
   };
 
   return (
@@ -195,11 +186,10 @@ const EditContent = ({
         {children}
       </SimpleForm>
 
-      {/*  統一刪除確認彈窗（不含錯誤/成功） */}
       <GlobalAlertDialog
         open={openDeleteConfirm}
         title="確認刪除"
-        description={`確定要刪除「${record.name ?? record.title ?? record.code ?? "這筆資料"}」嗎？`}
+        description={`確定要刪除「${record.name ?? "這筆資料"}」嗎？`}
         severity="error"
         confirmLabel="刪除"
         cancelLabel="取消"
