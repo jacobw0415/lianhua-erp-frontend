@@ -1,32 +1,199 @@
-// src/theme/LianhuaTheme.ts
 import { defaultTheme } from "react-admin";
 import { createTheme } from "@mui/material/styles";
 
-// ==========================
-// 🌞 亮色主題
-// ==========================
+/**
+ * ❗ MUI X DatePicker 必須先宣告 Types
+ */
+declare module "@mui/material/styles" {
+  interface Components {
+    MuiPickersDay?: any;
+    MuiPickersYear?: any;
+    MuiYearCalendar?: any;
+    MuiMonthCalendar?: any;
+    MuiDateCalendar?: any;
+    MuiPickersSlideTransition?: any;
+  }
+}
+
+// 共用 focus 禁用設定
+const disableFocusStyles = {
+  outline: "none !important",
+  boxShadow: "none !important",
+};
+
+// IconButton active 灰色殘影清除
+const disableIconActive = {
+  backgroundColor: "transparent !important",
+};
+
+/* =======================================================
+ * 🌞 亮色主題
+ * =======================================================
+ */
 export const LianhuaLightTheme = createTheme({
   ...defaultTheme,
   palette: {
     mode: "light",
-    primary: { main: "#4CAF50" }, // 🌿 蓮華綠
-    secondary: { main: "#81C784" }, // 較亮的綠色作為輔色
-    background: {
-      default: "#f9faf9", // 淺米白背景
-      paper: "#ffffff",
-    },
-    text: {
-      primary: "#2E2E2E",
-      secondary: "#555",
-    },
+    primary: { main: "#4CAF50" },
+    secondary: { main: "#81C784" },
+    background: { default: "#f9faf9", paper: "#ffffff" },
+    text: { primary: "#2E2E2E", secondary: "#555" },
   },
   typography: {
     fontFamily: '"Noto Sans TC", "Microsoft JhengHei", sans-serif',
     h5: { fontWeight: 600 },
     button: { textTransform: "none" },
   },
+
   components: {
-    // 🌿 AppBar 樣式
+    /* --------------------------------------------------
+     * 全域 ButtonBase / IconButton 禁用 focus/active
+     * -------------------------------------------------- */
+    MuiCssBaseline: {
+      styleOverrides: `
+      button:focus,
+      button:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    `,
+    },
+
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+          "&:focus": disableFocusStyles,
+          "&:focus-visible": disableFocusStyles,
+          "&:active": disableIconActive,
+        },
+      },
+    },
+
+    /* --------------------------------------------------
+     * DatePicker — Year / Month / Day / Calendar
+     * -------------------------------------------------- */
+    MuiYearCalendar: {
+      styleOverrides: {
+        root: {
+          "& button": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
+          },
+          "& button.Mui-selected": {
+            backgroundColor: "#66BB6A !important",
+            color: "#fff !important",
+            boxShadow: "none !important",
+          },
+          "& button:hover": {
+            backgroundColor: "#81C784 !important",
+          },
+          /* ---------- 自訂捲動條顏色 ---------- */
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "#E0E0E0",   // 淺灰色背景
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#BDBDBD",   // 淺灰色滾動條
+            borderRadius: "4px",
+          },
+
+          /* Firefox */
+          scrollbarColor: "#BDBDBD #E0E0E0",
+          scrollbarWidth: "thin",
+        },
+      },
+    },
+
+    MuiMonthCalendar: {
+      styleOverrides: {
+        root: {
+          "& button": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
+          },
+          "& button.Mui-selected": {
+            backgroundColor: "#66BB6A !important",
+            color: "#fff !important",
+            boxShadow: "none !important",
+          },
+          "& button:hover": {
+            backgroundColor: "#81C784 !important",
+          },
+        },
+      },
+    },
+
+    MuiDateCalendar: {
+      styleOverrides: {
+        root: {
+          "& button": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
+          },
+        },
+      },
+    },
+
+    MuiPickersSlideTransition: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+        },
+      },
+    },
+
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+          "&.Mui-selected": {
+            backgroundColor: "#66BB6A !important",
+            color: "inherit !important",
+            boxShadow: "none !important",
+          },
+          "&:hover": {
+            backgroundColor: "#C8E6C9",
+          },
+        },
+        today: {
+          border: "none !important",
+        },
+      },
+    },
+
+    MuiPickersYear: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+          "&.Mui-selected": disableFocusStyles,
+        },
+      },
+    },
+
+    /* --------------------------------------------------
+     * Outlined Input（移除 focus 藍框）
+     * -------------------------------------------------- */
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "transparent !important",
+            borderWidth: 0,
+          },
+        },
+      },
+    },
+
+    /* --------------------------------------------------
+     * AppBar
+     * -------------------------------------------------- */
     MuiAppBar: {
       styleOverrides: {
         colorPrimary: {
@@ -35,7 +202,10 @@ export const LianhuaLightTheme = createTheme({
         },
       },
     },
-    // 🌿 側邊選單
+
+    /* --------------------------------------------------
+     * Menu Item
+     * -------------------------------------------------- */
     MuiMenuItem: {
       styleOverrides: {
         root: {
@@ -49,36 +219,37 @@ export const LianhuaLightTheme = createTheme({
         },
       },
     },
-    // 🌿 卡片
+
+    /* --------------------------------------------------
+     * Card
+     * -------------------------------------------------- */
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-          transition: "box-shadow 0.2s ease-in-out",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          transition: "0.2s",
           "&:hover": {
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           },
         },
       },
     },
-    // 🌿 表格統一樣式
+
+    /* --------------------------------------------------
+     * Datagrid Table
+     * -------------------------------------------------- */
     MuiTable: {
-      styleOverrides: {
-        root: {
-          tableLayout: "fixed",
-          width: "100%",
-        },
-      },
+      styleOverrides: { root: { tableLayout: "fixed", width: "100%" } },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
           padding: "8px 12px",
           fontSize: "0.875rem",
+          whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
           borderBottom: "1px solid rgba(0,0,0,0.12)",
         },
         head: {
@@ -88,88 +259,38 @@ export const LianhuaLightTheme = createTheme({
         },
       },
     },
-    MuiTableRow: {
-      styleOverrides: {
-        root: {
-          "&:nth-of-type(odd)": {
-            backgroundColor: "#f5f5f5",
-          },
-          "&:hover": {
-            backgroundColor: "#f1f8e9",
-          },
-        },
-      },
-    },
-    // 🌿 React Admin Datagrid 調整
-    RaDatagrid: {
-      styleOverrides: {
-        root: {
-          "& .RaDatagrid-table": {
-            tableLayout: "fixed",
-            width: "100%",
-          },
-          "& .MuiTableCell-root": {
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          },
-          "& .MuiTableHead-root .MuiTableCell-root": {
-            fontWeight: 600,
-          },
-        },
-      },
-    },
-    // 🌿 按鈕
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: "none",
-          fontWeight: 500,
-        },
-      },
-    },
+
+    /* --------------------------------------------------
+     * Pagination 移除 focus 殘影
+     * -------------------------------------------------- */
     MuiPaginationItem: {
       styleOverrides: {
         root: {
-          outline: "none !important",
-          boxShadow: "none !important",
+          ...disableFocusStyles,
+          "&.Mui-focusVisible": disableFocusStyles,
+          "&:focus": disableFocusStyles,
+          "&:focus-visible": disableFocusStyles,
 
-          "&:focus": {
-            outline: "none !important",
-            boxShadow: "none !important",
+          "& div": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
           },
-          "&.Mui-focusVisible": {
-            outline: "none !important",
-            boxShadow: "none !important",
-          },
-          "& button": {
-            outline: "none !important",
-            boxShadow: "none !important",
-
-            "&:focus": {
-              outline: "none !important",
-              boxShadow: "none !important",
-            },
-            "&.Mui-focusVisible": {
-              outline: "none !important",
-              boxShadow: "none !important",
-            }
-          }
-        }
-      }
+        },
+      },
     },
   },
 });
 
-// ==========================
-// 🌑 暗色主題
-// ==========================
+/* =======================================================
+ * 🌑 暗色主題
+ * =======================================================
+ */
 export const LianhuaDarkTheme = createTheme({
   ...defaultTheme,
   palette: {
     mode: "dark",
-    primary: { main: "#81C784" }, // 淡綠 accent
+    primary: { main: "#81C784" },
     secondary: { main: "#A5D6A7" },
     background: { default: "#1E1E1E", paper: "#2A2A2A" },
     text: { primary: "#E8F5E9", secondary: "#BDBDBD" },
@@ -178,7 +299,145 @@ export const LianhuaDarkTheme = createTheme({
     fontFamily: '"Noto Sans TC", "Microsoft JhengHei", sans-serif',
     button: { textTransform: "none" },
   },
+
   components: {
+    MuiCssBaseline: {
+      styleOverrides: `
+      button:focus,
+      button:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    `,
+    },
+
+
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+          "&:focus": disableFocusStyles,
+          "&:focus-visible": disableFocusStyles,
+          "&:active": disableIconActive,
+        },
+      },
+    },
+
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "transparent !important",
+            borderWidth: 0,
+          },
+        },
+      },
+    },
+
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+          "&.Mui-selected": {
+            backgroundColor: "#66BB6A !important",
+            color: "inherit !important",
+            boxShadow: "none !important",
+          },
+          "&:hover": {
+            backgroundColor: "#1B5E20",
+          },
+        },
+        today: {
+          border: "none !important",
+        },
+      },
+    },
+
+    MuiPickersYear: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+          "&.Mui-selected": disableFocusStyles,
+        },
+      },
+    },
+
+    MuiYearCalendar: {
+      styleOverrides: {
+        root: {
+          "& button": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
+          },
+          "& button.Mui-selected": {
+            backgroundColor: "#66BB6A !important",
+            color: "#fff !important",
+            boxShadow: "none !important",
+          },
+          "& button:hover": {
+            backgroundColor: "#81C784 !important",
+          },
+          /* ---------- 自訂捲動條顏色 ---------- */
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "#E0E0E0",   // 淺灰色背景
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#BDBDBD",   // 淺灰色滾動條
+            borderRadius: "4px",
+          },
+
+          /* Firefox */
+          scrollbarColor: "#BDBDBD #E0E0E0",
+          scrollbarWidth: "thin",
+        },
+      },
+    },
+
+    MuiMonthCalendar: {
+      styleOverrides: {
+        root: {
+          "& button": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
+          },
+          "& button.Mui-selected": {
+            backgroundColor: "#66BB6A !important",
+            color: "#fff !important",
+            boxShadow: "none !important",
+          },
+          "& button:hover": {
+            backgroundColor: "#81C784 !important",
+          },
+        },
+      },
+    },
+
+    MuiDateCalendar: {
+      styleOverrides: {
+        root: {
+          "& button": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
+          },
+        },
+      },
+    },
+
+    MuiPickersSlideTransition: {
+      styleOverrides: {
+        root: {
+          ...disableFocusStyles,
+        },
+      },
+    },
+
     MuiAppBar: {
       styleOverrides: {
         colorPrimary: {
@@ -187,6 +446,7 @@ export const LianhuaDarkTheme = createTheme({
         },
       },
     },
+
     MuiMenuItem: {
       styleOverrides: {
         root: {
@@ -200,31 +460,25 @@ export const LianhuaDarkTheme = createTheme({
         },
       },
     },
+
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: 12,
           backgroundColor: "#263238",
-          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.5)",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
         },
       },
     },
-    MuiTable: {
-      styleOverrides: {
-        root: {
-          tableLayout: "fixed",
-          width: "100%",
-        },
-      },
-    },
+
     MuiTableCell: {
       styleOverrides: {
         root: {
           padding: "8px 12px",
           fontSize: "0.875rem",
+          whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
           borderBottom: "1px solid rgba(255,255,255,0.1)",
         },
         head: {
@@ -234,74 +488,22 @@ export const LianhuaDarkTheme = createTheme({
         },
       },
     },
-    MuiTableRow: {
-      styleOverrides: {
-        root: {
-          "&:nth-of-type(odd)": {
-            backgroundColor: "#1B1B1B",
-          },
-          "&:hover": {
-            backgroundColor: "#2E7D32",
-          },
-        },
-      },
-    },
-    RaDatagrid: {
-      styleOverrides: {
-        root: {
-          "& .RaDatagrid-table": {
-            tableLayout: "fixed",
-            width: "100%",
-          },
-          "& .MuiTableCell-root": {
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          },
-          "& .MuiTableHead-root .MuiTableCell-root": {
-            fontWeight: 600,
-          },
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: "none",
-          fontWeight: 500,
-        },
-      },
-    },
+
     MuiPaginationItem: {
       styleOverrides: {
         root: {
-          outline: "none !important",
-          boxShadow: "none !important",
+          ...disableFocusStyles,
+          "&.Mui-focusVisible": disableFocusStyles,
+          "&:focus": disableFocusStyles,
+          "&:focus-visible": disableFocusStyles,
 
-          "&:focus": {
-            outline: "none !important",
-            boxShadow: "none !important",
+          "& div": {
+            ...disableFocusStyles,
+            "&:focus": disableFocusStyles,
+            "&.Mui-focusVisible": disableFocusStyles,
           },
-          "&.Mui-focusVisible": {
-            outline: "none !important",
-            boxShadow: "none !important",
-          },
-          "& button": {
-            outline: "none !important",
-            boxShadow: "none !important",
-
-            "&:focus": {
-              outline: "none !important",
-              boxShadow: "none !important",
-            },
-            "&.Mui-focusVisible": {
-              outline: "none !important",
-              boxShadow: "none !important",
-            }
-          }
-        }
-      }
+        },
+      },
     },
   },
 });

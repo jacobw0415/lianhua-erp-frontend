@@ -8,6 +8,7 @@ import {
   IconButton,
   Popover,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import {
@@ -19,14 +20,21 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import DownloadIcon from "@mui/icons-material/Download";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 import { SearchChipsCompact } from "./SearchChipsCompact";
 import { formatFilters } from "@/utils/formatFilters";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
+import dayjs from "dayjs";
+
 interface FilterOption {
-  type: "text" | "select" | "dateRange";
+  type: "text" | "select" | "dateRange" | "date" | "autocomplete" | "month";
   source: string;
   label: string;
   choices?: { id: any; name: string }[];
@@ -50,6 +58,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   onExport,
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
+  const theme = useTheme();
 
   const [localInputValues, setLocalInputValues] =
     useState<Record<string, string>>({});
@@ -60,51 +69,31 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   const resource = useResourceContext();
   const createPath = useCreatePath();
 
-  /** ⭐ 全域彈窗 */
   const alert = useGlobalAlert();
 
-  /* ------------------------------------------------------------
-     ⭐ 安全搜尋 → 不覆蓋使用者輸入、不清空輸入框
-  ------------------------------------------------------------ */
+  /** 🔍 搜尋 */
   const handleSearch = () => {
-  const hasAny = Object.values(localInputValues)
-    .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
+    const hasAny = Object.values(localInputValues)
+      .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
 
-  if (!hasAny) {
-    alert.trigger("請輸入搜尋條件");
-    // ⭐ 重要：把 Enter 造成的焦點全部移除
+    if (!hasAny) {
+      alert.trigger("請輸入搜尋條件");
+      (document.activeElement as HTMLElement)?.blur();
+      return;
+    }
+
+    setFilters({ ...localInputValues }, null, false);
     (document.activeElement as HTMLElement)?.blur();
-    return;
-  }
+  };
 
-  setFilters({ ...localInputValues }, null, false);
-
-  // ⭐ 任何搜尋後都自動 blur，避免「搜尋」按鍵保持黑色
-  (document.activeElement as HTMLElement)?.blur();
-};
-
-  /* ------------------------------------------------------------
-     ⭐ 安全清除
-  ------------------------------------------------------------ */
+  /** ❌ 清除 */
   const clearFilters = () => {
     setLocalInputValues({});
     setFilters({}, null, false);
     (document.activeElement as HTMLElement)?.blur();
   };
 
-  /* ------------------------------------------------------------
-     ⭐ 安全取得 event.value（避免 null / div.target）
-  ------------------------------------------------------------ */
-  const safeGetValue = (e: any): string | undefined => {
-    const target = e.target as HTMLInputElement | null;
-    if (!target) return undefined;
-    if (typeof target.value !== "string") return undefined;
-    return target.value;
-  };
-
-  /* ------------------------------------------------------------
-     ⭐ Text Input（支援中文 & Enter）
-  ------------------------------------------------------------ */
+  /** 🧩 文字輸入 */
   const renderTextInput = (f: FilterOption) => {
     const key = f.source;
     const value = localInputValues[key] ?? "";
@@ -117,30 +106,19 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         size="small"
         sx={{
           "& .MuiInputBase-root": {
-            height: 40, // ⭐ 緊湊模式（原本 48–56px）
+            height: 40,
             fontSize: "0.85rem",
           },
         }}
         onCompositionStart={() => setIsComposing(true)}
         onCompositionEnd={(e) => {
           setIsComposing(false);
-
-          const val = safeGetValue(e);
-          if (val === undefined) return;
-
-          setLocalInputValues((prev) => ({
-            ...prev,
-            [key]: val,
-          }));
+          const val = (e.target as HTMLInputElement).value;
+          setLocalInputValues(prev => ({ ...prev, [key]: val }));
         }}
         onChange={(e) => {
-          const val = safeGetValue(e);
-          if (val === undefined) return;
-
-          setLocalInputValues((prev) => ({
-            ...prev,
-            [key]: val,
-          }));
+          const val = e.target.value;
+          setLocalInputValues(prev => ({ ...prev, [key]: val }));
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !isComposing) {
@@ -153,35 +131,23 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     );
   };
 
-  /* ------------------------------------------------------------
-     ⭐ Select Input
-  ------------------------------------------------------------ */
+  /** 🔽 選單 */
   const renderSelectInput = (f: FilterOption) => {
     const key = f.source;
-    const value = localInputValues[key] ?? "";
 
     return (
       <TextField
         select
         label={f.label}
         fullWidth
-        value={value}
+        value={localInputValues[key] ?? ""}
+        size="small"
         sx={{
-        "& .MuiInputBase-root": {
-          fontSize: "1.5rem",
-        },
-        "& .MuiSelect-select": {
-          padding: "10px 14px",      // ⭐ 正確方式：自然對齊
-        },
-      }}
+          "& .MuiInputBase-root": { height: 40 },
+          "& .MuiSelect-select": { padding: "10px 14px" },
+        }}
         onChange={(e) => {
-          const val = safeGetValue(e);
-          if (val === undefined) return;
-
-          setLocalInputValues((prev) => ({
-            ...prev,
-            [key]: val,
-          }));
+          setLocalInputValues(prev => ({ ...prev, [key]: e.target.value }));
         }}
       >
         {f.choices?.map((c) => (
@@ -193,74 +159,145 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     );
   };
 
-  /* ------------------------------------------------------------
-     ⭐ 日期區間
-  ------------------------------------------------------------ */
+  /** 📅 月份選擇（YYYY-MM） */
+  const renderMonthPicker = (f: FilterOption) => {
+    const key = f.source;
+    const date = localInputValues[key] ? dayjs(localInputValues[key]) : null;
+
+    return (
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DatePicker
+          views={["year", "month"]}
+          label={f.label}
+          format="YYYY-MM"
+          value={date}
+          onChange={(newValue) => {
+            const formatted = newValue ? newValue.format("YYYY-MM") : "";
+            setLocalInputValues(prev => ({ ...prev, [key]: formatted }));
+          }}
+          slots={{ openPickerIcon: CalendarMonthIcon }}
+          slotProps={{
+            openPickerIcon: {
+              sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+            },
+            textField: {
+              fullWidth: true,
+              size: "small",
+              sx: { "& .MuiInputBase-root": { height: 40 } },
+            },
+          }}
+        />
+      </LocalizationProvider>
+    );
+  };
+
+  /** 📅 單一日期（YYYY-MM-DD） */
+  const renderDateInput = (f: FilterOption) => {
+    const key = f.source;
+    const date = localInputValues[key] ? dayjs(localInputValues[key]) : null;
+
+    return (
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DatePicker
+          label={f.label}
+          format="YYYY-MM-DD"
+          value={date}
+          onChange={(newValue) => {
+            const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
+            setLocalInputValues(prev => ({ ...prev, [key]: formatted }));
+          }}
+          slots={{ openPickerIcon: CalendarMonthIcon }}
+          slotProps={{
+            openPickerIcon: {
+              sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+            },
+            textField: {
+              fullWidth: true,
+              size: "small",
+              sx: { "& .MuiInputBase-root": { height: 40 } },
+            },
+          }}
+        />
+      </LocalizationProvider>
+    );
+  };
+
+  /** 📅 日期區間（YYYY-MM-DD） */
   const renderDateRange = (f: FilterOption) => {
     const startKey = `${f.source}Start`;
     const endKey = `${f.source}End`;
 
+    const startDate = localInputValues[startKey]
+      ? dayjs(localInputValues[startKey])
+      : null;
+
+    const endDate = localInputValues[endKey]
+      ? dayjs(localInputValues[endKey])
+      : null;
+
     return (
-      <Stack direction="row" spacing={1}>
-        <TextField
-          type="date"
-          label="開始"
-          InputLabelProps={{ shrink: true }}
-          size="small"
-          sx={{
-            "& .MuiInputBase-root": {
-              height: 40,
-            },
-          }}
-          fullWidth
-          value={localInputValues[startKey] ?? ""}
-          onChange={(e) => {
-            const val = safeGetValue(e);
-            if (val === undefined) return;
-            setLocalInputValues((prev) => ({ ...prev, [startKey]: val }));
-          }}
-        />
-        <TextField
-          type="date"
-          label="結束"
-          InputLabelProps={{ shrink: true }}
-          size="small"
-          sx={{
-            "& .MuiInputBase-root": {
-              height: 40,
-            },
-          }}
-          fullWidth
-          value={localInputValues[endKey] ?? ""}
-          onChange={(e) => {
-            const val = safeGetValue(e);
-            if (val === undefined) return;
-            setLocalInputValues((prev) => ({ ...prev, [endKey]: val }));
-          }}
-        />
-      </Stack>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Stack direction="row" spacing={1}>
+          <DatePicker
+            label="開始"
+            format="YYYY-MM-DD"
+            value={startDate}
+            onChange={(newValue) => {
+              const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
+              setLocalInputValues(prev => ({ ...prev, [startKey]: formatted }));
+            }}
+            slots={{ openPickerIcon: CalendarMonthIcon }}
+            slotProps={{
+              openPickerIcon: {
+                sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+              },
+              textField: {
+                fullWidth: true,
+                size: "small",
+                sx: { "& .MuiInputBase-root": { height: 40 } },
+              },
+            }}
+          />
+
+          <DatePicker
+            label="結束"
+            format="YYYY-MM-DD"
+            value={endDate}
+            onChange={(newValue) => {
+              const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
+              setLocalInputValues(prev => ({ ...prev, [endKey]: formatted }));
+            }}
+            slots={{ openPickerIcon: CalendarMonthIcon }}
+            slotProps={{
+              openPickerIcon: {
+                sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+              },
+              textField: {
+                fullWidth: true,
+                size: "small",
+                sx: { "& .MuiInputBase-root": { height: 40 } },
+              },
+            }}
+          />
+        </Stack>
+      </LocalizationProvider>
     );
   };
 
-  /* ------------------------------------------------------------
-     ⭐ 判斷並渲染欄位
-  ------------------------------------------------------------ */
+  /** 🔀 渲染對應欄位 */
   const renderFilter = (f: FilterOption) => {
     switch (f.type) {
-      case "text":
-        return renderTextInput(f);
-      case "select":
-        return renderSelectInput(f);
-      case "dateRange":
-        return renderDateRange(f);
-      default:
-        return null;
+      case "text": return renderTextInput(f);
+      case "select": return renderSelectInput(f);
+      case "date": return renderDateInput(f);
+      case "dateRange": return renderDateRange(f);
+      case "month": return renderMonthPicker(f);
+      case "autocomplete": return renderSelectInput(f);
+      default: return null;
     }
   };
 
-  /* ------------------------------------------------------------
-     ⭐ Chips（安全同步 state）
-  ------------------------------------------------------------ */
+  /** 🏷 Chips */
   const chips = formatFilters(filterValues);
 
   const removeFilter = (key: string) => {
@@ -272,7 +309,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
     setFilters(updated, null, false);
 
-    setLocalInputValues((prev) => {
+    setLocalInputValues(prev => {
       const next = { ...prev };
       delete next[key];
       delete next[key + "Start"];
@@ -281,25 +318,23 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     });
   };
 
-  /* ------------------------------------------------------------
-     ⭐ UI Layout
-  ------------------------------------------------------------ */
+  /** ⭐ UI 結構 */
   return (
     <>
       <Box
         sx={{
-          p: "6px 10px",              // ⭐ 上下從 16px → 6px（縮短搜尋欄高度的關鍵）
-          mb: 1,                     // ⭐ 與下方 Datagrid 間距從 16px → 8px
+          p: "6px 10px",
+          mb: 1,
           borderRadius: 1.2,
           border: "1px solid #ddd",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           gap: 1.5,
-          minHeight: "60px",         // ⭐ 保證不壓扁但高度合理
+          minHeight: "60px",
         }}
       >
-        {/* 左側的搜尋區 */}
+        {/* 左側快速搜尋 */}
         <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
           {quickFilters.map((f, idx) => (
             <Box key={idx} sx={{ minWidth: 220 }}>
@@ -310,7 +345,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           {advancedFilters.length > 0 && (
             <IconButton onClick={(e) => {
               setAnchor(e.currentTarget);
-              (e.currentTarget as HTMLButtonElement).blur(); 
+              (e.currentTarget as HTMLButtonElement).blur();
             }}>
               <FilterListIcon />
             </IconButton>
@@ -336,13 +371,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           </Button>
         </Stack>
 
-        {/* 右側區塊：Chips、建立、匯出 */}
-        <Stack
-          direction="row"
-          spacing={1.5}
-          flexWrap="wrap"
-          alignItems="center"
-        >
+        {/* 右側 Chips + 建立 + 匯出 */}
+        <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center">
           <SearchChipsCompact chips={chips} onRemove={removeFilter} />
 
           {enableCreate && (
@@ -352,11 +382,11 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               startIcon={<AddIcon />}
               href={`#${createPath({ resource, type: "create" })}`}
               sx={{
-              height: 32,              // ⭐ 你要求的固定高度
-              minWidth: 90,            // ⭐ 避免按鈕太扁導致文字換行
-              padding: "0 12px",       // ⭐ 讓按鈕左右看起來更平衡
-              fontSize: "0.85rem",     // ⭐ ERP UI 常見字體大小
-            }}
+                height: 32,
+                minWidth: 90,
+                padding: "0 12px",
+                fontSize: "0.85rem",
+              }}
             >
               {createLabel}
             </Button>
@@ -393,13 +423,14 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             </Stack>
 
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-              <Button 
-                fullWidth 
-                variant="contained" 
+              <Button
+                fullWidth
+                variant="contained"
                 onClick={(e) => {
-                  (e.currentTarget as HTMLButtonElement).blur(); 
+                  (e.currentTarget as HTMLButtonElement).blur();
                   handleSearch();
-                }}>
+                }}
+              >
                 套用
               </Button>
               <Button
@@ -415,7 +446,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         </Popover>
       </Box>
 
-      {/* ⭐ 全域搜尋提示 */}
+      {/* 全域提示 */}
       <GlobalAlertDialog
         open={alert.open}
         message={alert.message}

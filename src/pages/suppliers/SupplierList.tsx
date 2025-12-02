@@ -32,6 +32,7 @@ export const SupplierList = () => (
           choices: [
             { id: "WEEKLY", name: "每週結帳" },
             { id: "MONTHLY", name: "每月結帳" },
+            { id: "BIWEEKLY", name: "每兩週結帳" },
           ],
         },
       ]}

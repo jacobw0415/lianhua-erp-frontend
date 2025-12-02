@@ -4,35 +4,21 @@ import {
   NumberField,
   DateField,
   FunctionField,
-  TopToolbar,
-  CreateButton,
   Pagination,
 } from "react-admin";
+
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
 import { useState } from "react";
 import { PaymentDrawer } from "./PaymentDrawer";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { CurrencyField } from "@/components/money/CurrencyField";
 
-
-/**
- * 📦 List 頁面上方工具列
- */
-const ListActions = () => (
-  <TopToolbar>
-    <CreateButton label="新增進貨" />
-  </TopToolbar>
-);
-
-/**
- * 📋 主表：進貨紀錄清單（右側 Drawer 子表版本）
- */
 export const PurchaseList = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [selectedPurchase, setSelectedPurchase] = useState(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
 
   const handleOpen = (record: any) => {
     setSelectedPurchase(record);
@@ -43,12 +29,76 @@ export const PurchaseList = () => {
     <>
       <List
         title="進貨紀錄"
-        actions={<ListActions />}
-        pagination={<Pagination rowsPerPageOptions={[5, 10, 25, 50]} />}
+        actions={false}
+        pagination={<Pagination rowsPerPageOptions={[10, 25, 50]} />}
         perPage={10}
+        filterDefaultValues={{ init: 1 }}
       >
-          <StyledListDatagrid
-          >
+        <StyledListWrapper
+          /* ---------------------------------------------------------
+           *  🔍 Quick Filters（簡易搜尋）
+           * --------------------------------------------------------- */
+          quickFilters={[
+            { type: "text", source: "supplierName", label: "供應商名稱" },
+            { type: "text", source: "item", label: "品項" },
+          ]}
+
+          /* ---------------------------------------------------------
+           *  📌 Advanced Filters（進階搜尋）
+           * --------------------------------------------------------- */
+          advancedFilters={[
+            {
+              type: "select",
+              source: "status",
+              label: "狀態",
+              choices: [
+                { id: "PENDING", name: "未付款" },
+                { id: "PARTIAL", name: "部分付款" },
+                { id: "PAID", name: "已付款" },
+              ],
+            },
+            {
+              type: "month",
+              source: "accountingPeriod",
+              label: "會計期間 (YYYY-MM)",
+            },
+            {
+              type: "date",
+              source: "fromDate",
+              label: "進貨日（起）",
+            },
+            {
+              type: "date",
+              source: "toDate",
+              label: "進貨日（迄）",
+            },
+          ]}
+
+          /* ---------------------------------------------------------
+           *  匯出設定
+           * --------------------------------------------------------- */
+          exportConfig={{
+            filename: "purchase_export",
+            format: "excel",
+            columns: [
+              { header: "供應商", key: "supplierName", width: 20 },
+              { header: "品項", key: "item", width: 20 },
+              { header: "數量", key: "qty", width: 10 },
+              { header: "單價", key: "unitPrice", width: 12 },
+              { header: "總金額", key: "totalAmount", width: 12 },
+              { header: "已付款", key: "paidAmount", width: 12 },
+              { header: "餘額", key: "balance", width: 12 },
+              { header: "狀態", key: "status", width: 10 },
+              { header: "進貨日期", key: "purchaseDate", width: 14 },
+              { header: "備註", key: "note", width: 20 },
+            ],
+          }}
+        >
+
+          {/* ---------------------------------------------------------
+           *   📄 Datagrid（資料表）
+           * --------------------------------------------------------- */}
+          <StyledListDatagrid>
             <TextField source="supplierName" label="供應商名稱" />
             <TextField source="item" label="品項" />
             <NumberField source="qty" label="數量" />
@@ -60,9 +110,10 @@ export const PurchaseList = () => {
             <DateField source="purchaseDate" label="進貨日期" />
             <TextField source="note" label="備註" />
 
-            {/* ⭐ 查看付款紀錄 (取代展開方式) */}
+            {/* 🔍 Drawer：查看付款紀錄 */}
             <FunctionField
               label="付款"
+              source="payment"
               className="cell-centered"
               render={(record) => (
                 <IconButton size="small" onClick={() => handleOpen(record)}>
@@ -71,17 +122,18 @@ export const PurchaseList = () => {
               )}
             />
 
-            {/* ⭐ 原本的操作欄位 */}
+            {/* 🛠️ 操作功能 */}
             <FunctionField
+              label="操作"
               source="action"
               className="column-action"
-              label="操作"
               render={() => <ActionColumns />}
             />
           </StyledListDatagrid>
+        </StyledListWrapper>
       </List>
 
-      {/* ⭐ 右側 Drawer */}
+      {/* 📘 右側 Drawer：付款紀錄 */}
       <PaymentDrawer
         open={openDrawer}
         onClose={() => setOpenDrawer(false)}
