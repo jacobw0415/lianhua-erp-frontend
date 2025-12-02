@@ -183,9 +183,17 @@ export const LianhuaLightTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#D0D0D0",   // 預設外框
+          },
+
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#B0B0B0",   // hover 時
+          },
+
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "transparent !important",
-            borderWidth: 0,
+            borderColor: "#4CAF50 !important",  // focus 時 → 蓮華綠
+            borderWidth: "2px",
           },
         },
       },
@@ -276,6 +284,57 @@ export const LianhuaLightTheme = createTheme({
             "&:focus": disableFocusStyles,
             "&.Mui-focusVisible": disableFocusStyles,
           },
+        },
+      },
+    },
+
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          // 下拉選單 scrollbar
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "#E0E0E0",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#BDBDBD",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#9E9E9E",
+          },
+
+          scrollbarWidth: "thin",
+          scrollbarColor: "#BDBDBD #E0E0E0",
+        },
+      },
+    },
+
+    MuiAutocomplete: {
+      styleOverrides: {
+        listbox: {
+          maxHeight: "300px",
+
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "#E0E0E0",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#BDBDBD",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#9E9E9E",
+          },
+
+          scrollbarWidth: "thin",
+          scrollbarColor: "#BDBDBD #E0E0E0",
         },
       },
     },
@@ -505,5 +564,57 @@ export const LianhuaDarkTheme = createTheme({
         },
       },
     },
+
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          // 下拉選單 scrollbar
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "#E0E0E0",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#BDBDBD",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#9E9E9E",
+          },
+
+          scrollbarWidth: "thin",
+          scrollbarColor: "#BDBDBD #E0E0E0",
+        },
+      },
+    },
+
+    MuiAutocomplete: {
+      styleOverrides: {
+        listbox: {
+          maxHeight: "300px",
+
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "#E0E0E0",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#BDBDBD",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#9E9E9E",
+          },
+
+          scrollbarWidth: "thin",
+          scrollbarColor: "#BDBDBD #E0E0E0",
+        },
+      },
+    },
+
   },
 });
