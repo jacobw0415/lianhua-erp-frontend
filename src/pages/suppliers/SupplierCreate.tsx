@@ -1,6 +1,6 @@
 import React from "react";
 import { TextInput, SelectInput, useRedirect } from "react-admin";
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
@@ -18,29 +18,51 @@ export const SupplierCreate: React.FC = () => {
           severity: "success",
           hideCancel: true,
         });
-        setTimeout(() => {
-          redirect("list", "suppliers");
-        }, 600);  
+        setTimeout(() => redirect("list", "suppliers"), 600);
       }}
     >
-      <Typography variant="h6">🏪 新增供應商資訊</Typography>
-      <TextInput source="name" label="供應商名稱" fullWidth required />
-      <TextInput source="contact" label="聯絡人" fullWidth />
-      <TextInput source="phone" label="電話" fullWidth />
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        🏪 新增供應商資訊
+      </Typography>
 
-      <SelectInput
-        source="billingCycle"
-        label="帳單週期"
-        choices={[
-          { id: "WEEKLY", name: "每週" },
-          { id: "BIWEEKLY", name: "每兩週" },
-          { id: "MONTHLY", name: "每月" },
-        ]}
-        fullWidth
-        defaultValue="MONTHLY"
-      />
+      {/* 整體固定最大寬度 */}
+      <Box sx={{ maxWidth: 600, width: "100%" }}>
+        {/* 第一列 */}
+        <Box display="flex" gap={2} mb={2}>
+          <Box flex={1}>
+            <TextInput source="name" label="供應商名稱 *" fullWidth />
+          </Box>
+          <Box flex={1}>
+            <TextInput source="contact" label="聯絡人" fullWidth />
+          </Box>
+        </Box>
 
-      <TextInput source="note" label="備註" multiline fullWidth />
+        {/* 第二列 */}
+        <Box display="flex" gap={2} mb={2}>
+          <Box flex={1}>
+            <TextInput source="phone" label="電話" fullWidth />
+          </Box>
+
+          <Box flex={1}>
+            <TextInput source="note" label="備註" multiline fullWidth />
+          </Box>
+        </Box>
+
+        {/* 單欄：帳單週期 */}
+        <Box mb={2}>
+          <SelectInput
+            source="billingCycle"
+            label="帳單週期"
+            fullWidth
+            defaultValue="MONTHLY"
+            choices={[
+              { id: "WEEKLY", name: "每週" },
+              { id: "BIWEEKLY", name: "每兩週" },
+              { id: "MONTHLY", name: "每月" },
+            ]}
+          />
+        </Box>
+      </Box>
     </GenericCreatePage>
   );
 };

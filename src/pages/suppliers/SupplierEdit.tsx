@@ -5,11 +5,10 @@ import {
   useRecordContext,
   useRedirect,
 } from "react-admin";
-import { Typography } from "@mui/material";
+import { Typography, Box } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { SupplierStatusField } from "./SupplierStatusField";
-
 
 /* -------------------------------------------------------
  * ⭐ 供應商編輯頁面
@@ -62,24 +61,47 @@ const SupplierFormFields: React.FC = () => {
         🏷️ 基本資訊
       </Typography>
 
-      <TextInput source="name" label="供應商名稱" fullWidth required />
-      <TextInput source="contact" label="聯絡人" fullWidth />
-      <TextInput source="phone" label="電話" fullWidth />
+      {/* 與 SupplierCreate 完全一致的 maxWidth 包裝 */}
+      <Box sx={{ maxWidth: 600, width: "100%" }}>
 
-      <SelectInput
-        source="billingCycle"
-        label="帳單週期"
-        choices={[
-          { id: "WEEKLY", name: "每週" },
-          { id: "BIWEEKLY", name: "每兩週" },
-          { id: "MONTHLY", name: "每月" },
-        ]}
-        fullWidth
-      />
+        {/* 第一列：供應商名稱 / 聯絡人 */}
+        <Box display="flex" gap={2} mb={2}>
+          <Box flex={1}>
+            <TextInput source="name" label="供應商名稱 *" fullWidth required />
+          </Box>
+          <Box flex={1}>
+            <TextInput source="contact" label="聯絡人" fullWidth />
+          </Box>
+        </Box>
 
-      <SupplierStatusField />
+        {/* 第二列：電話 / 帳單週期 */}
+        <Box display="flex" gap={2} mb={2}>
+          <Box flex={1}>
+            <TextInput source="phone" label="電話" fullWidth />
+          </Box>
+          <Box flex={1}>
+            <TextInput source="note" label="備註" fullWidth  />
+          </Box>
+        </Box>
 
-      <TextInput source="note" label="備註" multiline fullWidth />
+        <Box display="flex" gap={2} mb={2}>
+          <Box flex={1}>
+            <SupplierStatusField />
+          </Box>
+          <Box flex={1}>
+            <SelectInput
+                source="billingCycle"
+                label="帳單週期"
+                fullWidth
+                choices={[
+                  { id: "WEEKLY", name: "每週" },
+                  { id: "BIWEEKLY", name: "每兩週" },
+                  { id: "MONTHLY", name: "每月" },
+                ]}
+              />
+          </Box>
+        </Box>
+      </Box>
     </>
   );
 };

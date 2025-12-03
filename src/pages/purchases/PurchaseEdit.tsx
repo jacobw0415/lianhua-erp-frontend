@@ -130,7 +130,7 @@ const PurchaseFormFields: React.FC = () => {
             border: "1px solid #e0e0e0",
             borderRadius: "10px",
             p: 3,
-            minHeight: "425px",
+            minHeight: "410px",
           }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
