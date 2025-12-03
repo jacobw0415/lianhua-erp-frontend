@@ -180,24 +180,33 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
                   bulkActionButtons={false}
                   rowClick={false}
                   sx={{
-                    "& .RaDatagrid-table": {
-                      tableLayout: "fixed",
-                      borderRadius: "8px",
-                      overflow: "hidden",
+                    /* ⭐ 設定 scroll container 在 Datagrid 內建 wrapper */
+                    "& .RaDatagrid-tableWrapper": {
+                      maxHeight: maxHeight,
                     },
 
-                    "& .RaDatagrid-thead": {
-                      position: "sticky",
+                    /* ⭐ 固定表頭（這次會生效） */
+                    "& th": {
                       top: 0,
-                      zIndex: 1,
-                      bgcolor: "background.paper",
+                      zIndex: 5,
+                      backgroundColor: "background.paper",
+                      textAlign: "left",
+                      fontWeight: 600,
+                      padding: "8px 6px",
                     },
 
-                    "& th, & td": {
-                      textAlign: "center",
-                      whiteSpace: "nowrap",
+                    "& td": {
+                      textAlign: "left",
                       padding: "8px 6px",
-                      fontSize: "0.85rem",
+                    },
+
+                    "& .RaDatagrid-row": {
+                      width: "100%",
+                    },
+
+                    "& .RaDatagrid-headerRow": {
+                      position: "sticky",
+                      width: "100%",
                     },
                   }}
                 >

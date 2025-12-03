@@ -179,7 +179,7 @@ const PaymentArrayInput: React.FC = () => {
         <CustomClearButton
           onClear={({ setValue }) => {
             setValue("newPayments.0.amount", "");
-            setValue("newPayments.0.payDate", null);
+            setValue("newPayments.0.payDate", "");
             setValue("newPayments.0.method", "");
           }}
         />

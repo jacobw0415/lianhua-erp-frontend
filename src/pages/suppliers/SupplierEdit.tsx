@@ -1,13 +1,15 @@
 import React from "react";
 import {
   TextInput,
+  SelectInput,
   useRecordContext,
   useRedirect,
 } from "react-admin";
-
 import { Typography } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { SupplierStatusField } from "./SupplierStatusField";
+
 
 /* -------------------------------------------------------
  * ⭐ 供應商編輯頁面
@@ -19,7 +21,7 @@ export const SupplierEdit: React.FC = () => {
   return (
     <GenericEditPage
       resource="suppliers"
-      title="編輯供應商資料"
+      title="編輯供應商"
       width="700px"
       onSuccess={(data) => {
         showAlert({
@@ -48,7 +50,7 @@ export const SupplierEdit: React.FC = () => {
 };
 
 /* -------------------------------------------------------
- * ⭐ 供應商欄位區塊
+ * ⭐ 供應商欄位（與 Create 完全一致 + active）
  * ------------------------------------------------------- */
 const SupplierFormFields: React.FC = () => {
   const record = useRecordContext();
@@ -63,7 +65,21 @@ const SupplierFormFields: React.FC = () => {
       <TextInput source="name" label="供應商名稱" fullWidth required />
       <TextInput source="contact" label="聯絡人" fullWidth />
       <TextInput source="phone" label="電話" fullWidth />
-      <TextInput source="note" label="備註" fullWidth multiline/>
+
+      <SelectInput
+        source="billingCycle"
+        label="帳單週期"
+        choices={[
+          { id: "WEEKLY", name: "每週" },
+          { id: "BIWEEKLY", name: "每兩週" },
+          { id: "MONTHLY", name: "每月" },
+        ]}
+        fullWidth
+      />
+
+      <SupplierStatusField />
+
+      <TextInput source="note" label="備註" multiline fullWidth />
     </>
   );
 };
