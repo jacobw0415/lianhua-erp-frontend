@@ -385,10 +385,25 @@ export const LianhuaDarkTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "transparent !important",
-            borderWidth: 0,
+          backgroundColor: "#263238",
+          borderRadius: 6,
+
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "rgba(255,255,255,0.3)",
           },
+
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "rgba(255,255,255,0.5)",
+          },
+
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#81C784 !important",
+            borderWidth: "2px",
+          },
+        },
+
+        input: {
+          color: "#E8F5E9",
         },
       },
     },

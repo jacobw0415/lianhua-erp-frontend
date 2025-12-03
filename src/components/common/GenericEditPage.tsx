@@ -13,6 +13,8 @@ import {
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 interface GenericEditPageProps {
   resource: string;
@@ -24,7 +26,7 @@ interface GenericEditPageProps {
 }
 
 /* -------------------------------------------------------
- * ⭐ Custom Toolbar（保持與 GenericCreatePage 完全一致的 UX）
+ *  Custom Toolbar（保持與 GenericCreatePage 完全一致的 UX）
  * ------------------------------------------------------- */
 const CustomToolbar = ({
   onBack,
@@ -68,7 +70,7 @@ const CustomToolbar = ({
 );
 
 /* -------------------------------------------------------
- * ⭐ 主組件（含 update 最新資料取得）
+ *  主組件（含 update 最新資料取得）
  * ------------------------------------------------------- */
 export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   resource,
@@ -84,7 +86,7 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
   /* ---------------------------------------------------
-   * ⭐ 提交邏輯（自動重新抓最新資料）
+   *  提交邏輯（自動重新抓最新資料）
    * --------------------------------------------------- */
   const handleSubmit = async (values: any) => {
     const { id, newPayments, ...rest } = values;
@@ -126,33 +128,35 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   };
 
   return (
-    <Box sx={{ pt: "50px", display: "flex", justifyContent: "center" }}>
-      <Box
-        sx={{
-          width,
-          backgroundColor: "background.paper",
-          borderRadius: "12px",
-          padding: "2rem 3rem",
-        }}
-      >
-        <Edit title={title} actions={false}>
-          <EditContent
-            resource={resource}
-            onSubmit={handleSubmit}
-            openDeleteConfirm={openDeleteConfirm}
-            setOpenDeleteConfirm={setOpenDeleteConfirm}
-            onDeleteSuccess={onDeleteSuccess}
-          >
-            {children}
-          </EditContent>
-        </Edit>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ pt: "50px", display: "flex", justifyContent: "center" }}>
+        <Box
+          sx={{
+            width,
+            backgroundColor: "background.paper",
+            borderRadius: "12px",
+            padding: "2rem 3rem",
+          }}
+        >
+          <Edit title={title} actions={false}>
+            <EditContent
+              resource={resource}
+              onSubmit={handleSubmit}
+              openDeleteConfirm={openDeleteConfirm}
+              setOpenDeleteConfirm={setOpenDeleteConfirm}
+              onDeleteSuccess={onDeleteSuccess}
+            >
+              {children}
+            </EditContent>
+          </Edit>
+        </Box>
       </Box>
-    </Box>
+    </LocalizationProvider>
   );
 };
 
 /* -------------------------------------------------------
- * ⭐ EditContent（處理刪除 + 刪除確認彈窗）
+ *  EditContent（處理刪除 + 刪除確認彈窗）
  * ------------------------------------------------------- */
 const EditContent = ({
   children,
@@ -169,7 +173,7 @@ const EditContent = ({
   if (!record) return null;
 
   /* ---------------------------------------------------
-   * ⭐ 刪除邏輯（自動回傳完整 record）
+   *  刪除邏輯（自動回傳完整 record）
    * --------------------------------------------------- */
   const handleDelete = async () => {
     await dataProvider.delete(resource, {
@@ -195,13 +199,12 @@ const EditContent = ({
         {children}
       </SimpleForm>
 
-      {/* ⭐ 統一刪除確認彈窗 */}
+      {/*  統一刪除確認彈窗 */}
       <GlobalAlertDialog
         open={openDeleteConfirm}
         title="確認刪除"
-        description={`確定要刪除「${
-          record.name ?? record.title ?? record.code ?? "這筆資料"
-        }」嗎？`}
+        description={`確定要刪除「${record.name ?? record.title ?? record.code ?? "這筆資料"
+          }」嗎？`}
         severity="error"
         confirmLabel="刪除"
         cancelLabel="取消"
