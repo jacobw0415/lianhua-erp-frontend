@@ -173,7 +173,7 @@ const PaymentArrayInput: React.FC = () => {
             { id: "CARD", name: "刷卡" },
             { id: "CHECK", name: "支票" },
           ]}
-          sx={{ flex: 1 }}
+          sx={{ flex: 1 , marginTop: 2.5 }}
         />
 
         <CustomClearButton
