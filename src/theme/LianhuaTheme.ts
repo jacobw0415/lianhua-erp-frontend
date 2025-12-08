@@ -368,6 +368,8 @@ export const LianhuaLightTheme = createTheme({
     MuiListItemButton: {
       styleOverrides: {
         root: {
+          minHeight: 42,
+          transition: "padding 0.5s ease",
           color: "#2E3A45 !important",  // 父層：深灰字
           fontWeight: 500,
 
@@ -384,6 +386,22 @@ export const LianhuaLightTheme = createTheme({
               color: "#2E7D32 !important",
             },
           },
+
+          ".RaSidebar-expanded &": {
+            paddingLeft: 20,  // 展開時只增加左 padding，不改高度
+          }
+        },
+      },
+    },
+
+    MuiListItemIcon: {
+      styleOverrides: {
+        root: {
+          minWidth: 36, // 🔥 固定 icon 區域，不因展開縮放
+          color: "#555",
+          ".RaSidebar-expanded &": {
+            color: "#4CAF50", // 展開後 icon 綠色（可選）
+          }
         },
       },
     },

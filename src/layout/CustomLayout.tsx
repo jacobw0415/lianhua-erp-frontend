@@ -2,6 +2,7 @@ import * as React from "react";
 import { Layout } from "react-admin";
 import { CustomMenu } from "./CustomMenu";
 import { CustomAppBar } from "./CustomAppBar";
+import { CustomSidebar } from "./CustomSidebar";
 
 interface CustomLayoutProps {
     darkMode: boolean;
@@ -16,6 +17,7 @@ export const CustomLayout = ({
     <Layout
         {...props}
         menu={CustomMenu}
+        sidebar={CustomSidebar}
         appBar={(appBarProps) => (
             <CustomAppBar
                 {...appBarProps}

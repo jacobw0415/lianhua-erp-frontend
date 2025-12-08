@@ -6,7 +6,7 @@ import React from "react";
 export interface MenuItem {
   label: string;
   to: string;
-  icon?: React.ReactElement; 
+  icon?: React.ReactElement;
 }
 
 export interface MenuGroup {
@@ -45,7 +45,8 @@ import TableViewIcon from '@mui/icons-material/TableView';
 
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import SecurityIcon from '@mui/icons-material/Security';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 
 // ---------------------
 // Menu Groups
@@ -53,9 +54,9 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 export const menuGroups: MenuGroup[] = [
   {
     label: "儀表板",
-    icon: <DashboardIcon />,
+    icon: <SpaceDashboardIcon />,
     items: [
-      { label: "Dashboard", to: "/" },
+      { label: "Dashboard", to: "/", icon: <DashboardCustomizeIcon /> },
     ],
   },
 
