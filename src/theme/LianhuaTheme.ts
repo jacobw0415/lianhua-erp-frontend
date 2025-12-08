@@ -338,6 +338,56 @@ export const LianhuaLightTheme = createTheme({
         },
       },
     },
+
+    /* ==========================================================
+    * 🌿 Left Sidebar Menu（改善層次版）
+    * ========================================================== */
+    RaMenuItemLink: {
+      styleOverrides: {
+        root: {
+          color: "#4A4A4A !important", // 子層：預設灰黑，不是綠
+          fontWeight: 400,
+
+          "&:hover": {
+            backgroundColor: "rgba(76, 175, 80, 0.08)",
+            color: "#2E7D32 !important",
+          },
+
+          "&.RaMenuItemLink-active": {
+            backgroundColor: "rgba(76, 175, 80, 0.15) !important",
+            color: "#2E7D32 !important", // 深綠字
+            fontWeight: 700,              // 粗體
+            "& .MuiListItemIcon-root": {
+              color: "#2E7D32 !important", // 深綠 icon
+            },
+          },
+        },
+      },
+    },
+
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          color: "#2E3A45 !important",  // 父層：深灰字
+          fontWeight: 500,
+
+          "&:hover": {
+            backgroundColor: "rgba(76, 175, 80, 0.06)",
+            color: "#2E7D32 !important",
+          },
+
+          "&.Mui-selected": {
+            backgroundColor: "rgba(76, 175, 80, 0.15) !important",
+            color: "#2E7D32 !important",
+            fontWeight: 700,
+            "& .MuiListItemIcon-root": {
+              color: "#2E7D32 !important",
+            },
+          },
+        },
+      },
+    },
+
   },
 });
 

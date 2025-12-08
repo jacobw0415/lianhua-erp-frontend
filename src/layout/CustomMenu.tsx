@@ -4,22 +4,43 @@ import {
   MenuItemLink,
   useSidebarState,
 } from "react-admin";
-import { menuGroups } from "./menuConfig";
+
+import {
+  Collapse,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Box,
+} from "@mui/material";
 
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import { Collapse, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+
+import { menuGroups } from "./menuConfig";
 
 export const CustomMenu = () => {
   const [open] = useSidebarState();
-  const [openGroups, setOpenGroups] = React.useState<{ [key: string]: boolean }>({});
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({});
 
   const toggleGroup = (key: string) => {
-    setOpenGroups(prev => ({
+    setOpenGroups((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
   };
+
+  // ⭐ 自動展開當前路徑所在的模組
+  const currentPath = window.location.pathname;
+
+  React.useEffect(() => {
+    menuGroups.forEach((group) => {
+      const match = group.items.some((item) => currentPath.startsWith(item.to));
+      if (match) {
+        setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
+      }
+    });
+  }, [currentPath]);
 
   return (
     <Menu
@@ -32,28 +53,49 @@ export const CustomMenu = () => {
         },
       }}
     >
-
       {menuGroups.map((group) => {
-        const groupKey = group.label;
+        const isOpen = openGroups[group.label];
+
+        const groupButton = (
+          <ListItemButton
+            onClick={() => toggleGroup(group.label)}
+            sx={{
+              borderRadius: 1,
+              pl: open ? 2 : 1,
+              mb: 0.2,
+              bgcolor: isOpen ? "rgba(0,0,0,0.08)" : "transparent",
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}>{group.icon}</ListItemIcon>
+            {open && <ListItemText primary={group.label} />}
+            {open && (isOpen ? <ExpandLess /> : <ExpandMore />)}
+          </ListItemButton>
+        );
 
         return (
-          <React.Fragment key={groupKey}>
-            {/* 父類 */}
-            <ListItemButton onClick={() => toggleGroup(groupKey)}>
-              <ListItemIcon>{group.icon}</ListItemIcon>
-              <ListItemText primary={group.label} />
-              {openGroups[groupKey] ? <ExpandLess /> : <ExpandMore />}
-            </ListItemButton>
+          <React.Fragment key={group.label}>
+            {/* Sidebar 收起時 → 使用 tooltip */}
+            {open ? (
+              groupButton
+            ) : (
+              <Tooltip title={group.label} placement="right">
+                {groupButton}
+              </Tooltip>
+            )}
 
-            {/* 子類選項 */}
-            <Collapse in={openGroups[groupKey]} timeout="auto" unmountOnExit>
+            <Collapse in={isOpen} timeout="auto" unmountOnExit>
               {group.items.map((item) => (
                 <MenuItemLink
                   key={item.to}
                   to={item.to}
                   primaryText={item.label}
-                  leftIcon={item.icon ?? <span />}
-                  sx={{ paddingLeft: open ? 5 : 3 }}
+                  leftIcon={
+                    item.icon ? item.icon : <Box sx={{ width: 24, height: 24 }} />
+                  }
+                  sx={{
+                    pl: open ? 6 : 4,
+                    py: 0.6,
+                  }}
                 />
               ))}
             </Collapse>
