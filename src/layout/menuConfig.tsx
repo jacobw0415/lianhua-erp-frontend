@@ -47,6 +47,8 @@ import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+import ShoppingCartCheckoutTwoToneIcon from '@mui/icons-material/ShoppingCartCheckoutTwoTone';
+import StoreMallDirectoryTwoToneIcon from '@mui/icons-material/StoreMallDirectoryTwoTone';
 
 // ---------------------
 // Menu Groups
@@ -62,7 +64,7 @@ export const menuGroups: MenuGroup[] = [
 
   {
     label: "採購管理",
-    icon: <Inventory2Icon />,
+    icon: <ShoppingCartCheckoutTwoToneIcon />,
     items: [
       { label: "供應商管理", to: "/suppliers", icon: <StorefrontIcon /> },
       { label: "進貨紀錄", to: "/purchases", icon: <Inventory2Icon /> },
@@ -75,7 +77,7 @@ export const menuGroups: MenuGroup[] = [
     label: "銷售管理",
     icon: <PointOfSaleIcon />,
     items: [
-      { label: "現場銷售紀錄", to: "/sales", icon: <PointOfSaleIcon /> },
+      { label: "現場銷售紀錄", to: "/sales", icon: <StoreMallDirectoryTwoToneIcon /> },
       { label: "客戶管理", to: "/order-customers", icon: <GroupIcon /> },
       { label: "訂單管理", to: "/orders", icon: <ShoppingBagIcon /> },
       { label: "收款紀錄", to: "/receipts", icon: <AttachMoneyIcon /> },

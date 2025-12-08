@@ -15,7 +15,8 @@ import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { GenericSubTablePanel } from "@/components/common/GenericSubTablePanel";
 import { CustomClearButton } from "@/components/forms/CustomClearButton";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { LhDateInput } from "@/components/inputs/LhDateInput"; 
+import { LhDateInput } from "@/components/inputs/LhDateInput";
+import { CurrencyField } from "@/components/money/CurrencyField";
 
 
 /* ================================
@@ -104,17 +105,28 @@ const PurchaseFormFields: React.FC = () => {
               💡 目前付款狀況
             </Typography>
 
-            <Typography>💰 總金額：<b>${record.totalAmount?.toFixed(2)}</b></Typography>
-            <Typography>✅ 已付款：<b>${record.paidAmount?.toFixed(2)}</b></Typography>
-            <Typography>💸 剩餘額：<b>${record.balance?.toFixed(2)}</b></Typography>
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              💰 總金額：
+              <b><CurrencyField source="totalAmount" /></b>
+            </Typography>
+
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              ✅ 已付款：
+              <b><CurrencyField source="paidAmount" /></b>
+            </Typography>
+
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              💸 剩餘額：
+              <b><CurrencyField source="balance" /></b>
+            </Typography>
 
             <Alert
               severity={
                 record.status === "PAID"
                   ? "success"
                   : record.status === "PARTIAL"
-                  ? "warning"
-                  : "info"
+                    ? "warning"
+                    : "info"
               }
               sx={{ mt: 1 }}
             >
@@ -173,7 +185,7 @@ const PaymentArrayInput: React.FC = () => {
             { id: "CARD", name: "刷卡" },
             { id: "CHECK", name: "支票" },
           ]}
-          sx={{ flex: 1 , marginTop: 2.5 }}
+          sx={{ flex: 1, marginTop: 2.5 }}
         />
 
         <CustomClearButton

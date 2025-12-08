@@ -47,6 +47,7 @@ interface GenericFilterBarProps {
   enableExport?: boolean;
   createLabel?: string;
   onExport?: () => void;
+  disableCreate?: boolean;
 }
 
 export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
@@ -55,6 +56,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   enableCreate = true,
   enableExport = false,
   createLabel = "新增資料",
+  disableCreate = false,
   onExport,
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
@@ -375,7 +377,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center">
           <SearchChipsCompact chips={chips} onRemove={removeFilter} />
 
-          {enableCreate && (
+          {enableCreate && !disableCreate && (
             <Button
               variant="contained"
               color="success"

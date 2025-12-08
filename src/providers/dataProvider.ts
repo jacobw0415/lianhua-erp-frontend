@@ -119,7 +119,6 @@ export const createDataProvider = ({
                 "billingCycle",
                 "purchaseDate",
                 "supplierId",
-                "supplierName",
                 "accountingPeriod",
                 "item",
                 "qty",

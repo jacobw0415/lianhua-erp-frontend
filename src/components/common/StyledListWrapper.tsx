@@ -4,14 +4,13 @@ import {
   useListContext,
   ListContextProvider,
   type ListControllerResult,
-  useRefresh,         // ⭐ 新增
+  useRefresh,         
 } from "react-admin";
 
 import { GenericFilterBar } from "./GenericFilterBar";
 import { useListEnhancer } from "@/hooks/useListEnhancer";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
-
 import { exportExcel } from "@/utils/exportExcel";
 import { exportCsv } from "@/utils/exportCsv";
 
@@ -33,27 +32,29 @@ export const StyledListWrapper: React.FC<{
   advancedFilters?: any[];
   popoverWidth?: number | string;
   exportConfig?: ExportConfig;
+  disableCreate?: boolean; 
 }> = ({
   children,
   quickFilters = [],
   advancedFilters = [],
   exportConfig,
+  disableCreate = false, 
 }) => {
   const { datagridData, hasNoResult, resetFilters } = useListEnhancer();
   const raListCtx = useListContext();
   const alert = useGlobalAlert();
 
-  /** ⭐ React-Admin 官方 refresh API */
+  /**  React-Admin 官方 refresh API */
   const refresh = useRefresh();
 
-  /** ⭐ 查無資料 → 顯示提示 */
+  /**  查無資料 → 顯示提示 */
   useEffect(() => {
     if (hasNoResult) {
       alert.trigger("查無匹配的資料，請重新輸入搜尋條件");
     }
   }, [hasNoResult]);
 
-  /** ⭐⭐⭐ 刪除成功 → refresh() */
+  /**  刪除成功 → refresh() */
   useEffect(() => {
     if (alert.lastAction === "delete-success") {
       refresh(); // ← 正確刷新方式
@@ -95,6 +96,7 @@ export const StyledListWrapper: React.FC<{
         advancedFilters={advancedFilters}
         enableExport={!!exportConfig}
         onExport={exportConfig ? handleExport : undefined}
+        disableCreate={disableCreate} 
       />
 
       <ListContextProvider

@@ -32,4 +32,12 @@ export const filterMapping: Record<string, Record<string, string>> = {
         status: "status",
     },
 
+    payments: {
+        supplierName: "supplierName",
+        method: "method",
+        accountingPeriod: "accountingPeriod",
+        fromDate: "fromDate",
+        toDate: "toDate",
+    },
+
 };

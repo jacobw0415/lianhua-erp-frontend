@@ -20,7 +20,12 @@ export const apiRules: Record<string, any> = {
         detail: true,
     },
     purchases: {
-        search: true,  
+        search: true,
+        list: true,
+        detail: true,
+    },
+    payments: {
+        search: true,
         list: true,
         detail: true,
     },
