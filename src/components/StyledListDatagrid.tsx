@@ -52,14 +52,16 @@ const StyledDatagridRoot = styled(Datagrid, {
 
   /** ▌統一 Row 高度（關鍵） */
   "& .RaDatagrid-row": {
-    height: "18px",
-    maxHeight: "25px",
+    height: "42px",
+    maxHeight: "42px",
   },
 
   /** ▌Body Cell */
   "& .MuiTableCell-body": {
     padding: "0 8px !important",
-    height: "48px",
+    height: "42px",
+    lineHeight: "42px",
+    maxHeight: "42px",
     fontSize: "0.8rem",
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -121,21 +123,21 @@ const StyledDatagridRoot = styled(Datagrid, {
   "& .MuiButtonBase-root:focus, & .MuiButtonBase-root:focus-visible": {
     outline: "none !important",
     boxShadow: "none !important",
-  }, 
+  },
 }));
 
 /**
  * ⭐ 外層框（固定 10 行高度）
  */
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
-  const { rowClick = false, maxHeight = "520px", ...rest } = props;
+  const { rowClick = false, maxHeight = "470px", ...rest } = props;
 
   return (
     <Box
       sx={{
         width: "100%",
         flex: 1,
-        height: "520px",
+        height: "470px",
         overflow: "hidden",
         border: "1px solid #ddd",
         borderRadius: 2,
