@@ -44,14 +44,14 @@ export const PurchaseCreate: React.FC = () => {
         });
       }}
     >
-      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         📦 新增進貨資訊
       </Typography>
 
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 4 }}>
         {/* 左側欄位 */}
         <Box sx={{ maxWidth: 600, width: "100%" }}>
-          
+
           {/* 第一列：供應商（加上 mb=2） */}
           <Box mb={2}>
             <SelectInput
@@ -66,7 +66,7 @@ export const PurchaseCreate: React.FC = () => {
             />
           </Box>
 
-           {/* 第二列：品項 + 備註（你選擇放兩欄 → 維持） */}
+          {/* 第二列：品項 + 備註（你選擇放兩欄 → 維持） */}
           <Box display="flex" gap={2} mb={2}>
             <Box flex={1}>
               <TextInput source="item" label="品項" fullWidth />
@@ -100,8 +100,22 @@ export const PurchaseCreate: React.FC = () => {
 
         </Box>
 
-        {/* 右側付款區保持不變 */}
-        <PaymentArrayInput />
+        <Box
+          sx={(theme) => ({
+            borderRadius: 2,
+            width: "400px",
+            bgcolor: theme.palette.background.paper, //  卡片背景
+            border: `2px solid ${theme.palette.divider}`, //  統一邊框風格
+            p: 3,
+            minHeight: "380px",
+          })}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+            ➕ 新增付款紀錄
+          </Typography>
+
+          <PaymentArrayInput />
+        </Box>
       </Box>
     </GenericCreatePage>
   );
@@ -113,17 +127,6 @@ const PaymentArrayInput: React.FC = () => {
   const hasPayment = Array.isArray(payments) && payments.length > 0;
 
   return (
-    <Box
-      sx={{
-        border: "1px solid #e0e0e0",
-        borderRadius: "10px",
-        p: 1,
-      }}
-    >
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        ➕ 新增付款紀錄
-      </Typography>
-
       <ArrayInput source="payments" label="">
         <SimpleFormIterator
           disableAdd={hasPayment}
@@ -155,6 +158,5 @@ const PaymentArrayInput: React.FC = () => {
           />
         </SimpleFormIterator>
       </ArrayInput>
-    </Box>
   );
 };

@@ -74,17 +74,18 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
     >
       {/* ⭐ 標題列 */}
       <Box
-        sx={{
+        sx={(theme) => ({
           p: 2,
           position: "sticky",
           top: 0,
-          bgcolor: "background.paper",
+          bgcolor: theme.palette.background.paper,
           zIndex: 10,
-          borderBottom: "1px solid #ddd",
+          borderBottom: `1px solid ${theme.palette.divider}`,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-        }}
+          transition: "background-color 0.2s ease, border-color 0.2s ease",
+        })}
       >
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           {title}
@@ -97,16 +98,17 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
       {/* ⭐ 合計（可選） */}
       {showTotal && (
         <Box
-          sx={{
+          sx={(theme) => ({
             px: 2,
             py: 1.5,
             position: "sticky",
             top: 64,
-            bgcolor: "background.paper",
+            bgcolor: theme.palette.background.paper,
             zIndex: 9,
-            borderBottom: "1px solid #eee",
+            borderBottom: `1px solid ${theme.palette.divider}`,
             textAlign: "right",
-          }}
+            transition: "background-color 0.2s ease, border-color 0.2s ease",
+          })}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "green" }}>
             合計：NT${totalAmount?.toLocaleString()}
@@ -116,14 +118,14 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
 
       {/* ⭐ 子表內容 */}
       <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-        {/* Layer 1：外層統一框線 */}
         <Box
-          sx={{
-            border: "1px solid #eee",
+          sx={(theme) => ({
+            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 2,
-            bgcolor: "background.default",
-            p: 1.5,
-          }}
+            bgcolor: theme.palette.background.default,
+            p: 2,
+            transition: "background-color 0.2s ease, border-color 0.2s ease",
+          })}
         >
           <Typography
             variant="subtitle2"
@@ -141,26 +143,26 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
 
           {rows.length === 0 ? (
             <Box
-              sx={{
+              sx={(theme) => ({
                 width: "100%",
                 height: "120px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#999",
+                color: theme.palette.text.disabled,
                 fontSize: "0.9rem",
-              }}
+              })}
             >
               尚無資料
             </Box>
           ) : (
             <ListContextProvider value={listContext}>
               {/* Layer 2：滾動專用容器 */}
-              <Box
-                sx={{
-                  border: "1px solid #eee",
+               <Box
+                sx={(theme) => ({
+                  border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 1,
-                  maxHeight: maxHeight,
+                  maxHeight,
                   overflowY: enableScroll ? "auto" : "visible",
 
                   "&::-webkit-scrollbar": {
@@ -173,7 +175,7 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
                     background: "#c1c1c1",
                     borderRadius: "4px",
                   },
-                }}
+                })}
               >
                 {/* Layer 3：Datagrid（圓角避免缺角） */}
                 <Datagrid

@@ -1,29 +1,22 @@
 import * as React from "react";
 import { Layout } from "react-admin";
 import { CustomMenu } from "./CustomMenu";
-import { CustomAppBar } from "./CustomAppBar";
 import { CustomSidebar } from "./CustomSidebar";
+import { CustomAppBar } from "./CustomAppBar";
 
-interface CustomLayoutProps {
-    darkMode: boolean;
-    setDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export const CustomLayout = (props: any) => {
+    const appBar = React.useCallback(CustomAppBar, []);
+    const menu = React.useCallback(CustomMenu, []);
+    const sidebar = React.useCallback(CustomSidebar, []);
 
-export const CustomLayout = ({
-    darkMode,
-    setDarkMode,
-    ...props
-}: CustomLayoutProps & any) => (
-    <Layout
-        {...props}
-        menu={CustomMenu}
-        sidebar={CustomSidebar}
-        appBar={(appBarProps) => (
-            <CustomAppBar
-                {...appBarProps}
-                darkMode={darkMode}
-                setDarkMode={setDarkMode}
-            />
-        )}
-    />
-);
+    return (
+        <Layout
+            {...props}
+            appBar={appBar}
+            menu={menu}
+            sidebar={sidebar}
+        />
+    );
+};
+
+CustomLayout.displayName = "CustomLayout";

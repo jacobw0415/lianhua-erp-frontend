@@ -13,7 +13,7 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
 export const SupplierList = () => (
   <List
-    title="供應商清單"
+    title="供應商紀錄"
     actions={false}
     empty={false}
     pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}

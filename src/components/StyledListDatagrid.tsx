@@ -37,7 +37,6 @@ const StyledDatagridRoot = styled(Datagrid, {
     top: 0,
     zIndex: 2,
     backgroundColor: theme.palette.background.paper,
-    boxShadow: "0 2px 3px rgba(0,0,0,0.05)",
   },
 
   /** ▌Header Cell */
@@ -134,17 +133,16 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         width: "100%",
         flex: 1,
         height: "470px",
         overflow: "hidden",
-        border: "1px solid #ddd",
+        border: `1px solid ${theme.palette.action.disabled}`,   
         borderRadius: 2,
-        bgcolor: "background.paper",
         display: "flex",
         flexDirection: "column",
-      }}
+      })}
     >
       <StyledDatagridRoot
         empty={<EmptyPlaceholder />}

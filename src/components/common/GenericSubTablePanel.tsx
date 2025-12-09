@@ -37,16 +37,16 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
 
   return (
     <Box
-      sx={{
-        border: "1px solid #e0e0e0",
+      sx={(theme) => ({
+        bgcolor: theme.palette.background.paper, //  卡片背景
+        border: `2px solid ${theme.palette.divider}`, //  統一邊框風格
         borderRadius: 2,
         p: 1.5,
-        bgcolor: "background.default",
         minHeight: "200px",
         display: "flex",
         width: "100%",
         flexDirection: "column",
-      }}
+      })}
     >
       <Typography
         variant="subtitle2"
@@ -79,9 +79,12 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
       ) : (
         <ListContextProvider value={listContext}>
           <Box
-            sx={{
-              border: "1px solid #eee",
-              borderRadius: 1,
+            sx={(theme) => ({
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: 2,
+              bgcolor: theme.palette.background.paper, //  卡片背景
+              border: `2px solid ${theme.palette.divider}`, //  統一邊框風格
               maxHeight: maxHeight,
               width: "100%",
               overflowY: enableScroll ? "auto" : "visible",
@@ -90,7 +93,7 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
                 background: "#c1c1c1",
                 borderRadius: 4,
               },
-            }}
+            })}
           >
             <Datagrid
               bulkActionButtons={false}

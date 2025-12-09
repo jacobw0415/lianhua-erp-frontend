@@ -66,7 +66,7 @@ export const menuGroups: MenuGroup[] = [
     label: "採購管理",
     icon: <ShoppingCartCheckoutTwoToneIcon />,
     items: [
-      { label: "供應商管理", to: "/suppliers", icon: <StorefrontIcon /> },
+      { label: "供應商紀錄", to: "/suppliers", icon: <StorefrontIcon /> },
       { label: "進貨紀錄", to: "/purchases", icon: <Inventory2Icon /> },
       { label: "付款紀錄", to: "/payments", icon: <PaymentIcon /> },
       { label: "應付帳款", to: "/ap-aging", icon: <ReceiptLongIcon /> },

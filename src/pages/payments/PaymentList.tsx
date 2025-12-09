@@ -1,34 +1,25 @@
-import {
-  List,
-  TextField,
-  DateField,
-} from "react-admin";
-
+import { List, TextField, DateField, FunctionField, useRedirect } from "react-admin";
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
-import { CustomPaginationBar} from "@/components/pagination/CustomPagination";
+import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
 export const PaymentList = () => {
+  const redirect = useRedirect();
+
   return (
     <List
       title="付款紀錄"
       actions={false}
-      pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}
+      pagination={<CustomPaginationBar showPerPage={true} />}
+      perPage={10}
       filterDefaultValues={{ init: 1 }}
     >
       <StyledListWrapper
         disableCreate={true}
-        /* ---------------------------------------------------------
-         *   Quick Filters（簡易搜尋）
-         * --------------------------------------------------------- */
         quickFilters={[
           { type: "text", source: "supplierName", label: "供應商名稱" },
         ]}
-
-        /* ---------------------------------------------------------
-         *   Advanced Filters（進階搜尋）
-         * --------------------------------------------------------- */
         advancedFilters={[
           {
             type: "select",
@@ -49,10 +40,6 @@ export const PaymentList = () => {
           { type: "date", source: "fromDate", label: "付款日（起）" },
           { type: "date", source: "toDate", label: "付款日（迄）" },
         ]}
-
-        /* ---------------------------------------------------------
-         *   匯出 Excel 設定（更新後與頁面一致）
-         * --------------------------------------------------------- */
         exportConfig={{
           filename: "payment_export",
           format: "excel",
@@ -67,15 +54,36 @@ export const PaymentList = () => {
           ],
         }}
       >
-        {/* ---------------------------------------------------------
-         *    Datagrid（資料表）
-         * --------------------------------------------------------- */}
         <StyledListDatagrid>
           <TextField source="supplierName" label="供應商" />
           <DateField source="payDate" label="付款日期" />
           <CurrencyField source="amount" label="金額" />
           <TextField source="method" label="付款方式" />
-          <TextField source="purchaseId" label="進貨單編號" />
+
+          {/* ⭐ 可點擊的進貨單編號 */}
+          <FunctionField
+            label="進貨單編號"
+            render={(record) =>
+              record?.purchaseId ? (
+                <span
+                  style={{
+                    color: "#4CAF50",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    redirect(`/purchases/${record.purchaseId}`);
+                  }}
+                >
+                  {record.purchaseId}
+                </span>
+              ) : (
+                "-"
+              )
+            }
+          />
+
           <TextField source="accountingPeriod" label="會計期間" />
           <TextField source="note" label="備註" />
         </StyledListDatagrid>

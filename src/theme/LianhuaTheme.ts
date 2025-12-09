@@ -50,13 +50,20 @@ export const LianhuaLightTheme = createTheme({
      * 全域 ButtonBase / IconButton 禁用 focus/active
      * -------------------------------------------------- */
     MuiCssBaseline: {
-      styleOverrides: `
-      button:focus,
-      button:focus-visible {
-        outline: none !important;
-        box-shadow: none !important;
-      }
-    `,
+      styleOverrides: {
+        // 移除所有 transition（解決色調延遲）
+        '*': {
+          transition: 'none !important',
+        },
+
+        // 移除按鈕 focus 外框殘影
+        button: {
+          '&:focus, &:focus-visible': {
+            outline: 'none !important',
+            boxShadow: 'none !important',
+          },
+        },
+      },
     },
 
     MuiIconButton: {

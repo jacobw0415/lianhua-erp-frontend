@@ -67,7 +67,7 @@ const PurchaseFormFields: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         📦 編輯進貨資訊
       </Typography>
 
@@ -77,10 +77,11 @@ const PurchaseFormFields: React.FC = () => {
           gridTemplateColumns: "400px 1fr",
           gap: 4,
           alignItems: "start",
+          height: "370px",
         }}
       >
         {/* 左側：歷史付款紀錄 + 狀態 */}
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%", }}>
           <GenericSubTablePanel
             title="💰 歷史付款紀錄"
             rows={payments}
@@ -94,15 +95,16 @@ const PurchaseFormFields: React.FC = () => {
 
           {/* 目前付款狀態區 */}
           <Box
-            sx={{
-              border: "1px solid #e0e0e0",
+            sx={(theme) => ({
               borderRadius: "10px",
-              p: 2,
-              mt: 2,
-            }}
+              bgcolor: theme.palette.background.paper, //  卡片背景
+              border: `2px solid ${theme.palette.divider}`, //  統一邊框風格
+              p: 0.7,
+              mt: 0.7,
+            })}
           >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              💡 目前付款狀況
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, backgroundColor: "#9d99995b", borderRadius: "5px", }}>
+              💡 目前付款進度
             </Typography>
 
             <Typography sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -128,7 +130,7 @@ const PurchaseFormFields: React.FC = () => {
                     ? "warning"
                     : "info"
               }
-              sx={{ mt: 1 }}
+              sx={{ mt: 0.3 }}
             >
               狀態：{record.status}
             </Alert>
@@ -137,15 +139,16 @@ const PurchaseFormFields: React.FC = () => {
 
         {/* 右側：新增付款紀錄 */}
         <Box
-          sx={{
+          sx={(theme) => ({
+            borderRadius: 2,
             width: "400px",
-            border: "1px solid #e0e0e0",
-            borderRadius: "10px",
+            bgcolor: theme.palette.background.paper, //  卡片背景
+            border: `2px solid ${theme.palette.divider}`, //  統一邊框風格
             p: 3,
-            minHeight: "410px",
-          }}
+            minHeight: "380px",
+          })}
         >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
             ➕ 新增付款紀錄
           </Typography>
 
@@ -169,6 +172,7 @@ const PaymentArrayInput: React.FC = () => {
       <SimpleFormIterator
         disableAdd={hasPayment}
         disableRemove={true}
+        disableReordering={true}
         getItemLabel={() => ""}
       >
         <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />

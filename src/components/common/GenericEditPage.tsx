@@ -129,14 +129,24 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ pt: "50px", display: "flex", justifyContent: "center" }}>
+      <Box
+        sx={(theme) => ({
+          pt: "50px",
+          display: "flex",
+          justifyContent: "center", 
+          bgcolor: theme.palette.background.default,
+        })}
+      >
         <Box
-          sx={{
+          sx={(theme) => ({
             width,
-            backgroundColor: "background.paper",
+            maxWidth: width,
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: theme.shadows[3],
             borderRadius: "12px",
             padding: "2rem 3rem",
-          }}
+          })}
         >
           <Edit title={title} actions={false}>
             <EditContent

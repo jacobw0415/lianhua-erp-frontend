@@ -4,7 +4,7 @@ import {
   useListContext,
   ListContextProvider,
   type ListControllerResult,
-  useRefresh,         
+  useRefresh,
 } from "react-admin";
 
 import { GenericFilterBar } from "./GenericFilterBar";
@@ -32,89 +32,99 @@ export const StyledListWrapper: React.FC<{
   advancedFilters?: any[];
   popoverWidth?: number | string;
   exportConfig?: ExportConfig;
-  disableCreate?: boolean; 
+  disableCreate?: boolean;
 }> = ({
   children,
   quickFilters = [],
   advancedFilters = [],
   exportConfig,
-  disableCreate = false, 
+  disableCreate = false,
 }) => {
-  const { datagridData, hasNoResult, resetFilters } = useListEnhancer();
-  const raListCtx = useListContext();
-  const alert = useGlobalAlert();
+    const { datagridData, hasNoResult, resetFilters } = useListEnhancer();
+    const raListCtx = useListContext();
+    const alert = useGlobalAlert();
 
-  /**  React-Admin 官方 refresh API */
-  const refresh = useRefresh();
+    /**  React-Admin 官方 refresh API */
+    const refresh = useRefresh();
 
-  /**  查無資料 → 顯示提示 */
-  useEffect(() => {
-    if (hasNoResult) {
-      alert.trigger("查無匹配的資料，請重新輸入搜尋條件");
-    }
-  }, [hasNoResult]);
+    /**  查無資料 → 顯示提示 */
+    useEffect(() => {
+      if (hasNoResult) {
+        alert.trigger("查無匹配的資料，請重新輸入搜尋條件");
+      }
+    }, [hasNoResult]);
 
-  /**  刪除成功 → refresh() */
-  useEffect(() => {
-    if (alert.lastAction === "delete-success") {
-      refresh(); // ← 正確刷新方式
-    }
-  }, [alert.lastAction]);
+    /**  刪除成功 → refresh() */
+    useEffect(() => {
+      if (alert.lastAction === "delete-success") {
+        refresh(); // ← 正確刷新方式
+      }
+    }, [alert.lastAction]);
 
-  /** 匯出 */
-  const handleExport = () => {
-    if (!raListCtx.data || !exportConfig) return;
+    /** 匯出 */
+    const handleExport = () => {
+      if (!raListCtx.data || !exportConfig) return;
 
-    const { filename, format = "excel", columns } = exportConfig;
+      const { filename, format = "excel", columns } = exportConfig;
 
-    if (format === "excel") exportExcel(raListCtx.data, filename, columns);
-    else exportCsv(raListCtx.data, filename);
-  };
+      if (format === "excel") exportExcel(raListCtx.data, filename, columns);
+      else exportCsv(raListCtx.data, filename);
+    };
 
-  /** 合成 ListContext */
-  const enhancedListContext: Partial<ListControllerResult<any>> = {
-    ...raListCtx,
+    /** 合成 ListContext */
+    const enhancedListContext: Partial<ListControllerResult<any>> = {
+      ...raListCtx,
 
-    /**  設定資料來源：查無結果才使用背景快取 */
-    data: hasNoResult ? datagridData : raListCtx.data, 
+      /**  設定資料來源：查無結果才使用背景快取 */
+      data: hasNoResult ? datagridData : raListCtx.data,
 
-    /**  正確 total 來源：查無結果才用快取長度 */
-    total: hasNoResult
-    ? datagridData?.length ?? 0
-    : raListCtx.total,
-    isLoading: false,
-    isFetching: false,
-    isPending: false,
-    isPlaceholderData: false,
-    error: null,
-  };
+      /**  正確 total 來源：查無結果才用快取長度 */
+      total: hasNoResult
+        ? datagridData?.length ?? 0
+        : raListCtx.total,
+      isLoading: false,
+      isFetching: false,
+      isPending: false,
+      isPlaceholderData: false,
+      error: null,
+    };
 
-  return (
-    <Box sx={{ width: "100%", padding: "16px 16px", height: "570px", boxSizing: "border-box", }}>
-      <GenericFilterBar
-        quickFilters={quickFilters}
-        advancedFilters={advancedFilters}
-        enableExport={!!exportConfig}
-        onExport={exportConfig ? handleExport : undefined}
-        disableCreate={disableCreate} 
-      />
-
-      <ListContextProvider
-        value={enhancedListContext as ListControllerResult<any>}
+    return (
+      <Box
+        sx={(theme) => ({
+          width: "100%",
+          padding: "16px 16px",
+          height: "570px",
+          boxSizing: "border-box",
+          borderRadius: 2,
+          border: `1px solid ${theme.palette.action.disabled}`,
+          bgcolor: theme.palette.background.paper,
+        })}
       >
-        {children}
-      </ListContextProvider>
+        <GenericFilterBar
+          quickFilters={quickFilters}
+          advancedFilters={advancedFilters}
+          enableExport={!!exportConfig}
+          onExport={exportConfig ? handleExport : undefined}
+          disableCreate={disableCreate}
+        />
 
-      <GlobalAlertDialog
-        open={alert.open}
-        message={alert.message}
-        onClose={() => {
-          alert.close();
-          if (hasNoResult) resetFilters();
-        }}
-      />
-    </Box>
-  );
-};
+        <ListContextProvider
+          value={enhancedListContext as ListControllerResult<any>}
+        >
+          {children}
+        </ListContextProvider>
+
+        <GlobalAlertDialog
+          open={alert.open}
+          message={alert.message}
+          onClose={() => {
+            alert.close();
+            if (hasNoResult) resetFilters();
+          }}
+        />
+      </Box>
+    );
+  };
 
 export default StyledListWrapper;

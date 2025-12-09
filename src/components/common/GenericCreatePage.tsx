@@ -37,6 +37,7 @@ const CustomToolbar = ({ onBack }: { onBack: () => void }) => (
     >
       返回
     </Button>
+
     <SaveButton label="儲存" color="success" />
   </Toolbar>
 );
@@ -53,28 +54,26 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      {/* ⭐ 只要這一層包住，所有自訂 DatePicker 就不會報錯了 */}
-
       <Box
-        sx={{
+        sx={(theme) => ({
           display: "flex",
           justifyContent: "center",
-          alignItems: "flex-start",
-          paddingTop: "50px",
-          height: "calc(100vh - 64px)",
-          backgroundColor: "background.default",
-        }}
+          paddingTop: "40px",
+          minHeight: "calc(100vh - 64px)",
+          bgcolor: theme.palette.background.default, 
+        })}
       >
         <Box
-          sx={{
-            width: width,
+          sx={(theme) => ({
+            width,
             maxWidth: width,
-            backgroundColor: "background.paper",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+            borderRadius: 2,
+            bgcolor: theme.palette.background.paper, //  卡片背景
+            border: `1px solid ${theme.palette.divider}`, //  統一邊框風格
+            boxShadow: theme.shadows[3],
             padding: "2rem 3rem",
-            mb: 8,
-          }}
+            mb: 6,
+          })}
         >
           <Create
             title={title}

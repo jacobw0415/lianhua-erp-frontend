@@ -327,8 +327,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         sx={{
           p: "6px 10px",
           mb: 1,
-          borderRadius: 1.2,
-          border: "1px solid #ddd",
+          borderRadius: 2,
+          border: `1px solid ${theme.palette.action.disabled}`,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
