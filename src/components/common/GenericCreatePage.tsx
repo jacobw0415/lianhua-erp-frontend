@@ -59,7 +59,6 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
           display: "flex",
           justifyContent: "center",
           paddingTop: "40px",
-          minHeight: "calc(100vh - 64px)",
           bgcolor: theme.palette.background.default, 
         })}
       >
@@ -72,7 +71,6 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
             border: `1px solid ${theme.palette.divider}`, //  統一邊框風格
             boxShadow: theme.shadows[3],
             padding: "2rem 3rem",
-            mb: 6,
           })}
         >
           <Create
