@@ -15,6 +15,7 @@ import { useState } from "react";
 import { PaymentDrawer } from "./PaymentDrawer";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { CustomPaginationBar} from "@/components/pagination/CustomPagination";
 
 export const PurchaseList = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -30,8 +31,7 @@ export const PurchaseList = () => {
       <List
         title="進貨紀錄"
         actions={false}
-        pagination={<Pagination rowsPerPageOptions={[10, 25, 50]} />}
-        perPage={10}
+        pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}
         filterDefaultValues={{ init: 1 }}
       >
         <StyledListWrapper

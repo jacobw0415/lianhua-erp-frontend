@@ -2,20 +2,19 @@ import {
   List,
   TextField,
   DateField,
-  Pagination,
 } from "react-admin";
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { CustomPaginationBar} from "@/components/pagination/CustomPagination";
 
 export const PaymentList = () => {
   return (
     <List
       title="付款紀錄"
       actions={false}
-      pagination={<Pagination rowsPerPageOptions={[10, 25, 50]} />}
-      perPage={10}
+      pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}
       filterDefaultValues={{ init: 1 }}
     >
       <StyledListWrapper

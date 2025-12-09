@@ -1,7 +1,6 @@
 import {
   List,
   TextField,
-  Pagination,
   FunctionField,
 } from "react-admin";
 
@@ -10,14 +9,15 @@ import { ActionColumns } from "@/components/common/ActionColumns";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { SupplierStatusToggle } from "./SupplierStatusToggle";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
+import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
 export const SupplierList = () => (
   <List
     title="供應商清單"
     actions={false}
     empty={false}
-    pagination={<Pagination rowsPerPageOptions={[10, 25, 50]} />}
-    perPage={10}
+    pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}
+    filterDefaultValues={{ init: 1 }}
   >
     <StyledListWrapper
       quickFilters={[
