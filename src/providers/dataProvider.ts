@@ -129,6 +129,8 @@ export const createDataProvider = ({
                 "paidAmount",
                 "balance",
                 "status",
+                "payDate",
+                "supplier",
             ];
 
             if (field && allowedSortFields.includes(field)) {
