@@ -96,6 +96,41 @@ export const createDataProvider = ({
          * getList
          * ==================================================== */
         getList(resource, params) {
+            /** ============================================================
+            * 📘 Report 模組（AP Aging / AR Aging）
+            * ============================================================ */
+            if (resource === "ap-aging" || resource === "ar-aging") {
+                const filters = params.filter || {};
+
+                const query = new URLSearchParams();
+
+                if (filters.supplierId) query.append("supplierId", filters.supplierId);
+                if (filters.customerId) query.append("customerId", filters.customerId);
+                if (filters.minOverdue) query.append("minOverdue", filters.minOverdue);
+                if (filters.period) query.append("period", filters.period);
+
+                const endpoint =
+                    resource === "ap-aging"
+                        ? `${apiUrl}/reports/ap-aging`
+                        : `${apiUrl}/reports/ar-aging`;
+
+                const url = `${endpoint}?${query.toString()}`;
+
+                return httpClientSafe(url).then(({ json }) => {
+                    const list = json?.data ?? json ?? [];
+
+                    const data = list.map((row: any, idx: number) => ({
+                        id: idx + 1,
+                        ...row,
+                    }));
+
+                    return {
+                        data,
+                        total: data.length,
+                    };
+                });
+            }
+
             const rules = apiRules[resource] ?? {};
             const mapping = filterMapping[resource] ?? {};
 
