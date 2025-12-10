@@ -7,21 +7,25 @@ import {
 
 import {
   Collapse,
-  ListItemButton,
+  Tooltip,
   ListItemIcon,
   ListItemText,
-  Tooltip,
-  Box,
+  ListItemButton,
 } from "@mui/material";
 
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import { useLocation } from "react-router-dom";
 
 import { menuGroups } from "./menuConfig";
 
 export const CustomMenu = () => {
   const [open] = useSidebarState();
-  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({});
+  const location = useLocation();
+
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
+    {}
+  );
 
   const toggleGroup = (key: string) => {
     setOpenGroups((prev) => ({
@@ -30,56 +34,83 @@ export const CustomMenu = () => {
     }));
   };
 
-  // ⭐ 自動展開當前路徑所在的模組
-  const currentPath = window.location.pathname;
-
+  /** ⭐ 自動展開當前路徑 */
   React.useEffect(() => {
     menuGroups.forEach((group) => {
-      const match = group.items.some((item) => currentPath.startsWith(item.to));
-      if (match) {
+      const matched = group.items.some((item) =>
+        location.pathname.startsWith(item.to)
+      );
+      if (matched) {
         setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
       }
     });
-  }, [currentPath]);
+  }, [location.pathname]);
 
   return (
     <Menu
       sx={{
         "& .RaMenuItemLink-root": {
-          borderRadius: 2,
+          borderRadius: 1.2,
           marginY: 0.3,
-          paddingY: 0.7,
-          paddingLeft: open ? 2 : 1,
+          paddingY: 0.6,
+          transition: "all 0.25s ease",
+          width: "100%",
+        },
+
+        "& .RaMenuItemLink-active": {
+          bgcolor: "action.selected",
+          "& svg": {
+            color: "primary.main !important",
+          },
         },
       }}
     >
       {menuGroups.map((group) => {
         const isOpen = openGroups[group.label];
 
-        const groupButton = (
+        /**  Group Header（加上柔順動畫） */
+        const groupHeader = (
           <ListItemButton
             onClick={() => toggleGroup(group.label)}
             sx={{
+              width: "100%",
               borderRadius: 1,
               pl: open ? 2 : 1,
-              mb: 0.2,
-              height: 42,
-              bgcolor: isOpen ? "rgba(0,0,0,0.06)" : "transparent",
-              transition: "padding 0.2s ease, background-color 0.2s ease",
+              pr: open ? 1 : 1,
+              py: 0.8,
+              mt: 0.5,
+              height: 40,
+              bgcolor: isOpen ? "action.selected" : "transparent",
 
-              // ⭐ icon + text 動畫
+              transition:
+                "padding 0.25s ease, background-color 0.25s ease, color 0.25s ease",
+
+              "&:hover": {
+                bgcolor: "action.hover",
+              },
+
+              /** ⭐ 文字淡入淡出 + 滑動動畫 */
               "& .MuiListItemText-root": {
+                ml: 1,
                 opacity: open ? 1 : 0,
-                transform: open ? "translateX(0)" : "translateX(-10px)",
-                transition: "opacity 0.2s ease, transform 0.2s ease",
+                transform: open ? "translateX(0)" : "translateX(-8px)",
+                transition: "opacity 0.25s ease, transform 0.25s ease",
               },
             }}
           >
+            {/* ICON */}
             <ListItemIcon
               sx={{
-                minWidth: 36,
-                justifyContent: "center", // icon 不跳動
-                transition: "color 0.2s ease",
+                minWidth: 32,
+                justifyContent: open ? "flex-start" : "center",
+                transition: "all 0.25s ease",
+
+                "& svg": {
+                  color: isOpen
+                    ? "primary.main"
+                    : "text.secondary",
+                  transition: "color 0.25s ease",
+                },
               }}
             >
               {group.icon}
@@ -88,51 +119,81 @@ export const CustomMenu = () => {
             {open && (
               <ListItemText
                 primary={group.label}
-                sx={{
-                  whiteSpace: "nowrap",
+                primaryTypographyProps={{
+                  fontSize: 15,
+                  fontWeight: 500,
                 }}
               />
             )}
 
-            {open && (isOpen ? <ExpandLess /> : <ExpandMore />)}
+            {open &&
+              (isOpen ? (
+                <ExpandLess fontSize="small" />
+              ) : (
+                <ExpandMore fontSize="small" />
+              ))}
           </ListItemButton>
         );
 
         return (
           <React.Fragment key={group.label}>
-            {/* Sidebar 收起時 → 使用 tooltip */}
             {open ? (
-              groupButton
+              groupHeader
             ) : (
               <Tooltip title={group.label} placement="right">
-                {groupButton}
+                {groupHeader}
               </Tooltip>
             )}
 
-            {/* 子選單 Collapse */}
-            <Collapse in={isOpen} timeout={200} unmountOnExit>
-              {group.items.map((item) => (
-                <MenuItemLink
-                  key={item.to}
-                  to={item.to}
-                  primaryText={item.label}
-                  leftIcon={
-                    item.icon ? item.icon : <Box sx={{ width: 24, height: 24 }} />
-                  }
-                  sx={{
-                    pl: open ? 6 : 4,
-                    py: 0.6,
-                    height: 36,
+            {/*  子選單 Collapse （動畫已自帶） */}
+            <Collapse in={isOpen} timeout={250} unmountOnExit>
+              {group.items.map((item) => {
 
-                    // ⭐ 子項目淡入滑動動畫
-                    "& .RaMenuItemLink-primaryText": {
-                      opacity: open ? 1 : 0,
-                      transform: open ? "translateX(0)" : "translateX(-8px)",
-                      transition: "opacity 0.2s ease, transform 0.2s ease",
-                    },
-                  }}
-                />
-              ))}
+                return (
+                  <MenuItemLink
+                    key={item.to}
+                    to={item.to}
+                    primaryText={item.label}
+                    leftIcon={item.icon}
+                    sx={{
+                      width: "100%",
+                      pl: open ? 6 : 1.5,
+                      pr: open ? 2 : 1.5,
+                      py: 0.6,
+                      minHeight: 38,
+                      borderRadius: 1,
+
+                      transition:
+                        "padding 0.25s ease, background-color 0.25s ease",
+
+                      //  收合時文字淡出 + 滑動
+                      "& .RaMenuItemLink-primaryText": {
+                        display: open ? "block" : "block", 
+                        opacity: open ? 1 : 0,
+                        transform: open ? "translateX(0)" : "translateX(-8px)",
+                        transition: "opacity 0.25s ease, transform 0.25s ease",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        width: open ? "auto" : 0,
+                      },
+
+                      // ICON 位置
+                      "& .MuiListItemIcon-root": {
+                        minWidth: open ? 36 : 32,
+                        justifyContent: open ? "flex-start" : "center",
+                        transition: "all 0.25s ease",
+                      },
+
+                      "&.RaMenuItemLink-active": {
+                        bgcolor: "action.selected",
+                        "& svg": {
+                          color: "primary.main !important",
+                        },
+                      },
+                    }}
+                  />
+                );
+              })}
             </Collapse>
           </React.Fragment>
         );
