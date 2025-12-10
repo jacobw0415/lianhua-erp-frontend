@@ -35,16 +35,22 @@ export const CustomMenu = () => {
   };
 
   /** ⭐ 自動展開當前路徑 */
-  React.useEffect(() => {
-    menuGroups.forEach((group) => {
-      const matched = group.items.some((item) =>
-        location.pathname.startsWith(item.to)
-      );
-      if (matched) {
-        setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
+ React.useEffect(() => {
+  menuGroups.forEach((group) => {
+    const matched = group.items.some((item) => {
+      // Dashboard 特例：只能在 "/" 時匹配
+      if (item.to === "/") {
+        return location.pathname === "/";
       }
+      // 其他頁面正常比對
+      return location.pathname.startsWith(item.to);
     });
-  }, [location.pathname]);
+
+    if (matched) {
+      setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
+    }
+  });
+}, [location.pathname]);
 
   return (
     <Menu

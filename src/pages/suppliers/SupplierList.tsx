@@ -17,7 +17,6 @@ export const SupplierList = () => (
     actions={false}
     empty={false}
     pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}
-    filterDefaultValues={{ init: 1 }}
   >
     <StyledListWrapper
       quickFilters={[

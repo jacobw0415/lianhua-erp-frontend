@@ -32,7 +32,6 @@ export const PurchaseList = () => {
         title="進貨紀錄"
         actions={false}
         pagination={<CustomPaginationBar showPerPage={true} />} perPage={10}
-        filterDefaultValues={{ init: 1 }}
       >
         <StyledListWrapper
           /* ---------------------------------------------------------

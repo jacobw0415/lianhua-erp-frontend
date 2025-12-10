@@ -13,7 +13,6 @@ export const PaymentList = () => {
       actions={false}
       pagination={<CustomPaginationBar showPerPage={true} />}
       perPage={10}
-      filterDefaultValues={{ init: 1 }}
     >
       <StyledListWrapper
         disableCreate={true}
