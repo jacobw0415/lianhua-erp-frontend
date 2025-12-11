@@ -69,7 +69,7 @@ export const menuGroups: MenuGroup[] = [
       { label: "供應商紀錄", to: "/suppliers", icon: <StorefrontIcon /> },
       { label: "進貨紀錄", to: "/purchases", icon: <Inventory2Icon /> },
       { label: "付款紀錄", to: "/payments", icon: <PaymentIcon /> },
-      { label: "應付帳款", to: "/ap-aging", icon: <ReceiptLongIcon /> },
+      { label: "應付帳款", to: "/ap", icon: <ReceiptLongIcon /> },
     ],
   },
 
@@ -81,7 +81,7 @@ export const menuGroups: MenuGroup[] = [
       { label: "客戶管理", to: "/order-customers", icon: <GroupIcon /> },
       { label: "訂單管理", to: "/orders", icon: <ShoppingBagIcon /> },
       { label: "收款紀錄", to: "/receipts", icon: <AttachMoneyIcon /> },
-      { label: "應收帳款", to: "/ar-aging", icon: <RequestQuoteIcon /> },
+      { label: "應收帳款", to: "/ar", icon: <RequestQuoteIcon /> },
     ],
   },
 

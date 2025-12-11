@@ -1,16 +1,16 @@
 import * as React from "react";
 import {
-  Menu,
-  MenuItemLink,
-  useSidebarState,
+    Menu,
+    MenuItemLink,
+    useSidebarState,
 } from "react-admin";
 
 import {
-  Collapse,
-  Tooltip,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
+    Collapse,
+    Tooltip,
+    ListItemIcon,
+    ListItemText,
+    ListItemButton,
 } from "@mui/material";
 
 import ExpandLess from "@mui/icons-material/ExpandLess";
@@ -20,192 +20,192 @@ import { useLocation } from "react-router-dom";
 import { menuGroups } from "./menuConfig";
 
 export const CustomMenu = () => {
-  const [open] = useSidebarState();
-  const location = useLocation();
+    const [open] = useSidebarState();
+    const location = useLocation();
 
-  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
-    {}
-  );
+    /** ⭐ 控制每組選單的開關 */
+    const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({});
 
-  const toggleGroup = (key: string) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+    const toggleGroup = (key: string) => {
+        setOpenGroups((prev) => ({
+            ...prev,
+            [key]: !prev[key],
+        }));
+    };
 
-  /** ⭐ 自動展開當前路徑 */
- React.useEffect(() => {
-  menuGroups.forEach((group) => {
-    const matched = group.items.some((item) => {
-      // Dashboard 特例：只能在 "/" 時匹配
-      if (item.to === "/") {
-        return location.pathname === "/";
-      }
-      // 其他頁面正常比對
-      return location.pathname.startsWith(item.to);
-    });
+    /** ⭐ 自動展開當前路徑所在的 menuGroup */
+    React.useEffect(() => {
+        menuGroups.forEach((group) => {
+            const matched = group.items.some((item) => {
+                if (item.to === "/") return location.pathname === "/";
+                return location.pathname.startsWith(item.to);
+            });
 
-    if (matched) {
-      setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
-    }
-  });
-}, [location.pathname]);
+            if (matched) {
+                setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
+            }
+        });
+    }, [location.pathname]);
 
-  return (
-    <Menu
-      sx={{
-        "& .RaMenuItemLink-root": {
-          borderRadius: 1.2,
-          marginY: 0.3,
-          paddingY: 0.6,
-          transition: "all 0.25s ease",
-          width: "100%",
-        },
-
-        "& .RaMenuItemLink-active": {
-          bgcolor: "action.selected",
-          "& svg": {
-            color: "primary.main !important",
-          },
-        },
-      }}
-    >
-      {menuGroups.map((group) => {
-        const isOpen = openGroups[group.label];
-
-        /**  Group Header（加上柔順動畫） */
-        const groupHeader = (
-          <ListItemButton
-            onClick={() => toggleGroup(group.label)}
+    /** ============================================================
+     * ⭐ 主體渲染
+     * ============================================================ */
+    return (
+        <Menu
             sx={{
-              width: "100%",
-              borderRadius: 1,
-              pl: open ? 2 : 1,
-              pr: open ? 1 : 1,
-              py: 0.8,
-              mt: 0.5,
-              height: 40,
-              bgcolor: isOpen ? "action.selected" : "transparent",
-
-              transition:
-                "padding 0.25s ease, background-color 0.25s ease, color 0.25s ease",
-
-              "&:hover": {
-                bgcolor: "action.hover",
-              },
-
-              /** ⭐ 文字淡入淡出 + 滑動動畫 */
-              "& .MuiListItemText-root": {
-                ml: 1,
-                opacity: open ? 1 : 0,
-                transform: open ? "translateX(0)" : "translateX(-8px)",
-                transition: "opacity 0.25s ease, transform 0.25s ease",
-              },
-            }}
-          >
-            {/* ICON */}
-            <ListItemIcon
-              sx={{
-                minWidth: 32,
-                justifyContent: open ? "flex-start" : "center",
-                transition: "all 0.25s ease",
-
-                "& svg": {
-                  color: isOpen
-                    ? "primary.main"
-                    : "text.secondary",
-                  transition: "color 0.25s ease",
+                "& .RaMenuItemLink-root": {
+                    borderRadius: 1.2,
+                    marginY: 0.3,
+                    paddingY: 0.6,
+                    transition: "all 0.25s ease",
+                    width: "100%",
                 },
-              }}
-            >
-              {group.icon}
-            </ListItemIcon>
+                "& .RaMenuItemLink-active": {
+                    bgcolor: "action.selected",
+                    "& svg": { color: "primary.main !important" },
+                },
+            }}
+        >
+            {menuGroups.flatMap((group) => {
+                const isOpen = openGroups[group.label];
 
-            {open && (
-              <ListItemText
-                primary={group.label}
-                primaryTypographyProps={{
-                  fontSize: 15,
-                  fontWeight: 500,
-                }}
-              />
-            )}
+                /** ==============================
+                 *  ⭐ GROUP HEADER（含動畫）
+                 * ============================== */
+                const groupHeader = (
+                    <ListItemButton
+                        onClick={() => toggleGroup(group.label)}
+                        sx={{
+                            width: "100%",
+                            borderRadius: 1,
+                            pl: open ? 2 : 1,
+                            pr: open ? 1 : 1,
+                            py: 0.8,
+                            mt: 0.5,
+                            height: 40,
+                            bgcolor: isOpen ? "action.selected" : "transparent",
+                            transition:
+                                "padding 0.25s ease, background-color 0.25s ease, color 0.25s ease",
+                            "&:hover": {
+                                bgcolor: "action.hover",
+                            },
+                            "& .MuiListItemText-root": {
+                                ml: 1,
+                                opacity: open ? 1 : 0,
+                                transform: open ? "translateX(0)" : "translateX(-8px)",
+                                transition: "opacity 0.25s ease, transform 0.25s ease",
+                            },
+                        }}
+                    >
+                        <ListItemIcon
+                            sx={{
+                                minWidth: 32,
+                                justifyContent: open ? "flex-start" : "center",
+                                transition: "all 0.25s ease",
+                                "& svg": {
+                                    color: isOpen
+                                        ? "primary.main"
+                                        : "text.secondary",
+                                    transition: "color 0.25s ease",
+                                },
+                            }}
+                        >
+                            {group.icon}
+                        </ListItemIcon>
 
-            {open &&
-              (isOpen ? (
-                <ExpandLess fontSize="small" />
-              ) : (
-                <ExpandMore fontSize="small" />
-              ))}
-          </ListItemButton>
-        );
+                        {open && (
+                            <ListItemText
+                                primary={group.label}
+                                primaryTypographyProps={{
+                                    fontSize: 15,
+                                    fontWeight: 500,
+                                }}
+                            />
+                        )}
 
-        return (
-          <React.Fragment key={group.label}>
-            {open ? (
-              groupHeader
-            ) : (
-              <Tooltip title={group.label} placement="right">
-                {groupHeader}
-              </Tooltip>
-            )}
-
-            {/*  子選單 Collapse （動畫已自帶） */}
-            <Collapse in={isOpen} timeout={250} unmountOnExit>
-              {group.items.map((item) => {
-
-                return (
-                  <MenuItemLink
-                    key={item.to}
-                    to={item.to}
-                    primaryText={item.label}
-                    leftIcon={item.icon}
-                    sx={{
-                      width: "100%",
-                      pl: open ? 6 : 1.5,
-                      pr: open ? 2 : 1.5,
-                      py: 0.6,
-                      minHeight: 38,
-                      borderRadius: 1,
-
-                      transition:
-                        "padding 0.25s ease, background-color 0.25s ease",
-
-                      //  收合時文字淡出 + 滑動
-                      "& .RaMenuItemLink-primaryText": {
-                        display: open ? "block" : "block", 
-                        opacity: open ? 1 : 0,
-                        transform: open ? "translateX(0)" : "translateX(-8px)",
-                        transition: "opacity 0.25s ease, transform 0.25s ease",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        width: open ? "auto" : 0,
-                      },
-
-                      // ICON 位置
-                      "& .MuiListItemIcon-root": {
-                        minWidth: open ? 36 : 32,
-                        justifyContent: open ? "flex-start" : "center",
-                        transition: "all 0.25s ease",
-                      },
-
-                      "&.RaMenuItemLink-active": {
-                        bgcolor: "action.selected",
-                        "& svg": {
-                          color: "primary.main !important",
-                        },
-                      },
-                    }}
-                  />
+                        {open &&
+                            (isOpen ? (
+                                <ExpandLess fontSize="small" />
+                            ) : (
+                                <ExpandMore fontSize="small" />
+                            ))}
+                    </ListItemButton>
                 );
-              })}
-            </Collapse>
-          </React.Fragment>
-        );
-      })}
-    </Menu>
-  );
+
+                /** ⭐ 回傳 array（避免 Fragment） */
+                return [
+                    /** -------------------------
+                     *     GROUP HEADER 區塊
+                     * ------------------------- */
+                    open ? (
+                        groupHeader
+                    ) : (
+                        <Tooltip
+                            key={`${group.label}-tooltip`}
+                            title={group.label}
+                            placement="right"
+                        >
+                            {groupHeader}
+                        </Tooltip>
+                    ),
+
+                    /** -------------------------
+                     *     子選單區塊
+                     * ------------------------- */
+                    <Collapse
+                        key={`${group.label}-collapse`}
+                        in={isOpen}
+                        timeout={250}
+                        unmountOnExit
+                    >
+                        {group.items.map((item) => (
+                            <MenuItemLink
+                                key={item.to}
+                                to={item.to}
+                                primaryText={item.label}
+                                leftIcon={item.icon}
+                                sx={{
+                                    width: "100%",
+                                    pl: open ? 6 : 1.5,
+                                    pr: open ? 2 : 1.5,
+                                    py: 0.6,
+                                    minHeight: 38,
+                                    borderRadius: 1,
+                                    transition:
+                                        "padding 0.25s ease, background-color 0.25s ease",
+
+                                    "& .RaMenuItemLink-primaryText": {
+                                        opacity: open ? 1 : 0,
+                                        transform: open
+                                            ? "translateX(0)"
+                                            : "translateX(-8px)",
+                                        transition:
+                                            "opacity 0.25s ease, transform 0.25s ease",
+                                        whiteSpace: "nowrap",
+                                    },
+
+                                    "& .MuiListItemIcon-root": {
+                                        minWidth: open ? 36 : 32,
+                                        justifyContent: open
+                                            ? "flex-start"
+                                            : "center",
+                                        transition: "all 0.25s ease",
+                                    },
+
+                                    "&.RaMenuItemLink-active": {
+                                        bgcolor: "action.selected",
+                                        "& svg": {
+                                            color: "primary.main !important",
+                                        },
+                                    },
+                                }}
+                            />
+                        ))}
+                    </Collapse>,
+                ];
+            })}
+        </Menu>
+    );
 };
 
 export default CustomMenu;

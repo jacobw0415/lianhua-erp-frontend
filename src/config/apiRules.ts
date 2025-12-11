@@ -29,9 +29,9 @@ export const apiRules: Record<string, any> = {
         list: true,
         detail: true,
     },
-    "ap-aging": {
+    ap: {
         search: true,
         list: true,
-        detail: false,
+        detail: true,
     },
 };

@@ -151,7 +151,7 @@ export const CustomAppBar = (props: any) => {
         <AppBar
             {...props}
             color="inherit"
-            toolbar={<></>}   // ❗移除預設 Refresh
+            toolbar={null}
             elevation={0}
             sx={{
                 backdropFilter: "blur(10px)",

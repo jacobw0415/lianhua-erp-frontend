@@ -59,7 +59,7 @@ const App = () => {
             <Resource name="suppliers" list={SupplierList} create={SupplierCreate} edit={SupplierEdit} />
             <Resource name="purchases" list={PurchaseList} create={PurchaseCreate} edit={PurchaseEdit} />
             <Resource name="payments" list={PaymentList} />
-            <Resource name="ap-aging" list={APList} />
+            <Resource name="ap" list={APList} />
             <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />
