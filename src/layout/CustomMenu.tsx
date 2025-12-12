@@ -11,6 +11,7 @@ import {
     ListItemIcon,
     ListItemText,
     ListItemButton,
+    Box,
 } from "@mui/material";
 
 import ExpandLess from "@mui/icons-material/ExpandLess";
@@ -24,7 +25,9 @@ export const CustomMenu = () => {
     const location = useLocation();
 
     /** ⭐ 控制每組選單的開關 */
-    const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({});
+    const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
+        {}
+    );
 
     const toggleGroup = (key: string) => {
         setOpenGroups((prev) => ({
@@ -42,7 +45,10 @@ export const CustomMenu = () => {
             });
 
             if (matched) {
-                setOpenGroups((prev) => ({ ...prev, [group.label]: true }));
+                setOpenGroups((prev) => ({
+                    ...prev,
+                    [group.label]: true,
+                }));
             }
         });
     }, [location.pathname]);
@@ -79,11 +85,13 @@ export const CustomMenu = () => {
                             width: "100%",
                             borderRadius: 1,
                             pl: open ? 2 : 1,
-                            pr: open ? 1 : 1,
+                            pr: 1,
                             py: 0.8,
                             mt: 0.5,
                             height: 40,
-                            bgcolor: isOpen ? "action.selected" : "transparent",
+                            bgcolor: isOpen
+                                ? "action.selected"
+                                : "transparent",
                             transition:
                                 "padding 0.25s ease, background-color 0.25s ease, color 0.25s ease",
                             "&:hover": {
@@ -92,15 +100,20 @@ export const CustomMenu = () => {
                             "& .MuiListItemText-root": {
                                 ml: 1,
                                 opacity: open ? 1 : 0,
-                                transform: open ? "translateX(0)" : "translateX(-8px)",
-                                transition: "opacity 0.25s ease, transform 0.25s ease",
+                                transform: open
+                                    ? "translateX(0)"
+                                    : "translateX(-8px)",
+                                transition:
+                                    "opacity 0.25s ease, transform 0.25s ease",
                             },
                         }}
                     >
                         <ListItemIcon
                             sx={{
                                 minWidth: 32,
-                                justifyContent: open ? "flex-start" : "center",
+                                justifyContent: open
+                                    ? "flex-start"
+                                    : "center",
                                 transition: "all 0.25s ease",
                                 "& svg": {
                                     color: isOpen
@@ -132,13 +145,15 @@ export const CustomMenu = () => {
                     </ListItemButton>
                 );
 
-                /** ⭐ 回傳 array（避免 Fragment） */
+                /** ⭐ 回傳 array（所有元素都是「可接收 DOM props」的實體元件） */
                 return [
                     /** -------------------------
                      *     GROUP HEADER 區塊
                      * ------------------------- */
                     open ? (
-                        groupHeader
+                        <Box key={`${group.label}-header`}>
+                            {groupHeader}
+                        </Box>
                     ) : (
                         <Tooltip
                             key={`${group.label}-tooltip`}
@@ -195,7 +210,8 @@ export const CustomMenu = () => {
                                     "&.RaMenuItemLink-active": {
                                         bgcolor: "action.selected",
                                         "& svg": {
-                                            color: "primary.main !important",
+                                            color:
+                                                "primary.main !important",
                                         },
                                     },
                                 }}
