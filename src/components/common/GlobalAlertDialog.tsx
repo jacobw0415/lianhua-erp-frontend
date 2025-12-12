@@ -29,6 +29,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   description,
   confirmLabel = "確定",
   cancelLabel = "取消",
+  hideCancel,
   hideButtons,
   onClose,
   onConfirm,
@@ -50,23 +51,44 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   }, [open, onClose, onConfirm]);
 
   /** ⭐ 按鈕顏色依 severity 切換 */
-  const confirmButtonColor =
-    severity === "error"
-      ? {
-        bgcolor: "#D32F2F",
-        color: "white",
-        "&:hover": { bgcolor: "#B71C1C", color: "white" },
-      }
-      : {
-        bgcolor: "#4CAF50",
-        color: "white",
-        "&:hover": { bgcolor: "#45A049", color: "white" },
-      };
+  const severityColorMap: Record<
+    NonNullable<GlobalAlertDialogProps["severity"]>,
+    { bgcolor: string; hover: string }
+  > = {
+    error: {
+      bgcolor: "#D32F2F",   // red
+      hover: "#B71C1C",
+    },
+    warning: {
+      bgcolor: "#ED6C02",   // orange
+      hover: "#E65100",
+    },
+    info: {
+      bgcolor: "#0288D1",   // blue
+      hover: "#0277BD",
+    },
+    success: {
+      bgcolor: "#2E7D32",   // green
+      hover: "#1B5E20",
+    },
+  };
+
+  const confirmButtonColor = {
+    bgcolor: severityColorMap[severity].bgcolor,
+    color: "white",
+    "&:hover": {
+      bgcolor: severityColorMap[severity].hover,
+      color: "white",
+    },
+  };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={(_, reason) => {
+        if (reason === "backdropClick" || reason === "escapeKeyDown") return;
+        onClose();
+      }}
       maxWidth="xs"
       fullWidth
       slotProps={{
@@ -104,23 +126,25 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
       {!hideButtons && (
         onConfirm ? (
           <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
-            <Button
-              variant="outlined"
-              color="inherit"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.currentTarget.blur();
-                onClose();
-              }}
-              sx={{
-                borderColor: "#777",
-                color: "#ddd",
-                "&:hover": { borderColor: "#aaa", color: "#fff" },
-                minWidth: 90,
-              }}
-            >
-              {cancelLabel}
-            </Button>
+            {!hideCancel && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.currentTarget.blur();
+                  onClose();
+                }}
+                sx={{
+                  borderColor: "#777",
+                  color: "#ddd",
+                  "&:hover": { borderColor: "#aaa", color: "#fff" },
+                  minWidth: 90,
+                }}
+              >
+                {cancelLabel}
+              </Button>
+            )}
 
             <Button
               variant="contained"

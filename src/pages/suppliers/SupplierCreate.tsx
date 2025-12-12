@@ -3,7 +3,7 @@ import { TextInput, SelectInput, useRedirect } from "react-admin";
 import { Box, Typography } from "@mui/material";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-
+import { required } from "react-admin";
 export const SupplierCreate: React.FC = () => {
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
@@ -18,7 +18,7 @@ export const SupplierCreate: React.FC = () => {
           severity: "success",
           hideCancel: true,
         });
-        setTimeout(() => redirect("list", "suppliers"), 600);
+        setTimeout(() => redirect("list", "suppliers"));
       }}
     >
       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -30,7 +30,7 @@ export const SupplierCreate: React.FC = () => {
         {/* 第一列 */}
         <Box display="flex" gap={2} mb={2}>
           <Box flex={1}>
-            <TextInput source="name" label="供應商名稱 *" fullWidth />
+            <TextInput source="name" label="供應商名稱 *" fullWidth  validate={[required()]}/>
           </Box>
           <Box flex={1}>
             <TextInput source="contact" label="聯絡人" fullWidth />

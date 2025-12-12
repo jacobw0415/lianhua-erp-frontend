@@ -11,6 +11,9 @@ import React from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
+import { useApiErrorHandler } from "@/hooks/useApiErrorHandler";
+import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+
 interface GenericCreatePageProps {
   resource: string;
   title: string;
@@ -52,6 +55,10 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
 }) => {
   const redirect = useRedirect();
 
+  //  關鍵：接上全域錯誤處理
+  const globalAlert = useGlobalAlert();
+  const { handleApiError } = useApiErrorHandler(globalAlert);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box
@@ -59,7 +66,7 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
           display: "flex",
           justifyContent: "center",
           paddingTop: "40px",
-          bgcolor: theme.palette.background.default, 
+          bgcolor: theme.palette.background.default,
         })}
       >
         <Box
@@ -67,8 +74,8 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
             width,
             maxWidth: width,
             borderRadius: 2,
-            bgcolor: theme.palette.background.paper, //  卡片背景
-            border: `1px solid ${theme.palette.divider}`, //  統一邊框風格
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
             boxShadow: theme.shadows[3],
             padding: "2rem 3rem",
           })}
@@ -78,15 +85,28 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
             actions={false}
             mutationOptions={{
               onSuccess: async (data) => {
-                if (onSuccess) onSuccess(data);
-                else redirect("list", resource);
+                onSuccess?.(data);
+                if (!onSuccess) {
+                  redirect("list", resource);
+                }
               },
+
               onError: (error) => {
-                if (onError) onError(error);
+                // ① 頁面自訂（可選）
+                onError?.(error);
+
+                // ② ⭐ 一定要顯示錯誤（核心）
+                handleApiError(error);
               },
             }}
           >
-            <SimpleForm toolbar={<CustomToolbar onBack={() => redirect("list", resource)} />}>
+            <SimpleForm
+              toolbar={
+                <CustomToolbar
+                  onBack={() => redirect("list", resource)}
+                />
+              }
+            >
               {children}
             </SimpleForm>
           </Create>

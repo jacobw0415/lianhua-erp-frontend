@@ -33,15 +33,7 @@ export const PurchaseCreate: React.FC = () => {
           severity: "success",
           hideCancel: true,
         });
-        setTimeout(() => redirect("list", "purchases"), 600);
-      }}
-      onError={(error) => {
-        showAlert({
-          title: "新增失敗",
-          message: error?.message ?? "請確認欄位或伺服器狀態",
-          severity: "error",
-          hideCancel: true,
-        });
+        setTimeout(() => redirect("list", "purchases"));
       }}
     >
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>

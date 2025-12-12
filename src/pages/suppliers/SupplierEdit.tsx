@@ -9,6 +9,7 @@ import { Typography, Box } from "@mui/material";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { SupplierStatusField } from "./SupplierStatusField";
+import { required } from "react-admin";
 
 /* -------------------------------------------------------
  * ⭐ 供應商編輯頁面
@@ -30,7 +31,7 @@ export const SupplierEdit: React.FC = () => {
           hideCancel: true,
         });
 
-        setTimeout(() => redirect("list", "suppliers"), 600);
+        setTimeout(() => redirect("list", "suppliers"));
       }}
       onDeleteSuccess={(record) => {
         showAlert({
@@ -40,7 +41,7 @@ export const SupplierEdit: React.FC = () => {
           hideCancel: true,
         });
 
-        setTimeout(() => redirect("list", "suppliers"), 600);
+        setTimeout(() => redirect("list", "suppliers"));
       }}
     >
       <SupplierFormFields />
@@ -67,7 +68,7 @@ const SupplierFormFields: React.FC = () => {
         {/* 第一列：供應商名稱 / 聯絡人 */}
         <Box display="flex" gap={2} mb={2}>
           <Box flex={1}>
-            <TextInput source="name" label="供應商名稱 *" fullWidth required />
+            <TextInput source="name" label="供應商名稱 *" fullWidth validate={[required()]} />
           </Box>
           <Box flex={1}>
             <TextInput source="contact" label="聯絡人" fullWidth />

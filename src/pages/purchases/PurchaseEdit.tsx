@@ -38,7 +38,7 @@ export const PurchaseEdit: React.FC = () => {
           severity: "success",
           hideCancel: true,
         });
-        setTimeout(() => redirect("list", "purchases"), 600);
+        setTimeout(() => redirect("list", "purchases"));
       }}
       onDeleteSuccess={(record) => {
         showAlert({
@@ -47,7 +47,7 @@ export const PurchaseEdit: React.FC = () => {
           severity: "success",
           hideCancel: true,
         });
-        setTimeout(() => redirect("list", "purchases"), 600);
+        setTimeout(() => redirect("list", "purchases"));
       }}
     >
       <PurchaseFormFields />
