@@ -99,8 +99,8 @@ export const createDataProvider = (): DataProvider => {
 
         /* ===================== getList ===================== */
         getList(resource, params) {
-            const rules = apiRules[resource] ?? {};
             const mapping = filterMapping[resource] ?? {};
+            const rules = apiRules[resource] ?? {};
 
             const { page = 1, perPage = 25 } = params.pagination || {};
             const { field, order } = params.sort || {};
@@ -110,6 +110,9 @@ export const createDataProvider = (): DataProvider => {
             query.set("page", String(page - 1));
             query.set("size", String(perPage));
 
+            /* ===============================
+             * 排序
+             * =============================== */
             const allowedSortFields = [
                 "id",
                 "createdAt",
@@ -131,27 +134,35 @@ export const createDataProvider = (): DataProvider => {
                 "balance",
                 "status",
                 "payDate",
-                "supplier",
+                "supplierName",
             ];
 
             if (field && allowedSortFields.includes(field)) {
                 query.set("sort", `${field},${(order || "ASC").toLowerCase()}`);
             }
 
-            let hasSearch = false;
+            /* ===============================
+             * Filters → Query Param
+             * =============================== */
+            const hasFilter = Object.values(filters).some(
+                v => v !== "" && v !== undefined && v !== null
+            );
 
             Object.entries(filters).forEach(([key, value]) => {
                 if (value !== "" && value !== undefined && value !== null) {
-                    hasSearch = true;
                     const backendKey = mapping[key] ?? key;
                     query.append(backendKey, String(value));
                 }
             });
 
-            const basePath =
-                hasSearch && rules.search
-                    ? `${apiUrl}/${resource}/search`
-                    : `${apiUrl}/${resource}`;
+            /* ===============================
+             *  正確的 Path 決策
+             * =============================== */
+            let basePath = `${apiUrl}/${resource}`;
+
+            if (hasFilter && rules.search === true) {
+                basePath = `${apiUrl}/${resource}/search`;
+            }
 
             const url = `${basePath}?${query.toString()}`;
 

@@ -74,7 +74,6 @@ export const APAgingDetailDrawer = ({
                 <TableCell>已付款</TableCell>
                 <TableCell>未付款</TableCell>
                 <TableCell>帳齡區間</TableCell>
-                <TableCell>逾期天數</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -86,7 +85,6 @@ export const APAgingDetailDrawer = ({
                   <TableCell><PlainCurrency value={row.paidAmount} /></TableCell>
                   <TableCell><PlainCurrency value={row.balance} /></TableCell>
                   <TableCell>{row.agingBucket}</TableCell>
-                  <TableCell>{row.daysOverdue}</TableCell>
                 </TableRow>
               ))}
 

@@ -30,7 +30,7 @@ export const apiRules: Record<string, any> = {
         detail: true,
     },
     ap: {
-        search: true,
+        search: false,
         list: true,
         detail: true,
     },
