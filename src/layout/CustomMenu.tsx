@@ -24,7 +24,7 @@ export const CustomMenu = () => {
     const [open] = useSidebarState();
     const location = useLocation();
 
-    /** ⭐ 控制每組選單的開關 */
+    /**  控制每組選單的開關 */
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
         {}
     );
@@ -36,7 +36,7 @@ export const CustomMenu = () => {
         }));
     };
 
-    /** ⭐ 自動展開當前路徑所在的 menuGroup */
+    /**  自動展開當前路徑所在的 menuGroup */
     React.useEffect(() => {
         menuGroups.forEach((group) => {
             const matched = group.items.some((item) => {
@@ -54,7 +54,7 @@ export const CustomMenu = () => {
     }, [location.pathname]);
 
     /** ============================================================
-     * ⭐ 主體渲染
+     *  主體渲染
      * ============================================================ */
     return (
         <Menu
@@ -76,7 +76,7 @@ export const CustomMenu = () => {
                 const isOpen = openGroups[group.label];
 
                 /** ==============================
-                 *  ⭐ GROUP HEADER（含動畫）
+                 *   GROUP HEADER（含動畫）
                  * ============================== */
                 const groupHeader = (
                     <ListItemButton
@@ -145,24 +145,29 @@ export const CustomMenu = () => {
                     </ListItemButton>
                 );
 
-                /** ⭐ 回傳 array（所有元素都是「可接收 DOM props」的實體元件） */
+                /** ====================================================
+                 *  GROUP ITEMS
+                 * Menu 的 direct child 永遠只會是 Box
+                 * ==================================================== */
                 return [
                     /** -------------------------
-                     *     GROUP HEADER 區塊
+                     *     GROUP HEADER
                      * ------------------------- */
-                    open ? (
-                        <Box key={`${group.label}-header`}>
-                            {groupHeader}
-                        </Box>
-                    ) : (
-                        <Tooltip
-                            key={`${group.label}-tooltip`}
-                            title={group.label}
-                            placement="right"
-                        >
-                            {groupHeader}
-                        </Tooltip>
-                    ),
+                    <Box
+                        key={`${group.label}-header`}
+                        sx={{ width: "100%" }}
+                    >
+                        {open ? (
+                            groupHeader
+                        ) : (
+                            <Tooltip
+                                title={group.label}
+                                placement="right"
+                            >
+                                {groupHeader}
+                            </Tooltip>
+                        )}
+                    </Box>,
 
                     /** -------------------------
                      *     子選單區塊
