@@ -1,4 +1,5 @@
 import { List, TextField, DateField, FunctionField, useRedirect } from "react-admin";
+import { Typography } from "@mui/material";
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -47,7 +48,7 @@ export const PaymentList = () => {
             { header: "供應商", key: "supplierName", width: 20 },
             { header: "金額", key: "amount", width: 12 },
             { header: "付款方式", key: "method", width: 10 },
-            { header: "進貨單編號", key: "purchaseId", width: 14 },
+            { header: "進貨單號", key: "purchaseId", width: 14 },
             { header: "會計期間", key: "accountingPeriod", width: 10 },
             { header: "備註", key: "note", width: 20 },
           ],
@@ -59,24 +60,27 @@ export const PaymentList = () => {
           <CurrencyField source="amount" label="金額" />
           <TextField source="method" label="付款方式" />
 
-          {/* ⭐ 可點擊的進貨單編號 */}
+          {/* ✅ 與 APAgingDetailDrawer 完全一致的 UI */}
           <FunctionField
-            label="進貨單編號"
-            render={(record) =>
+            label="進貨單號"
+            render={(record: any) =>
               record?.purchaseId ? (
-                <span
-                  style={{
-                    color: "#4CAF50",
+                <Typography
+                  sx={{
+                    color: "primary.main",
                     cursor: "pointer",
-                    textDecoration: "underline",
+                    fontWeight: 600,
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
                   }}
                   onClick={(e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // 防止 rowClick
                     redirect(`/purchases/${record.purchaseId}`);
                   }}
                 >
-                  {record.purchaseId}
-                </span>
+                  #{record.purchaseId}
+                </Typography>
               ) : (
                 "-"
               )
