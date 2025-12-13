@@ -1,17 +1,59 @@
 import { Switch, Box } from "@mui/material";
-import { useRecordContext, useDataProvider, useNotify, useRefresh } from "react-admin";
+import {
+  useRecordContext,
+  useDataProvider,
+  useNotify,
+  useRefresh,
+} from "react-admin";
 import { useState } from "react";
 
+/* =========================================================
+ * 型別定義
+ * ========================================================= */
+
+interface SupplierRow {
+  id: number;
+  active: boolean;
+}
+
+interface BackendError {
+  body?: {
+    message?: string;
+  };
+}
+
+/* =========================================================
+ * Type Guard
+ * ========================================================= */
+
+const isBackendError = (error: unknown): error is BackendError => {
+  if (typeof error !== "object" || error === null) return false;
+
+  const e = error as Record<string, unknown>;
+  const body = e.body;
+
+  if (typeof body !== "object" || body === null) return false;
+
+  const bodyObj = body as Record<string, unknown>;
+  return typeof bodyObj.message === "string";
+};
+
+/* =========================================================
+ * Component
+ * ========================================================= */
+
 export const SupplierStatusToggle = () => {
-  const record = useRecordContext();
+  //  Hooks 一律放最上面
+  const record = useRecordContext<SupplierRow>();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const refresh = useRefresh();
+  const [loading, setLoading] = useState(false);
 
+  // ⛔ 早期 return 一定要放在 hooks 之後
   if (!record) return null;
 
   const isActive = record.active === true;
-  const [loading, setLoading] = useState(false);
 
   const handleToggle = async () => {
     if (loading) return;
@@ -21,28 +63,30 @@ export const SupplierStatusToggle = () => {
     try {
       await dataProvider.update("suppliers", {
         id: record.id,
-        data: {}, // 不需要資料，本次是 meta 控制 endpoint
+        data: {},
         meta: { endpoint: isActive ? "deactivate" : "activate" },
         previousData: record,
       });
 
       notify(isActive ? "已停用" : "已啟用", { type: "success" });
       refresh();
-    } catch (err: any) {
-      notify(`操作失敗：${err?.body?.message || err.message}`, { type: "error" });
+    } catch (err: unknown) {
+      let message = "操作失敗";
+
+      if (isBackendError(err) && err.body?.message) {
+        message = err.body.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+
+      notify(`操作失敗：${message}`, { type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        width: "100%",
-        height: "100%",
-      }}
-    >
+    <Box sx={{ display: "flex", width: "100%", height: "100%" }}>
       <Switch
         checked={isActive}
         onChange={handleToggle}

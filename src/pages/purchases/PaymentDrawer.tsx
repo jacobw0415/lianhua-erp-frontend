@@ -1,27 +1,44 @@
-import React from "react";
 import { GenericSubTableDrawer } from "@/components/common/GenericSubTableDrawer";
+
+/* =========================================================
+ * 型別定義
+ * ========================================================= */
+
+interface PaymentRow {
+  amount: number;
+  payDate: string; // yyyy-MM-dd
+  method: "CASH" | "TRANSFER" | "CARD" | "CHECK";
+  note?: string;
+}
+
+interface PurchaseWithPayments {
+  supplierName: string;
+  payments: PaymentRow[];
+}
 
 interface PaymentDrawerProps {
   open: boolean;
   onClose: () => void;
-  purchase: any | null;
+  purchase?: PurchaseWithPayments;
 }
 
-export const PaymentDrawer: React.FC<PaymentDrawerProps> = ({
+/* =========================================================
+ * Component
+ * ========================================================= */
+
+export const PaymentDrawer = ({
   open,
   onClose,
   purchase,
-}) => {
+}: PaymentDrawerProps) => {
   if (!purchase) return null;
-
-  const payments = purchase.payments ?? [];
 
   return (
     <GenericSubTableDrawer
       open={open}
       onClose={onClose}
       title={`💰 付款紀錄 — ${purchase.supplierName}`}
-      rows={payments}
+      rows={purchase.payments}
       showTotal
       totalField="amount"
       columns={[

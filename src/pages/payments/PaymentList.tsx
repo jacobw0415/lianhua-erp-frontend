@@ -1,9 +1,39 @@
-import { List, TextField, DateField, FunctionField, useRedirect } from "react-admin";
+import {
+  List,
+  TextField,
+  DateField,
+  FunctionField,
+  useRedirect,
+} from "react-admin";
 import { Typography } from "@mui/material";
+
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+
+/* =========================================================
+ * 型別定義（Payment List Row）
+ * ========================================================= */
+
+interface PaymentListRow {
+  id: number;
+
+  payDate: string;
+  supplierName: string;
+  amount: number;
+  method: "CASH" | "TRANSFER" | "CARD" | "CHECK";
+
+  purchaseId?: number;
+  purchaseNo?: string;
+
+  accountingPeriod: string;
+  note?: string;
+}
+
+/* =========================================================
+ * Component
+ * ========================================================= */
 
 export const PaymentList = () => {
   const redirect = useRedirect();
@@ -12,11 +42,11 @@ export const PaymentList = () => {
     <List
       title="付款紀錄"
       actions={false}
-      pagination={<CustomPaginationBar showPerPage={true} />}
+      pagination={<CustomPaginationBar showPerPage />}
       perPage={10}
     >
       <StyledListWrapper
-        disableCreate={true}
+        disableCreate
         quickFilters={[
           { type: "text", source: "supplierName", label: "供應商名稱" },
         ]}
@@ -48,18 +78,18 @@ export const PaymentList = () => {
             { header: "供應商", key: "supplierName", width: 20 },
             { header: "金額", key: "amount", width: 12 },
             { header: "付款方式", key: "method", width: 10 },
-             { header: "進貨單號", key: "purchaseNo", width: 18 },
+            { header: "進貨單號", key: "purchaseNo", width: 18 },
             { header: "會計期間", key: "accountingPeriod", width: 10 },
             { header: "備註", key: "note", width: 20 },
           ],
         }}
       >
         <StyledListDatagrid>
-          {/* ✅ 與 APAgingDetailDrawer 完全一致的 UI */}
+          {/* 進貨單號（可點擊） */}
           <FunctionField
             label="進貨單號"
-            render={(record: any) =>
-              record?.purchaseNo ? (
+            render={(record: PaymentListRow) =>
+              record.purchaseNo ? (
                 <Typography
                   sx={{
                     color: "primary.main",
@@ -70,7 +100,7 @@ export const PaymentList = () => {
                     },
                   }}
                   onClick={(e) => {
-                    e.stopPropagation(); // 防止 rowClick
+                    e.stopPropagation();
                     redirect(`/purchases/${record.purchaseId}`);
                   }}
                 >
@@ -81,6 +111,7 @@ export const PaymentList = () => {
               )
             }
           />
+
           <TextField source="supplierName" label="供應商" />
           <DateField source="payDate" label="付款日期" />
           <CurrencyField source="amount" label="金額" />

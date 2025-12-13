@@ -3,6 +3,7 @@ import {
     AppBar,
     useTheme,
     useRedirect,
+    type AppBarProps,
 } from "react-admin";
 
 import {
@@ -28,28 +29,40 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
-import { useColorMode } from "@/contexts/ColorModeContext";
+import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
 
 import dayjs from "dayjs";
+import type { ReactElement, ElementType } from "react";
 
+/* =====================================================
+ * 🔐 型別定義（只補型別，不影響結構）
+ * ===================================================== */
+interface MenuItemMeta {
+    to: string;
+    label: string;
+    icon?: ReactElement;
+}
 
-// ------------------------------------------------------------
-// 🔰 模擬通知資料
-// ------------------------------------------------------------
-const dummyNotifications = [
+interface MenuGroupMeta {
+    items?: MenuItemMeta[];
+}
+
+/* ------------------------------------------------------------
+ * 🔰 模擬通知資料
+ * ------------------------------------------------------------ */
+const dummyNotifications: { id: number; text: string }[] = [
     { id: 1, text: "今日有 2 筆進貨尚未付款" },
     { id: 2, text: "永進蛋品帳款超過 7 天未清" },
     { id: 3, text: "本月應付金額達 $175,000" },
 ];
 
-
-// ------------------------------------------------------------
-// 🔰 CustomAppBar
-// ------------------------------------------------------------
-export const CustomAppBar = (props: any) => {
+/* ------------------------------------------------------------
+ * 🔰 CustomAppBar
+ * ------------------------------------------------------------ */
+export const CustomAppBar = (props: AppBarProps) => {
     const muiTheme = useMuiTheme();
-    const [_, setRaTheme] = useTheme();
+    const [, setRaTheme] = useTheme();
     const { setMode } = useColorMode();
     const redirect = useRedirect();
     const isDark = muiTheme.palette.mode === "dark";
@@ -57,32 +70,38 @@ export const CustomAppBar = (props: any) => {
     const location = useLocation();
     const pathname = location.pathname;
 
-
     /* =====================================================
-     * 📌 Step 1 — 從 menuGroups 產生路由 → { title, icon }
+     * 📌 Step 1 — 從 menuGroups 產生 route meta
      * ===================================================== */
-    const routeMetaMap: Record<string, { title: string; icon: any }> = {};
+    const routeMetaMap: Record<
+        string,
+        { title: string; icon: ElementType }
+    > = {};
 
-    menuGroups.forEach((group: any) => {
-        group.items?.forEach((item: any) => {
+    (menuGroups as MenuGroupMeta[]).forEach((group) => {
+        group.items?.forEach((item) => {
+            const resolvedIcon: ElementType =
+                typeof item.icon?.type === "string"
+                    ? CalendarMonthIcon
+                    : item.icon?.type ?? CalendarMonthIcon;
+
             routeMetaMap[item.to] = {
                 title: item.label,
-                icon: item.icon?.type || CalendarMonthIcon,
+                icon: resolvedIcon,
             };
         });
     });
 
     /* =====================================================
-     * 📌 Step 2 — 找出目前最接近的路由（支援子路由）
+     * 📌 Step 2 — 取得目前路由對應資料
      * ===================================================== */
     const matched = Object.keys(routeMetaMap)
         .filter((p) => pathname.startsWith(p))
         .sort((a, b) => b.length - a.length)[0];
 
     const activeMeta = matched ? routeMetaMap[matched] : null;
-    const ActiveIcon = activeMeta?.icon || CalendarMonthIcon;
-    const activeTitle = activeMeta?.title || "未命名頁面";
-
+    const ActiveIcon = activeMeta?.icon ?? CalendarMonthIcon;
+    const activeTitle = activeMeta?.title ?? "未命名頁面";
 
     /* =====================================================
      * 🌙 主題切換
@@ -93,14 +112,16 @@ export const CustomAppBar = (props: any) => {
         setRaTheme(next);
     };
 
-
     /* =====================================================
      * 📅 會計期間切換
      * ===================================================== */
-    const [periodMenuAnchor, setPeriodMenuAnchor] = useState<null | HTMLElement>(null);
-    const [accountingPeriod, setAccountingPeriod] = useState(dayjs().format("YYYY-MM"));
+    const [periodMenuAnchor, setPeriodMenuAnchor] =
+        useState<HTMLElement | null>(null);
+    const [accountingPeriod, setAccountingPeriod] =
+        useState<string>(dayjs().format("YYYY-MM"));
 
-    const openPeriodMenu = (e: any) => setPeriodMenuAnchor(e.currentTarget);
+    const openPeriodMenu = (e: React.MouseEvent<HTMLElement>) =>
+        setPeriodMenuAnchor(e.currentTarget);
     const closePeriodMenu = () => setPeriodMenuAnchor(null);
 
     const handlePeriodChange = (period: string) => {
@@ -108,41 +129,42 @@ export const CustomAppBar = (props: any) => {
         closePeriodMenu();
     };
 
-    const periodList = [
+    const periodList: string[] = [
         dayjs().subtract(1, "month").format("YYYY-MM"),
         dayjs().format("YYYY-MM"),
         dayjs().add(1, "month").format("YYYY-MM"),
     ];
 
-
     /* =====================================================
      * 🔍 全域搜尋
      * ===================================================== */
-    const [searchText, setSearchText] = useState("");
+    const [searchText, setSearchText] = useState<string>("");
 
-    const handleGlobalSearch = (e: any) => {
+    const handleGlobalSearch = (
+        e: React.KeyboardEvent<HTMLInputElement>
+    ) => {
         if (e.key === "Enter" && searchText.trim()) {
             redirect(`/suppliers?search=${searchText}`);
         }
     };
 
-
     /* =====================================================
      * 🔔 通知中心
      * ===================================================== */
-    const [notiAnchor, setNotiAnchor] = useState<null | HTMLElement>(null);
-    const openNoti = (e: any) => setNotiAnchor(e.currentTarget);
+    const [notiAnchor, setNotiAnchor] =
+        useState<HTMLElement | null>(null);
+    const openNoti = (e: React.MouseEvent<HTMLElement>) =>
+        setNotiAnchor(e.currentTarget);
     const closeNoti = () => setNotiAnchor(null);
-
 
     /* =====================================================
      * 👤 使用者選單
      * ===================================================== */
-    const [userAnchor, setUserAnchor] = useState<null | HTMLElement>(null);
-    const openUserMenu = (e: any) => setUserAnchor(e.currentTarget);
+    const [userAnchor, setUserAnchor] =
+        useState<HTMLElement | null>(null);
+    const openUserMenu = (e: React.MouseEvent<HTMLElement>) =>
+        setUserAnchor(e.currentTarget);
     const closeUserMenu = () => setUserAnchor(null);
-
-
 
     /* =====================================================
      * 🎨 AppBar UI
@@ -156,8 +178,8 @@ export const CustomAppBar = (props: any) => {
             sx={{
                 backdropFilter: "blur(10px)",
                 backgroundColor: isDark
-                    ? "rgba(42, 61, 42, 0.85)"   // 深色玻璃
-                    : "rgba(76, 175, 80, 0.85)", // 亮色玻璃
+                    ? "rgba(42, 61, 42, 0.85)"
+                    : "rgba(76, 175, 80, 0.85)",
                 paddingLeft: 2,
                 paddingRight: 1,
                 borderBottomLeftRadius: 12,
@@ -165,15 +187,10 @@ export const CustomAppBar = (props: any) => {
                 boxShadow: isDark
                     ? "0 2px 10px rgba(0,0,0,0.4)"
                     : "0 2px 10px rgba(0,0,0,0.15)",
-                transition: "background-color 0.25s ease, backdrop-filter 0.25s ease",
             }}
         >
             <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-
-
-                {/* ----------------------------------------------
-                 * ⭐ 動態 Icon + 動態 Title（自動依路由切換）
-                 * ---------------------------------------------- */}
+                {/* ⭐ 動態 Icon + Title */}
                 <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
                     <ActiveIcon sx={{ color: "#fff", mr: 1 }} />
                     <Typography
@@ -192,10 +209,7 @@ export const CustomAppBar = (props: any) => {
                     </Typography>
                 </Box>
 
-
-                {/* ----------------------------------------------
-                 * 📅 會計期間膠囊
-                 * ---------------------------------------------- */}
+                {/* 📅 會計期間 */}
                 <Box
                     onClick={openPeriodMenu}
                     sx={{
@@ -209,22 +223,28 @@ export const CustomAppBar = (props: any) => {
                         mr: 3,
                     }}
                 >
-                    <Typography sx={{ mr: 1 }}>📅 {accountingPeriod}</Typography>
+                    <Typography sx={{ mr: 1 }}>
+                        📅 {accountingPeriod}
+                    </Typography>
                     <ArrowDropDownIcon />
                 </Box>
 
-                <Menu anchorEl={periodMenuAnchor} open={Boolean(periodMenuAnchor)} onClose={closePeriodMenu}>
+                <Menu
+                    anchorEl={periodMenuAnchor}
+                    open={Boolean(periodMenuAnchor)}
+                    onClose={closePeriodMenu}
+                >
                     {periodList.map((p) => (
-                        <MenuItem key={p} onClick={() => handlePeriodChange(p)}>
+                        <MenuItem
+                            key={p}
+                            onClick={() => handlePeriodChange(p)}
+                        >
                             {p}
                         </MenuItem>
                     ))}
                 </Menu>
 
-
-                {/* ----------------------------------------------
-                 * 🔍 全域搜尋
-                 * ---------------------------------------------- */}
+                {/* 🔍 搜尋 */}
                 <TextField
                     placeholder="搜尋供應商 / 商品 / 單號..."
                     variant="outlined"
@@ -234,53 +254,51 @@ export const CustomAppBar = (props: any) => {
                         backgroundColor: "#fff",
                         borderRadius: "6px",
                         mr: 2,
-                        "& .MuiOutlinedInput-root": {
-                            paddingLeft: "8px",
-                            height: "36px",
-                        },
                     }}
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onKeyDown={handleGlobalSearch}
                 />
 
-
-                {/* ----------------------------------------------
-                 * 🔘 右側按鈕群組
-                 * ---------------------------------------------- */}
-                <Box sx={{ display: "flex", alignItems: "center", marginLeft: "auto" }}>
-
-                    {/* 🔔 通知 */}
+                {/* 右側操作 */}
+                <Box sx={{ display: "flex", ml: "auto" }}>
                     <Tooltip title="通知中心">
-                        <IconButton color="inherit" onClick={openNoti}>
-                            <Badge badgeContent={dummyNotifications.length} color="error">
+                        <IconButton onClick={openNoti}>
+                            <Badge
+                                badgeContent={dummyNotifications.length}
+                                color="error"
+                            >
                                 <NotificationsIcon sx={{ color: "#fff" }} />
                             </Badge>
                         </IconButton>
                     </Tooltip>
 
-                    <Menu anchorEl={notiAnchor} open={Boolean(notiAnchor)} onClose={closeNoti}>
+                    <Menu
+                        anchorEl={notiAnchor}
+                        open={Boolean(notiAnchor)}
+                        onClose={closeNoti}
+                    >
                         {dummyNotifications.map((n) => (
                             <MenuItem key={n.id}>{n.text}</MenuItem>
                         ))}
                     </Menu>
 
-
-                    {/* 👤 使用者 */}
                     <Tooltip title="使用者選單">
-                        <IconButton color="inherit" onClick={openUserMenu}>
+                        <IconButton onClick={openUserMenu}>
                             <AccountCircleIcon sx={{ color: "#fff" }} />
                         </IconButton>
                     </Tooltip>
 
-                    <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={closeUserMenu}>
+                    <Menu
+                        anchorEl={userAnchor}
+                        open={Boolean(userAnchor)}
+                        onClose={closeUserMenu}
+                    >
                         <MenuItem>個人資料</MenuItem>
                         <MenuItem>偏好設定</MenuItem>
                         <MenuItem>登出</MenuItem>
                     </Menu>
 
-
-                    {/* 🌙 暗亮切換 */}
                     <Tooltip title={isDark ? "切換為亮色" : "切換為暗色"}>
                         <IconButton onClick={handleToggleTheme}>
                             {isDark ? (
@@ -291,18 +309,14 @@ export const CustomAppBar = (props: any) => {
                         </IconButton>
                     </Tooltip>
 
-
-                    {/* ⚙️ 系統設定 */}
                     <Tooltip title="系統設定">
-                        <IconButton color="inherit">
+                        <IconButton>
                             <SettingsIcon sx={{ color: "#fff" }} />
                         </IconButton>
                     </Tooltip>
 
-
-                    {/* 🔄 自訂 Refresh */}
                     <Tooltip title="重新整理">
-                        <IconButton color="inherit" onClick={() => window.location.reload()}>
+                        <IconButton onClick={() => window.location.reload()}>
                             <RefreshIcon sx={{ color: "#fff" }} />
                         </IconButton>
                     </Tooltip>

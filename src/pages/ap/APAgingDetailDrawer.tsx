@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Drawer,
   Box,
@@ -12,6 +12,7 @@ import {
   TableRow,
   TableContainer,
   Paper,
+  Tooltip,
 } from "@mui/material";
 
 import CloseIcon from "@mui/icons-material/Close";
@@ -20,6 +21,29 @@ import dayjs from "dayjs";
 
 import { PlainCurrency } from "@/components/money/PlainCurrency";
 
+/* ================= 型別 ================= */
+
+interface SupplierLite {
+  supplierId: number;
+  supplierName: string;
+}
+
+interface APAgingPurchaseRow {
+  purchaseId: number;
+  purchaseNo: string;
+  purchaseDate: string;
+  totalAmount: number;
+  paidAmount: number;
+  balance: number;
+  agingBucket: string;
+}
+
+interface APAgingDetailResponse {
+  data: APAgingPurchaseRow[];
+}
+
+/* ================= Component ================= */
+
 export const APAgingDetailDrawer = ({
   open,
   onClose,
@@ -27,12 +51,12 @@ export const APAgingDetailDrawer = ({
 }: {
   open: boolean;
   onClose: () => void;
-  supplier: any;
+  supplier?: SupplierLite;
 }) => {
   const dataProvider = useDataProvider();
   const redirect = useRedirect();
 
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<APAgingPurchaseRow[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,14 +65,16 @@ export const APAgingDetailDrawer = ({
     setLoading(true);
     dataProvider
       .get(`ap/${supplier.supplierId}/purchases`)
-      .then((res: any) => setRows(res.data || []))
+      .then((res: APAgingDetailResponse) => {
+        setRows(res.data ?? []);
+      })
       .finally(() => setLoading(false));
   }, [open, supplier, dataProvider]);
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Box sx={{ width: 750, p: 3 }}>
-        {/* ================= Header ================= */}
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -67,17 +93,34 @@ export const APAgingDetailDrawer = ({
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* ================= Table (Sticky Header + Scroll) ================= */}
+        {/* Table */}
         <TableContainer
           component={Paper}
           variant="outlined"
           sx={{
-            maxHeight: 260,          // ⭐ 約 3 筆後開始捲動
+            maxHeight: 260,
             overflowY: "auto",
             scrollbarGutter: "stable",
           }}
         >
-          <Table stickyHeader size="small">
+          <Table
+            stickyHeader
+            size="small"
+            sx={{
+              tableLayout: "fixed",
+              width: "100%",
+            }}
+          >
+            {/* ⭐ 關鍵：欄寬定義 */}
+            <colgroup>
+              <col style={{ width: 160 }} />
+              <col style={{ width: 120 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 110 }} />
+            </colgroup>
+
             <TableHead>
               <TableRow>
                 <TableCell>進貨單號</TableCell>
@@ -90,31 +133,30 @@ export const APAgingDetailDrawer = ({
             </TableHead>
 
             <TableBody>
-              {rows.map((row, i) => (
-                <TableRow key={i} hover>
-                  {/* 採購單號（可點擊） */}
+              {rows.map((row) => (
+                <TableRow key={row.purchaseId} hover>
                   <TableCell>
-                    <Typography
-                      sx={{
-                        color: "primary.main",
-                        cursor: "pointer",
-                        fontWeight: 600,
-                        "&:hover": { textDecoration: "underline" },
-                      }}
-                      onClick={() =>
-                        redirect(`/purchases/${row.purchaseId}`)
-                      }
-                    >
-                      #{row.purchaseNo}
-                    </Typography>
+                    <Tooltip title={row.purchaseNo}>
+                      <Typography
+                        noWrap
+                        sx={{
+                          color: "primary.main",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                        }}
+                        onClick={() =>
+                          redirect(`/purchases/${row.purchaseId}`)
+                        }
+                      >
+                        #{row.purchaseNo}
+                      </Typography>
+                    </Tooltip>
                   </TableCell>
 
-                  {/* 日期格式統一 */}
                   <TableCell>
                     {dayjs(row.purchaseDate).format("YYYY-MM-DD")}
                   </TableCell>
 
-                  {/* 金額欄位（正確用法：PlainCurrency） */}
                   <TableCell>
                     <PlainCurrency value={row.totalAmount} />
                   </TableCell>

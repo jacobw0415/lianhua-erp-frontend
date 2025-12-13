@@ -12,12 +12,17 @@ interface Props {
 }
 
 export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
+  /* =========================================================
+   * ⭐ Hooks 一定要放最前面
+   * ========================================================= */
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  /* 🛡 防呆：確保 chips 是陣列 */
+  /* =========================================================
+   * 🛡 防呆處理（放在 Hooks 之後）
+   * ========================================================= */
   if (!Array.isArray(chips)) return null;
 
-  /* 🛡 過濾掉任何 display 無效的 chip */
   const safeChips = chips.filter(
     (chip) =>
       chip &&
@@ -29,12 +34,16 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
 
   if (safeChips.length === 0) return null;
 
+  /* =========================================================
+   * 資料切分
+   * ========================================================= */
   const visibleCount = 3;
   const visible = safeChips.slice(0, visibleCount);
   const hidden = safeChips.slice(visibleCount);
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
+  /* =========================================================
+   * 樣式
+   * ========================================================= */
   const chipBg =
     theme.palette.mode === "dark" ? "rgba(255,255,255,0.15)" : "#e8e8e8";
 
@@ -43,6 +52,9 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
       ? theme.palette.common.white
       : theme.palette.common.black;
 
+  /* =========================================================
+   * Render
+   * ========================================================= */
   return (
     <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
       {visible.map((chip) => (

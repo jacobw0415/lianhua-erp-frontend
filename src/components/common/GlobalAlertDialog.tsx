@@ -37,18 +37,23 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
 
   /** 🔥 Enter 觸發 */
   useEffect(() => {
-    if (!open) return;
+  if (!open) return;
 
-    const handleEnter = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        onConfirm ? onConfirm() : onClose();
+  const handleEnter = (e: KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      if (onConfirm) {
+        onConfirm();
+      } else {
+        onClose();
       }
-    };
+    }
+  };
 
-    window.addEventListener("keydown", handleEnter);
-    return () => window.removeEventListener("keydown", handleEnter);
-  }, [open, onClose, onConfirm]);
+  window.addEventListener("keydown", handleEnter);
+  return () => window.removeEventListener("keydown", handleEnter);
+}, [open, onClose, onConfirm]);
 
   /** ⭐ 按鈕顏色依 severity 切換 */
   const severityColorMap: Record<

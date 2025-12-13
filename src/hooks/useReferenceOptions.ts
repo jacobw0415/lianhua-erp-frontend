@@ -7,38 +7,45 @@ import { fetchUtils } from "react-admin";
  * @param idKey 資料的 id 欄位
  * @param nameKey 顯示名稱欄位
  */
+type ReferenceOption = {
+  id: string | number;
+  name: string;
+};
+
+type UnknownRecord = Record<string, unknown>;
+
 export const useReferenceOptions = (
   url: string,
   idKey: string = "id",
   nameKey: string = "name"
 ) => {
-  const [options, setOptions] = useState<{ id: any; name: string }[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [options, setOptions] = useState<ReferenceOption[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let active = true;
 
-    const load = async () => {
+    const load = async (): Promise<void> => {
       setLoading(true);
       try {
         const { json } = await fetchUtils.fetchJson(url);
 
-        // 🔥 支援 Swagger 格式
-        const items = Array.isArray(json)
+        // 🔥 支援 Swagger 格式：[] 或 { data: [] }
+        const items: UnknownRecord[] = Array.isArray(json)
           ? json
-          : Array.isArray(json.data)
-            ? json.data
-            : [];
+          : Array.isArray((json as { data?: unknown }).data)
+          ? ((json as { data: unknown[] }).data as UnknownRecord[])
+          : [];
 
         if (active) {
           setOptions(
-            items.map((item: any) => ({
-              id: item[idKey],
-              name: item[nameKey],
+            items.map((item) => ({
+              id: item[idKey] as string | number,
+              name: String(item[nameKey] ?? ""),
             }))
           );
         }
-      } catch (e) {
+      } catch (e: unknown) {
         console.error(`載入 reference (${url}) 失敗：`, e);
       } finally {
         if (active) setLoading(false);

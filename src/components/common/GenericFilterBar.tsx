@@ -37,7 +37,7 @@ interface FilterOption {
   type: "text" | "select" | "dateRange" | "date" | "autocomplete" | "month";
   source: string;
   label: string;
-  choices?: { id: any; name: string }[];
+  choices?: { id: string | number; name: string }[];
 }
 
 interface GenericFilterBarProps {

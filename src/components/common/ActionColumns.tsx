@@ -13,13 +13,41 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 
+/** --------------------------------------------------------
+ *  🔐 安全錯誤訊息解析（無 any）
+ * -------------------------------------------------------- */
+const resolveErrorMessage = (error: unknown): string => {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "body" in error &&
+    typeof (error as { body?: unknown }).body === "object" &&
+    (error as { body?: { message?: unknown } }).body?.message
+  ) {
+    return String(
+      (error as { body: { message: unknown } }).body.message
+    );
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error
+  ) {
+    return String((error as { message: unknown }).message);
+  }
+
+  return "不可刪除該筆資料，因為具有關聯紀錄。";
+};
+
 export const ActionColumns = () => {
   const record = useRecordContext<RaRecord>();
   const { resource } = useListContext();
   const refresh = useRefresh();
-  const safeRecord: RaRecord = record ?? { id: "placeholder" };
-
   const dataProvider = useDataProvider();
+
+  /** ⭐ fallback record（避免 TS any） */
+  const safeRecord = (record ?? { id: "placeholder" }) as RaRecord;
 
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openErrorDialog, setOpenErrorDialog] = useState(false);
@@ -30,34 +58,27 @@ export const ActionColumns = () => {
 
   /** ⭐ 統一顯示名稱（避免 undefined） */
   const displayName =
-    safeRecord?.name ||
-    safeRecord?.item ||
-    safeRecord?.productName ||
-    safeRecord?.title ||
-    `#${safeRecord?.id}`;
+    (safeRecord as { name?: string }).name ||
+    (safeRecord as { item?: string }).item ||
+    (safeRecord as { productName?: string }).productName ||
+    (safeRecord as { title?: string }).title ||
+    `#${safeRecord.id}`;
 
-
-  /** ⭐ 刪除邏輯 */
+  /** --------------------------------------------------------
+   *  🗑 刪除邏輯
+   * -------------------------------------------------------- */
   const handleDelete = async () => {
     try {
       await dataProvider.delete(resource, { id: safeRecord.id });
 
-      // 顯示成功彈窗
       setOpenSuccessDialog(true);
 
-      // 自動關閉（不需 hideConfirm）
       setTimeout(() => {
         setOpenSuccessDialog(false);
         refresh();
       }, 800);
-
-    } catch (err: any) {
-      const backendMessage =
-        err?.body?.message ||
-        err?.message ||
-        "不可刪除該筆資料，因為具有關聯紀錄。";
-
-      setErrorMessage(backendMessage);
+    } catch (error: unknown) {
+      setErrorMessage(resolveErrorMessage(error));
       setOpenErrorDialog(true);
     }
   };
@@ -75,7 +96,7 @@ export const ActionColumns = () => {
           startIcon={<EditIcon fontSize="small" />}
           onClick={(e) => {
             e.stopPropagation();
-            (e.currentTarget as HTMLButtonElement).blur();
+            e.currentTarget.blur();
             window.location.href = `#/${resource}/${safeRecord.id}`;
           }}
           sx={{ minWidth: "60px", textTransform: "none" }}
@@ -91,7 +112,7 @@ export const ActionColumns = () => {
           startIcon={<DeleteIcon fontSize="small" />}
           onClick={(e) => {
             e.stopPropagation();
-            (e.currentTarget as HTMLButtonElement).blur();
+            e.currentTarget.blur();
             setButtonTarget(e.currentTarget);
             setOpenConfirm(true);
           }}
@@ -101,7 +122,7 @@ export const ActionColumns = () => {
         </Button>
       </Stack>
 
-      {/* 🟥 刪除確認彈窗（保持雙按鈕模式） */}
+      {/* 🟥 刪除確認 */}
       <GlobalAlertDialog
         open={openConfirm}
         title="確認刪除"
@@ -122,25 +143,24 @@ export const ActionColumns = () => {
         }}
       />
 
-      {/*  錯誤彈窗單按鈕模式 */}
+      {/* ❗ 錯誤彈窗（單按鈕） */}
       <GlobalAlertDialog
         open={openErrorDialog}
         title="操作失敗"
         description={errorMessage}
         severity="warning"
         confirmLabel="確定"
-        onClose={() => setOpenErrorDialog(false)}   //  單按鈕模式
-      // ❌ 不給 onConfirm（避免進到雙按鈕模式）
+        onClose={() => setOpenErrorDialog(false)}
       />
 
-      {/*  刪除成功 彈窗：單按鈕 + 自動關閉 */}
+      {/* ✅ 成功彈窗（自動關閉） */}
       <GlobalAlertDialog
         open={openSuccessDialog}
         title="刪除成功"
         description={`「${displayName}」已成功刪除`}
         severity="success"
-        hideButtons   
-        onClose={() => { }}
+        hideButtons
+        onClose={() => {}}
       />
     </>
   );

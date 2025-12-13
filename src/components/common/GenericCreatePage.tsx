@@ -18,8 +18,8 @@ interface GenericCreatePageProps {
   resource: string;
   title: string;
   children: React.ReactNode;
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: unknown) => void;
+  onError?: (error: unknown) => void;
   width?: string;
 }
 
@@ -55,7 +55,7 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
 }) => {
   const redirect = useRedirect();
 
-  //  關鍵：接上全域錯誤處理
+  // ⭐ 全域錯誤處理（已是 unknown-safe）
   const globalAlert = useGlobalAlert();
   const { handleApiError } = useApiErrorHandler(globalAlert);
 
@@ -84,18 +84,15 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
             title={title}
             actions={false}
             mutationOptions={{
-              onSuccess: async (data) => {
+              onSuccess: async (data: unknown) => {
                 onSuccess?.(data);
                 if (!onSuccess) {
                   redirect("list", resource);
                 }
               },
 
-              onError: (error) => {
-                // ① 頁面自訂（可選）
+              onError: (error: unknown) => {
                 onError?.(error);
-
-                // ② ⭐ 一定要顯示錯誤（核心）
                 handleApiError(error);
               },
             }}

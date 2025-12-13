@@ -15,12 +15,46 @@ import { IconButton } from "@mui/material";
 
 import { APAgingDetailDrawer } from "./APAgingDetailDrawer";
 
+/* =========================================================
+ * 型別定義
+ * ========================================================= */
+
+/** Drawer 只需要的供應商基本資料 */
+interface SupplierLite {
+  supplierId: number;
+  supplierName: string;
+}
+
+/** AP Aging Summary（List 每一列） */
+interface APAgingSummaryRow {
+  supplierId: number;
+  supplierName: string;
+
+  aging0to30: number;
+  aging31to60: number;
+  aging60plus: number;
+
+  paidAmount: number;
+  balance: number;
+  totalAmount: number;
+}
+
+/* =========================================================
+ * Component
+ * ========================================================= */
+
 export const APList = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
 
-  const handleOpen = (record: any) => {
-    setSelectedSupplier(record);
+  /** ⭐ 只存 Drawer 真正需要的型別 */
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<SupplierLite | undefined>(undefined);
+
+  const handleOpen = (record: APAgingSummaryRow) => {
+    setSelectedSupplier({
+      supplierId: record.supplierId,
+      supplierName: record.supplierName,
+    });
     setOpenDrawer(true);
   };
 
@@ -35,11 +69,11 @@ export const APList = () => {
         pagination={<CustomPaginationBar showPerPage />}
       >
         <StyledListWrapper
-          /** 🔴 AP Aging 為報表頁，不允許新增 */
+          /** AP Aging 為報表頁，不允許新增 */
           disableCreate
 
           /** ===============================
-           *  Quick Filters（即時搜尋）
+           *  Quick Filters
            * =============================== */
           quickFilters={[
             {
@@ -50,7 +84,7 @@ export const APList = () => {
           ]}
 
           /** ===============================
-           *  Advanced Filters（進階條件）
+           *  Advanced Filters
            * =============================== */
           advancedFilters={[
             {
@@ -100,7 +134,7 @@ export const APList = () => {
 
             <FunctionField
               label="明細"
-              render={(record) => (
+              render={(record: APAgingSummaryRow) => (
                 <IconButton
                   size="small"
                   onClick={() => handleOpen(record)}

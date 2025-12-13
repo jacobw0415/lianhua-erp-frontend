@@ -1,33 +1,65 @@
-export const useApiErrorHandler = (globalAlert: any) => {
+/* =========================================================
+ * 🔐 型別定義（最小、只補型別）
+ * ========================================================= */
+interface GlobalAlertApi {
+  showAlert: (options: {
+    title: string;
+    message: string;
+    severity: "success" | "info" | "warning" | "error";
+  }) => void;
+}
+
+type ApiError =
+  | {
+      message?: string;
+      body?: {
+        message?: string;
+        error?: string;
+      };
+    }
+  | unknown;
+
+/* =========================================================
+ * 🔧 useApiErrorHandler
+ * ========================================================= */
+export const useApiErrorHandler = (globalAlert: GlobalAlertApi) => {
 
   /** --------------------------------------------------------
-   *  解析後端錯誤訊息（強化支援 normalizedError）
+   *  解析後端錯誤訊息（支援 normalizedError / Spring Boot）
    * -------------------------------------------------------- */
-  const extractMessage = (error: any): string => {
+  const extractMessage = (error: ApiError): string => {
     if (!error) return "發生未知錯誤";
 
-    //  支援 dataProvider 正規化後的格式
-    if (error.message) return error.message;
+    if (typeof error === "object") {
+      const e = error as {
+        message?: string;
+        body?: {
+          message?: string;
+          error?: string;
+        };
+      };
 
-    //  支援後端回傳 body.message
-    if (error.body?.message) return error.body.message;
+      // React-Admin / normalized error
+      if (e.message) return e.message;
 
-    //  支援 Spring Boot error / validation
-    if (error.body?.error) return error.body.error;
+      // Spring Boot body.message
+      if (e.body?.message) return e.body.message;
 
-    //  最後 fallback
+      // Spring Boot error
+      if (e.body?.error) return e.body.error;
+    }
+
     return "系統發生錯誤，請稍後再試";
   };
 
   /** --------------------------------------------------------
    * ⭐ 主錯誤處理
    * -------------------------------------------------------- */
-  const handleApiError = (error: any) => {
+  const handleApiError = (error: ApiError): void => {
     console.error("🔥 API ERROR:", error);
 
     const resolvedMessage = extractMessage(error);
 
-    // ⭐ 統一彈出你的 GlobalAlert UI
     globalAlert.showAlert({
       title: "操作失敗",
       message: resolvedMessage,

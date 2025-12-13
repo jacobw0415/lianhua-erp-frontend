@@ -8,6 +8,7 @@ import {
   useUpdate,
   useRecordContext,
   useDataProvider,
+  type RaRecord,
 } from "react-admin";
 
 import { Box, Button } from "@mui/material";
@@ -20,17 +21,20 @@ import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useApiErrorHandler } from "@/hooks/useApiErrorHandler";
 
+/* =======================================================
+ *  Props
+ * ======================================================= */
 interface GenericEditPageProps {
   resource: string;
   title: string;
   children: React.ReactNode;
   width?: string;
-  onSuccess?: (data: any) => void;
-  onDeleteSuccess?: (record: any) => void;
+  onSuccess?: (data: unknown) => void;
+  onDeleteSuccess?: (record: unknown) => void;
 }
 
 /* -------------------------------------------------------
- *  Custom Toolbar（與 GenericCreatePage UX 一致）
+ *  Custom Toolbar
  * ------------------------------------------------------- */
 const CustomToolbar = ({
   onBack,
@@ -73,9 +77,9 @@ const CustomToolbar = ({
   </Toolbar>
 );
 
-/* -------------------------------------------------------
+/* =======================================================
  *  主組件
- * ------------------------------------------------------- */
+ * ======================================================= */
 export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   resource,
   title,
@@ -94,13 +98,20 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
   /* ---------------------------------------------------
-   *  提交（Update）邏輯
+   *  提交（Update）
    * --------------------------------------------------- */
-  const handleSubmit = async (values: any) => {
-    const { id, newPayments, ...rest } = values;
-    const payload = { ...rest };
+  const handleSubmit = async (values: unknown) => {
+    if (typeof values !== "object" || values === null) return;
 
-    // 移除唯讀欄位（依實際資料結構）
+    const {
+      id,
+      newPayments,
+      ...rest
+    } = values as Record<string, unknown>;
+
+    const payload: Record<string, unknown> = { ...rest };
+
+    // 移除唯讀欄位
     delete payload.supplierName;
     delete payload.item;
     delete payload.totalAmount;
@@ -111,8 +122,15 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
     // payments 處理
     if (Array.isArray(newPayments)) {
       payload.payments = newPayments
-        .filter((p: any) => p.amount && p.payDate && p.method)
-        .map((p: any) => ({
+        .filter(
+          (p): p is { amount: unknown; payDate: unknown; method: unknown } =>
+            typeof p === "object" &&
+            p !== null &&
+            "amount" in p &&
+            "payDate" in p &&
+            "method" in p
+        )
+        .map((p) => ({
           amount: p.amount,
           payDate: p.payDate,
           method: p.method,
@@ -123,10 +141,16 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
       resource,
       { id, data: payload },
       {
-        onSuccess: async (result: any) => {
-          const newId = result?.data?.id ?? id;
+        onSuccess: async (result: unknown) => {
+          const newId =
+            typeof result === "object" &&
+            result !== null &&
+            "data" in result &&
+            typeof (result as { data?: unknown }).data === "object" &&
+            (result as { data?: { id?: unknown } }).data?.id
+              ? (result as { data: { id: unknown } }).data.id
+              : id;
 
-          // 重新抓最新資料，確保外層拿到完整 record
           const latest = await dataProvider.getOne(resource, { id: newId });
 
           onSuccess?.(latest.data);
@@ -135,8 +159,8 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
           }
         },
 
-        onError: (error: any) => {
-          handleApiError(error); // ⭐ 核心：一定顯示錯誤
+        onError: (error: unknown) => {
+          handleApiError(error);
         },
       }
     );
@@ -181,10 +205,20 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   );
 };
 
-/* -------------------------------------------------------
- *  EditContent（Delete + Delete Confirm）
- * ------------------------------------------------------- */
-const EditContent = ({
+/* =======================================================
+ *  EditContent
+ * ======================================================= */
+interface EditContentProps {
+  children: React.ReactNode;
+  resource: string;
+  onSubmit: (values: unknown) => void;
+  openDeleteConfirm: boolean;
+  setOpenDeleteConfirm: React.Dispatch<React.SetStateAction<boolean>>;
+  onDeleteSuccess?: (record: unknown) => void;
+  handleApiError: (error: unknown) => void;
+}
+
+const EditContent: React.FC<EditContentProps> = ({
   children,
   resource,
   onSubmit,
@@ -192,15 +226,15 @@ const EditContent = ({
   setOpenDeleteConfirm,
   onDeleteSuccess,
   handleApiError,
-}: any) => {
+}) => {
   const redirect = useRedirect();
   const dataProvider = useDataProvider();
-  const record = useRecordContext();
+  const record = useRecordContext<RaRecord>();
 
   if (!record) return null;
 
   /* ---------------------------------------------------
-   *  刪除邏輯
+   *  刪除
    * --------------------------------------------------- */
   const handleDelete = async () => {
     try {
@@ -213,8 +247,8 @@ const EditContent = ({
       if (!onDeleteSuccess) {
         redirect("list", resource);
       }
-    } catch (error: any) {
-      handleApiError(error); // ⭐ 核心：一定顯示錯誤
+    } catch (error: unknown) {
+      handleApiError(error);
     }
   };
 
@@ -232,12 +266,14 @@ const EditContent = ({
         {children}
       </SimpleForm>
 
-      {/* 刪除確認 Dialog（操作確認，不是錯誤） */}
       <GlobalAlertDialog
         open={openDeleteConfirm}
         title="確認刪除"
         description={`確定要刪除「${
-          record.name ?? record.title ?? record.code ?? "這筆資料"
+          (record as { name?: string }).name ??
+          (record as { title?: string }).title ??
+          (record as { code?: string }).code ??
+          "這筆資料"
         }」嗎？`}
         severity="error"
         confirmLabel="刪除"
