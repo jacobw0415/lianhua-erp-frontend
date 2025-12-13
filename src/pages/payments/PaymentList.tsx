@@ -48,23 +48,18 @@ export const PaymentList = () => {
             { header: "供應商", key: "supplierName", width: 20 },
             { header: "金額", key: "amount", width: 12 },
             { header: "付款方式", key: "method", width: 10 },
-            { header: "進貨單號", key: "purchaseId", width: 14 },
+             { header: "進貨單號", key: "purchaseNo", width: 18 },
             { header: "會計期間", key: "accountingPeriod", width: 10 },
             { header: "備註", key: "note", width: 20 },
           ],
         }}
       >
         <StyledListDatagrid>
-          <TextField source="supplierName" label="供應商" />
-          <DateField source="payDate" label="付款日期" />
-          <CurrencyField source="amount" label="金額" />
-          <TextField source="method" label="付款方式" />
-
           {/* ✅ 與 APAgingDetailDrawer 完全一致的 UI */}
           <FunctionField
             label="進貨單號"
             render={(record: any) =>
-              record?.purchaseId ? (
+              record?.purchaseNo ? (
                 <Typography
                   sx={{
                     color: "primary.main",
@@ -79,14 +74,17 @@ export const PaymentList = () => {
                     redirect(`/purchases/${record.purchaseId}`);
                   }}
                 >
-                  #{record.purchaseId}
+                  #{record.purchaseNo}
                 </Typography>
               ) : (
                 "-"
               )
             }
           />
-
+          <TextField source="supplierName" label="供應商" />
+          <DateField source="payDate" label="付款日期" />
+          <CurrencyField source="amount" label="金額" />
+          <TextField source="method" label="付款方式" />
           <TextField source="accountingPeriod" label="會計期間" />
           <TextField source="note" label="備註" />
         </StyledListDatagrid>

@@ -105,7 +105,7 @@ export const APAgingDetailDrawer = ({
                         redirect(`/purchases/${row.purchaseId}`)
                       }
                     >
-                      #{row.purchaseId}
+                      #{row.purchaseNo}
                     </Typography>
                   </TableCell>
 

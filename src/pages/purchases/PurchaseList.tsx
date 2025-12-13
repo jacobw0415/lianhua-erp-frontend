@@ -80,6 +80,7 @@ export const PurchaseList = () => {
             filename: "purchase_export",
             format: "excel",
             columns: [
+              { header: "供應商單號", key: "purchaseNo", width: 20 },
               { header: "供應商", key: "supplierName", width: 20 },
               { header: "品項", key: "item", width: 20 },
               { header: "數量", key: "qty", width: 10 },
@@ -98,6 +99,7 @@ export const PurchaseList = () => {
            *   📄 Datagrid（資料表）
            * --------------------------------------------------------- */}
           <StyledListDatagrid>
+            <TextField source="purchaseNo" label="進貨單號" />
             <TextField source="supplierName" label="供應商名稱" />
             <TextField source="item" label="品項" />
             <NumberField source="qty" label="數量" />
