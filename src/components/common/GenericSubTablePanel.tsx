@@ -4,9 +4,9 @@ import {
   TextField,
   NumberField,
   DateField,
-  ArrayField,
+  ListContextProvider,
 } from "react-admin";
-import type { RaRecord } from "react-admin";
+import type { RaRecord, ListControllerResult } from "react-admin";
 import { Box, Typography } from "@mui/material";
 
 /* =========================================================
@@ -34,6 +34,20 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
 }) => {
   const enableScroll = rows.length > 2;
   const maxHeight = enableScroll ? "150px" : "auto";
+
+  /**
+   * ⚠️ 關鍵說明
+   * 這裡是「UI 用的本地子表」
+   * Datagrid 實際只會用到 data / total / isLoading
+   * React-Admin v4 型別要求完整 ListControllerResult
+   * → 在此做「集中、可控」的型別斷言（正確做法）
+   */
+  const listContext = {
+    data: rows,
+    total: rows.length,
+    isLoading: false,
+    resource: "generic-subtable-panel",
+  } as unknown as ListControllerResult;
 
   return (
     <Box
@@ -75,16 +89,31 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
           目前尚無紀錄
         </Box>
       ) : (
-        <Box
-          sx={(theme) => ({
-            borderRadius: 2,
-            border: `2px solid ${theme.palette.divider}`,
-            maxHeight,
-            overflowY: enableScroll ? "auto" : "visible",
-          })}
-        >
-          <ArrayField source="rows" record={{ rows }}>
-            <Datagrid bulkActionButtons={false} rowClick={false}>
+        <ListContextProvider value={listContext}>
+          <Box
+            sx={(theme) => ({
+              borderRadius: 2,
+              border: `2px solid ${theme.palette.divider}`,
+              maxHeight,
+              overflowY: enableScroll ? "auto" : "visible",
+            })}
+          >
+            <Datagrid
+              bulkActionButtons={false}
+              rowClick={false}
+              sx={{
+                /* ⭐ 關鍵：整張子表統一靠左（包含金額） */
+                "& th": {
+                  textAlign: "left",
+                  fontWeight: 600,
+                  padding: "8px 6px",
+                },
+                "& td": {
+                  textAlign: "left",
+                  padding: "8px 6px",
+                },
+              }}
+            >
               {columns.map((col) => {
                 switch (col.type) {
                   case "currency":
@@ -100,6 +129,7 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
                         }}
                       />
                     );
+
                   case "date":
                     return (
                       <DateField
@@ -108,6 +138,7 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
                         label={col.label}
                       />
                     );
+
                   default:
                     return (
                       <TextField
@@ -119,9 +150,11 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
                 }
               })}
             </Datagrid>
-          </ArrayField>
-        </Box>
+          </Box>
+        </ListContextProvider>
       )}
     </Box>
   );
 };
+
+export default GenericSubTablePanel;

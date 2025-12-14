@@ -2,26 +2,25 @@ import { useState } from "react";
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   FunctionField,
 } from "react-admin";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
-import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { PaymentDrawer } from "./PaymentDrawer";
-import { ActionColumns } from "@/components/common/ActionColumns";
-import { CurrencyField } from "@/components/money/CurrencyField";
+import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+import { CurrencyField } from "@/components/money/CurrencyField";
+import { ActionColumns } from "@/components/common/ActionColumns";
+
+import { PurchaseDetailDrawer } from "./PurchaseDetailDrawer";
 
 /* =========================================================
  * 型別定義
  * ========================================================= */
 
-/** PaymentDrawer 需要的付款資料（與 PaymentDrawer.tsx 對齊） */
 interface PaymentRow {
   amount: number;
   payDate: string;
@@ -29,48 +28,74 @@ interface PaymentRow {
   note?: string;
 }
 
-/** PaymentDrawer 真正需要的 Purchase 型別 */
-interface PurchaseWithPayments {
-  supplierName: string;
-  payments: PaymentRow[];
-}
-
-/** Purchase List 每一列（Summary + Drawer 所需欄位） */
-interface PurchaseListRow extends PurchaseWithPayments {
+interface PurchaseDetailRow {
   id: number;
-
-  purchaseNo: string;
-  supplierName: string;
   item: string;
-
   qty: number;
   unitPrice: number;
+  totalAmount: number;
+  note?: string;
+}
+
+interface PurchaseListRow {
+  id: number;
+  purchaseNo: string;
+  supplierName: string;
+  purchaseDate: string;
+
   totalAmount: number;
   paidAmount: number;
   balance: number;
 
   status: "PENDING" | "PARTIAL" | "PAID";
-  purchaseDate: string;
   note?: string;
+
+  payments?: PaymentRow[];
 }
+
+/* =========================================================
+ * Drawer 資料來源
+ * ========================================================= */
+
+type SelectedPurchase = {
+  id: number;
+  purchaseNo: string;
+  supplierName: string;
+  purchaseDate: string;
+  status: "PENDING" | "PARTIAL" | "PAID";
+
+  totalAmount: number;
+  paidAmount: number;
+  balance: number;
+
+  details: PurchaseDetailRow[];
+  payments: PaymentRow[];
+};
 
 /* =========================================================
  * Component
  * ========================================================= */
 
 export const PurchaseList = () => {
-  const [openDrawer, setOpenDrawer] = useState(false);
-
-  /** ⭐ Drawer 只吃「它需要的結構」 */
+  const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
   const [selectedPurchase, setSelectedPurchase] =
-    useState<PurchaseWithPayments | undefined>(undefined);
+    useState<SelectedPurchase | null>(null);
 
-  const handleOpen = (record: PurchaseListRow) => {
+  const openDetails = (record: PurchaseListRow) => {
     setSelectedPurchase({
+      id: record.id,
+      purchaseNo: record.purchaseNo,
       supplierName: record.supplierName,
+      purchaseDate: record.purchaseDate,
+      status: record.status,
+      totalAmount: record.totalAmount,
+      paidAmount: record.paidAmount,
+      balance: record.balance,
+      details: [],                  // 明細由 Drawer 內補
       payments: record.payments ?? [],
     });
-    setOpenDrawer(true);
+
+    setOpenDetailDrawer(true);
   };
 
   return (
@@ -78,21 +103,14 @@ export const PurchaseList = () => {
       <List
         title="進貨紀錄"
         actions={false}
-        pagination={<CustomPaginationBar showPerPage />}
         perPage={10}
+        pagination={<CustomPaginationBar showPerPage />}
       >
         <StyledListWrapper
-          /* -----------------------------
-           * 🔍 Quick Filters
-           * ----------------------------- */
           quickFilters={[
             { type: "text", source: "supplierName", label: "供應商名稱" },
-            { type: "text", source: "item", label: "品項" },
+            { type: "text", source: "purchaseNo", label: "進貨單號" },
           ]}
-
-          /* -----------------------------
-           * 📌 Advanced Filters
-           * ----------------------------- */
           advancedFilters={[
             {
               type: "select",
@@ -109,70 +127,44 @@ export const PurchaseList = () => {
               source: "accountingPeriod",
               label: "會計期間 (YYYY-MM)",
             },
-            {
-              type: "date",
-              source: "fromDate",
-              label: "進貨日（起）",
-            },
-            {
-              type: "date",
-              source: "toDate",
-              label: "進貨日（迄）",
-            },
+            { type: "date", source: "fromDate", label: "進貨日（起）" },
+            { type: "date", source: "toDate", label: "進貨日（迄）" },
           ]}
-
-          /* -----------------------------
-           * 📤 Export
-           * ----------------------------- */
           exportConfig={{
             filename: "purchase_export",
             format: "excel",
             columns: [
-              { header: "進貨單號", key: "purchaseNo", width: 20 },
-              { header: "供應商", key: "supplierName", width: 20 },
-              { header: "品項", key: "item", width: 20 },
-              { header: "數量", key: "qty", width: 10 },
-              { header: "單價", key: "unitPrice", width: 12 },
-              { header: "總金額", key: "totalAmount", width: 12 },
-              { header: "已付款", key: "paidAmount", width: 12 },
-              { header: "餘額", key: "balance", width: 12 },
-              { header: "狀態", key: "status", width: 10 },
-              { header: "進貨日期", key: "purchaseDate", width: 14 },
-              { header: "備註", key: "note", width: 20 },
+              { header: "進貨單號", key: "purchaseNo", width: 18 },
+              { header: "供應商名稱", key: "supplierName", width: 20 },
+              { header: "進貨日期", key: "purchaseDate", width: 15 },
+              { header: "品項", key: "item", width: 15 },
+              { header: "數量", key: "qty", width: 15 },
+              { header: "單價", key: "unitPrice", width: 15 },
+              { header: "總金額", key: "totalAmount", width: 15 },
+              { header: "備註", key: "note", width: 25 },
             ],
           }}
         >
-          {/* -----------------------------
-           * 📄 Datagrid
-           * ----------------------------- */}
           <StyledListDatagrid>
             <TextField source="purchaseNo" label="進貨單號" />
             <TextField source="supplierName" label="供應商名稱" />
-            <TextField source="item" label="品項" />
-            <NumberField source="qty" label="數量" />
+            <DateField source="purchaseDate" label="進貨日期" />
+            <CurrencyField source="item" label="品項" />
+            <CurrencyField source="qty" label="數量" />
             <CurrencyField source="unitPrice" label="單價" />
             <CurrencyField source="totalAmount" label="總金額" />
-            <CurrencyField source="paidAmount" label="已付款" />
-            <CurrencyField source="balance" label="餘額" />
-            <TextField source="status" label="狀態" />
-            <DateField source="purchaseDate" label="進貨日期" />
-            <TextField source="note" label="備註" />
 
-            {/* 🔍 Drawer：查看付款紀錄 */}
+            {/* 📦 明細 */}
             <FunctionField
-              label="付款"
-              className="cell-centered"
+              label="明細"
               render={(record: PurchaseListRow) => (
-                <IconButton
-                  size="small"
-                  onClick={() => handleOpen(record)}
-                >
+                <IconButton size="small" onClick={() => openDetails(record)}>
                   <VisibilityIcon fontSize="small" />
                 </IconButton>
               )}
             />
 
-            {/* 🛠️ 操作欄 */}
+            {/* 🛠 操作 */}
             <FunctionField
               label="操作"
               source="action"
@@ -183,11 +175,10 @@ export const PurchaseList = () => {
         </StyledListWrapper>
       </List>
 
-      {/* 📘 Drawer：付款紀錄 */}
-      <PaymentDrawer
-        open={openDrawer}
-        onClose={() => setOpenDrawer(false)}
-        purchase={selectedPurchase}
+      <PurchaseDetailDrawer
+        open={openDetailDrawer}
+        onClose={() => setOpenDetailDrawer(false)}
+        purchase={selectedPurchase ?? undefined}
       />
     </>
   );

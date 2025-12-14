@@ -113,7 +113,7 @@ export const APAgingDetailDrawer = ({
           >
             {/* ⭐ 關鍵：欄寬定義 */}
             <colgroup>
-              <col style={{ width: 160 }} />
+              <col style={{ width: 170 }} />
               <col style={{ width: 120 }} />
               <col style={{ width: 110 }} />
               <col style={{ width: 110 }} />

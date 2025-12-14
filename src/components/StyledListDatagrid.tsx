@@ -109,8 +109,12 @@ const StyledDatagridRoot = styled(Datagrid, {
   },
 
   /** ▌供應商名稱寬度 (source="supplierName") */
-  "& td.column-supplierName, & th.column-supplierName": {
+  "& td.column-supplierName, & th.column-supplierName, & th.column-purchaseNo": {
     width: "120px",
+  },
+
+  "& th.column-purchaseNo": {
+    width: "150px",
   },
 
   /** ▌備註欄寬度 (source="note") */
