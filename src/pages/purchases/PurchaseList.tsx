@@ -149,7 +149,7 @@ export const PurchaseList = () => {
             <TextField source="purchaseNo" label="進貨單號" />
             <TextField source="supplierName" label="供應商名稱" />
             <DateField source="purchaseDate" label="進貨日期" />
-            <CurrencyField source="item" label="品項" />
+            <TextField source="item" label="品項" />
             <CurrencyField source="qty" label="數量" />
             <CurrencyField source="unitPrice" label="單價" />
             <CurrencyField source="totalAmount" label="總金額" />

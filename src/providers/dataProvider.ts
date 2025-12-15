@@ -11,13 +11,13 @@ import { filterMapping } from "@/config/filterMapping";
  * ======================================================== */
 type ApiError =
   | {
+    message?: string;
+    body?: {
       message?: string;
-      body?: {
-        message?: string;
-        error?: string;
-      };
-      status?: number;
-    }
+      error?: string;
+    };
+    status?: number;
+  }
   | unknown;
 
 const apiUrl: string =
@@ -171,8 +171,13 @@ export const createDataProvider = ({
 
       return httpClientSafe(`${basePath}?${query}`).then(({ json }) => {
         const payload = json?.data ?? json;
-        const data = payload?.content ?? [];
-        const total = payload?.totalElements ?? data.length;
+        const data = Array.isArray(payload)
+          ? payload
+          : payload?.content ?? [];
+
+        const total = Array.isArray(payload)
+          ? payload.length
+          : payload?.totalElements ?? data.length;
         return { data, total };
       });
     },

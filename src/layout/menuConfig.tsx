@@ -89,7 +89,7 @@ export const menuGroups: MenuGroup[] = [
     label: "商品管理",
     icon: <InventoryIcon />,
     items: [
-      { label: "商品分類", to: "/product-categories", icon: <CategoryIcon /> },
+      { label: "商品分類", to: "/product_categories", icon: <CategoryIcon /> },
       { label: "商品資料", to: "/products", icon: <InventoryIcon /> },
     ],
   },

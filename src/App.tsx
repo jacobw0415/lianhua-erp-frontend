@@ -17,6 +17,8 @@ import { PaymentList } from "@/pages/payments/PaymentList";
 import { APList } from "@/pages/ap/APList";
 import { SaleList } from "@/pages/sales/SaleList";
 
+import { ProductCategoryList } from "@/pages/products/ProductCategoryList";
+
 import { CustomLayout } from "@/layout/CustomLayout";
 
 import {
@@ -85,6 +87,10 @@ const App = () => {
             />
             <Resource name="payments" list={PaymentList} />
             <Resource name="ap" list={APList} />
+            <Resource
+                name="product_categories"
+                list={ProductCategoryList}
+            />
             <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />
