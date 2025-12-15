@@ -16,6 +16,24 @@ import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { CustomClearButton } from "@/components/forms/CustomClearButton";
 import { useActiveSuppliers } from "@/hooks/useActiveSuppliers";
 
+/* -------------------------------------------------------
+ * 🔐 Purchase 型別定義（Create 成功回傳用）
+ * ------------------------------------------------------- */
+interface Purchase {
+  id: number;
+  purchaseNo: string;
+  supplierId: number;
+  note?: string;
+  qty?: number;
+  unitPrice?: number;
+  purchaseDate?: string;
+  payments?: Array<{
+    amount?: number;
+    payDate?: string;
+    method?: "CASH" | "TRANSFER" | "CARD" | "CHECK";
+  }>;
+}
+
 export const PurchaseCreate: React.FC = () => {
   const { suppliers, loading } = useActiveSuppliers();
   const { showAlert } = useGlobalAlert();
@@ -27,9 +45,11 @@ export const PurchaseCreate: React.FC = () => {
       title="新增進貨紀錄"
       width="970px"
       onSuccess={(data) => {
+        const purchase = data as Purchase;
+
         showAlert({
           title: "新增成功",
-          message: `進貨單「${data.item}」已成功建立`,
+          message: `進貨單「${purchase.purchaseNo}」已成功建立`,
           severity: "success",
           hideCancel: true,
         });
@@ -119,36 +139,36 @@ const PaymentArrayInput: React.FC = () => {
   const hasPayment = Array.isArray(payments) && payments.length > 0;
 
   return (
-      <ArrayInput source="payments" label="">
-        <SimpleFormIterator
-          disableAdd={hasPayment}
-          disableRemove={true}
-          getItemLabel={() => ""}
-        >
-          <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />
+    <ArrayInput source="payments" label="">
+      <SimpleFormIterator
+        disableAdd={hasPayment}
+        disableRemove={true}
+        getItemLabel={() => ""}
+      >
+        <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />
 
-          <LhDateInput source="payDate" label="付款日期" />
+        <LhDateInput source="payDate" label="付款日期" />
 
-          <SelectInput
-            source="method"
-            label="付款方式"
-            choices={[
-              { id: "CASH", name: "現金" },
-              { id: "TRANSFER", name: "轉帳" },
-              { id: "CARD", name: "刷卡" },
-              { id: "CHECK", name: "支票" },
-            ]}
-            sx={{ flex: 1, marginTop: 2.5 }}
-          />
+        <SelectInput
+          source="method"
+          label="付款方式"
+          choices={[
+            { id: "CASH", name: "現金" },
+            { id: "TRANSFER", name: "轉帳" },
+            { id: "CARD", name: "刷卡" },
+            { id: "CHECK", name: "支票" },
+          ]}
+          sx={{ flex: 1, marginTop: 2.5 }}
+        />
 
-          <CustomClearButton
-            onClear={({ setValue }) => {
-              setValue("payments.0.amount", "");
-              setValue("payments.0.payDate", null);
-              setValue("payments.0.method", "");
-            }}
-          />
-        </SimpleFormIterator>
-      </ArrayInput>
+        <CustomClearButton
+          onClear={({ setValue }) => {
+            setValue("payments.0.amount", "");
+            setValue("payments.0.payDate", null);
+            setValue("payments.0.method", "");
+          }}
+        />
+      </SimpleFormIterator>
+    </ArrayInput>
   );
 };

@@ -2,7 +2,31 @@ import React, { createContext, useContext } from "react";
 import { useApiErrorHandler } from "@/hooks/useApiErrorHandler";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 
-const ErrorHandlerContext = createContext<any>(null);
+/* =========================================================
+ * 🔐 最小 ApiError 型別（Context 專用）
+ * ========================================================= */
+type ApiError =
+  | {
+      message?: string;
+      body?: {
+        message?: string;
+        error?: string;
+      };
+    }
+  | unknown;
+
+/* =========================================================
+ * 🔐 Context 型別定義（關鍵）
+ * ========================================================= */
+interface ErrorHandlerContextValue {
+  handleApiError: (error: ApiError) => void;
+}
+
+/* =========================================================
+ * Context
+ * ========================================================= */
+const ErrorHandlerContext =
+  createContext<ErrorHandlerContextValue | null>(null);
 
 export const ErrorHandlerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,

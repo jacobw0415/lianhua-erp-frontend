@@ -1,9 +1,31 @@
 import React from "react";
-import { TextInput, SelectInput, useRedirect } from "react-admin";
+import {
+  TextInput,
+  SelectInput,
+  useRedirect,
+  required,
+} from "react-admin";
 import { Box, Typography } from "@mui/material";
+
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { required } from "react-admin";
+
+/* -------------------------------------------------------
+ * 🔐 Supplier 型別定義
+ * ------------------------------------------------------- */
+interface Supplier {
+  id: number;
+  name: string;
+  contact?: string;
+  phone?: string;
+  note?: string;
+  billingCycle?: "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+  active?: boolean;
+}
+
+/* -------------------------------------------------------
+ * ⭐ 新增供應商頁面
+ * ------------------------------------------------------- */
 export const SupplierCreate: React.FC = () => {
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
@@ -13,11 +35,14 @@ export const SupplierCreate: React.FC = () => {
       resource="suppliers"
       title="新增供應商"
       onSuccess={(data) => {
+        const supplier = data as Supplier;
+
         showAlert({
-          message: `供應商「${data.name}」新增成功！`,
+          message: `供應商「${supplier.name}」新增成功！`,
           severity: "success",
           hideCancel: true,
         });
+
         setTimeout(() => redirect("list", "suppliers"));
       }}
     >
@@ -27,28 +52,32 @@ export const SupplierCreate: React.FC = () => {
 
       {/* 整體固定最大寬度 */}
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 第一列 */}
+        {/* 第一列：名稱 / 聯絡人 */}
         <Box display="flex" gap={2} mb={2}>
           <Box flex={1}>
-            <TextInput source="name" label="供應商名稱 *" fullWidth  validate={[required()]}/>
+            <TextInput
+              source="name"
+              label="供應商名稱 *"
+              fullWidth
+              validate={[required()]}
+            />
           </Box>
           <Box flex={1}>
             <TextInput source="contact" label="聯絡人" fullWidth />
           </Box>
         </Box>
 
-        {/* 第二列 */}
+        {/* 第二列：電話 / 備註 */}
         <Box display="flex" gap={2} mb={2}>
           <Box flex={1}>
             <TextInput source="phone" label="電話" fullWidth />
           </Box>
-
           <Box flex={1}>
             <TextInput source="note" label="備註" multiline fullWidth />
           </Box>
         </Box>
 
-        {/* 單欄：帳單週期 */}
+        {/* 帳單週期 */}
         <Box mb={2}>
           <SelectInput
             source="billingCycle"
