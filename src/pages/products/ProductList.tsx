@@ -10,6 +10,7 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { ProductStatusToggle } from "./ProductStatusToggle";
 
 /* =========================================================
  * Component
@@ -26,6 +27,7 @@ export const ProductList = () => {
     >
       <StyledListWrapper
         quickFilters={[
+          { type: "text", source: "categoryCode", label: "分類代碼" },
           { type: "text", source: "name", label: "商品名稱" },
         ]}
         advancedFilters={[
@@ -42,10 +44,10 @@ export const ProductList = () => {
       >
         <StyledListDatagrid>
 
-          <TextField source="name" label="商品名稱" />
-
           {/* ⭐ 顯示可以用 category.code，但搜尋不能 */}
           <TextField source="category.code" label="分類代碼" />
+
+           <TextField source="name" label="商品名稱" />
 
           <CurrencyField source="unitPrice" label="單價" />
 
@@ -54,6 +56,12 @@ export const ProductList = () => {
             className="cell-centered"
             render={() => <ActiveStatusField />}
           />
+
+           <FunctionField
+             label="切換狀態"
+             className="cell-centered"
+             render={() => <ProductStatusToggle />}
+           />
 
           <FunctionField
             label="操作"

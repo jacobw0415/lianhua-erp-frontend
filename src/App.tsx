@@ -22,6 +22,8 @@ import { ProductCategoryCreate } from "@/pages/productCategories/ProductCategory
 import { ProductCategoryEdit } from "@/pages/productCategories/ProductCategoryEdit";
 
 import { ProductList } from "@/pages/products/ProductList";
+import { ProductCreate } from "@/pages/products/ProductCreate";
+import { ProductEdit } from "@/pages/products/ProductEdit";
 
 
 
@@ -99,7 +101,12 @@ const App = () => {
                 create={ProductCategoryCreate}
                 edit={ProductCategoryEdit}
             />
-            <Resource name="products" list={ProductList} />
+            <Resource 
+                name="products"
+                list={ProductList}
+                create={ProductCreate}
+                edit={ProductEdit}
+            />
             <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />

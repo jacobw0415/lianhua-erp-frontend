@@ -144,7 +144,7 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
       sx={(theme) => ({
         width: "100%",
         flex: 1,
-        height: "470px",
+        height: maxHeight,
         overflow: "hidden",
         border: `1px solid ${theme.palette.action.disabled}`,
         borderRadius: 2,
