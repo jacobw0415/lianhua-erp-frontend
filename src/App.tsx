@@ -17,7 +17,13 @@ import { PaymentList } from "@/pages/payments/PaymentList";
 import { APList } from "@/pages/ap/APList";
 import { SaleList } from "@/pages/sales/SaleList";
 
-import { ProductCategoryList } from "@/pages/products/ProductCategoryList";
+import { ProductCategoryList } from "@/pages/productCategories/ProductCategoryList";
+import { ProductCategoryCreate } from "@/pages/productCategories/ProductCategoryCreate";
+import { ProductCategoryEdit } from "@/pages/productCategories/ProductCategoryEdit";
+
+import { ProductList } from "@/pages/products/ProductList";
+
+
 
 import { CustomLayout } from "@/layout/CustomLayout";
 
@@ -90,7 +96,10 @@ const App = () => {
             <Resource
                 name="product_categories"
                 list={ProductCategoryList}
+                create={ProductCategoryCreate}
+                edit={ProductCategoryEdit}
             />
+            <Resource name="products" list={ProductList} />
             <Resource name="sales" list={SaleList} />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />

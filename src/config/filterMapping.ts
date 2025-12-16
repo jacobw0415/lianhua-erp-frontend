@@ -9,9 +9,13 @@ export const filterMapping: Record<string, Record<string, string>> = {
     },
 
     products: {
-        name: "productName",
-        barcode: "barcode",
-        category: "category",
+        name: "name",
+        code: "code",
+        active: "active",
+        categoryId: "categoryId",
+        categoryCode: "categoryCode",
+        unitPriceMin: "unitPriceMin",
+        unitPriceMax: "unitPriceMax",
     },
 
     employees: {
