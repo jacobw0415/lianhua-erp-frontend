@@ -8,7 +8,7 @@ interface StyledDatagridProps extends DatagridProps {
 }
 
 /**
- * ⭐ 最終版不爆框 StyledDatagrid（統一高度 + 完整等比）
+ * - 最終版不爆框 StyledDatagrid（統一高度 + 完整等比）
  * - row 高度一致（所有頁表完全統一）
  * - Chip、Switch、Icon、按鈕 全部垂直置中
  * - 固定欄位寬與操作欄不爆框
@@ -17,6 +17,10 @@ interface StyledDatagridProps extends DatagridProps {
 const StyledDatagridRoot = styled(Datagrid, {
   shouldForwardProp: (prop) => prop !== "maxHeight",
 })<StyledDatagridProps>(({ theme }) => ({
+  /* 讓 Datagrid 撐滿外層 Box */
+  flex: 1,
+  height: "100%",
+
   borderRadius: 12,
   overflowX: "hidden",
   overflowY: "hidden",
@@ -92,7 +96,7 @@ const StyledDatagridRoot = styled(Datagrid, {
     flexShrink: 0,
   },
 
-  /** ▌客製化 scrollbar */
+  /** ▌Scrollbar */
   "&::-webkit-scrollbar": {
     width: "6px",
     height: "6px",
@@ -104,20 +108,20 @@ const StyledDatagridRoot = styled(Datagrid, {
   "&::-webkit-scrollbar-thumb:hover": {
     backgroundColor: "#888",
   },
+
   "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
     textAlign: "left",
   },
 
-  /** ▌供應商名稱寬度 (source="supplierName") */
+  /** ▌供應商名稱 / 進貨單號 */
   "& td.column-supplierName, & th.column-supplierName, & th.column-purchaseNo": {
     width: "120px",
   },
-
   "& th.column-purchaseNo": {
     width: "150px",
   },
 
-  /** ▌備註欄寬度 (source="note") */
+  /** ▌備註欄 */
   "& td.column-note, & th.column-note": {
     width: "140px",
   },
@@ -142,7 +146,7 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
         flex: 1,
         height: "470px",
         overflow: "hidden",
-        border: `1px solid ${theme.palette.action.disabled}`,   
+        border: `1px solid ${theme.palette.action.disabled}`,
         borderRadius: 2,
         display: "flex",
         flexDirection: "column",
@@ -152,7 +156,6 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
         empty={<EmptyPlaceholder />}
         bulkActionButtons={false}
         size="small"
-        maxHeight={maxHeight}
         rowClick={rowClick}
         {...rest}
       />

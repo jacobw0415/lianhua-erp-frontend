@@ -1,7 +1,6 @@
 import {
   List,
   TextField,
-  DateField,
   FunctionField,
 } from "react-admin";
 
