@@ -1,7 +1,6 @@
 import {
   List,
   TextField,
-  BooleanField,
   DateField,
   FunctionField,
 } from "react-admin";
@@ -10,6 +9,8 @@ import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
+import { ActiveStatusField } from "@/components/common/ActiveStatusField";
+import { ProductCategoryStatusToggle } from "./ProductCategoryStatusToggle";
 
 /* =========================================================
  * Component
@@ -20,8 +21,9 @@ export const ProductCategoryList = () => {
     <List
       title="商品分類管理"
       actions={false}
+      empty={false}
       perPage={10}
-      pagination={<CustomPaginationBar showPerPage />}
+      pagination={<CustomPaginationBar showPerPage={true} />}
     >
       <StyledListWrapper
         quickFilters={[
@@ -41,36 +43,33 @@ export const ProductCategoryList = () => {
         ]}
       >
         <StyledListDatagrid>
-          {/* 分類代碼 */}
+
           <TextField source="code" label="分類代碼" />
 
-          {/* 分類名稱 */}
           <TextField source="name" label="分類名稱" />
 
-          {/* 是否啟用 */}
-          <BooleanField source="active" label="啟用" />
-
-          {/* 建立時間 */}
-          <DateField
-            source="createdAt"
-            label="建立時間"
-            showTime
+          <FunctionField
+            label="狀態"
+            className="cell-centered"
+            render={() => <ActiveStatusField />}
           />
 
-          {/* 更新時間 */}
-          <DateField
-            source="updatedAt"
-            label="更新時間"
-            showTime
+          <FunctionField
+            label="切換狀態"
+            className="cell-centered"
+            render={() => <ProductCategoryStatusToggle />}
           />
 
-          {/* 操作 */}
+          <TextField source="description" label="描述" />
+
+
           <FunctionField
             label="操作"
             source="action"
             className="column-action"
             render={() => <ActionColumns />}
           />
+
         </StyledListDatagrid>
       </StyledListWrapper>
     </List>
