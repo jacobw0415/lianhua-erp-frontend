@@ -140,6 +140,7 @@ export const PurchaseList = () => {
               { header: "進貨日期", key: "purchaseDate", width: 15 },
               { header: "品項", key: "item", width: 15 },
               { header: "數量", key: "qty", width: 15 },
+              { header: "單位", key: "unit", width: 15 },
               { header: "單價", key: "unitPrice", width: 15 },
               { header: "總金額", key: "totalAmount", width: 15 },
               { header: "備註", key: "note", width: 25 },
@@ -151,7 +152,8 @@ export const PurchaseList = () => {
             <TextField source="supplierName" label="供應商名稱" />
             <DateField source="purchaseDate" label="進貨日期" />
             <TextField source="item" label="品項" />
-            <NumberField source="qty" label="數量" />
+            <NumberField source="qty" label="數量" /> 
+            <TextField source="unit" label="單位" />
             <CurrencyField source="unitPrice" label="單價" />
             <CurrencyField source="totalAmount" label="總金額" />
 

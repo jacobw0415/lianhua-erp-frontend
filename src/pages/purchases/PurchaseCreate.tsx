@@ -25,6 +25,7 @@ interface Purchase {
   supplierId: number;
   note?: string;
   qty?: number;
+  unit?: string;
   unitPrice?: number;
   purchaseDate?: string;
   payments?: Array<{
@@ -63,27 +64,72 @@ export const PurchaseCreate: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 4 }}>
         {/* 左側欄位 */}
         <Box sx={{ maxWidth: 600, width: "100%" }}>
-
-          {/* 第一列：供應商（加上 mb=2） */}
-          <Box mb={2}>
-            <SelectInput
-              source="supplierId"
-              label="供應商"
-              choices={suppliers}
-              optionText="name"
-              optionValue="id"
-              fullWidth
-              isLoading={loading}
-              validate={[required()]}
-            />
-          </Box>
-
-          {/* 第二列：品項 + 備註（你選擇放兩欄 → 維持） */}
+          {/* 第一列：供應商 */}
           <Box display="flex" gap={2} mb={2}>
             <Box flex={1}>
-              <TextInput source="item" label="品項" fullWidth />
+              <SelectInput
+                source="supplierId"
+                label="供應商"
+                choices={suppliers}
+                optionText="name"
+                optionValue="id"
+                fullWidth
+                isLoading={loading}
+                validate={[required()]}
+              />
             </Box>
 
+            <Box flex={1}>
+              <SelectInput
+                source="unit"
+                label="單位"
+                fullWidth
+                validate={[required()]}
+                choices={[
+                  { id: "斤", name: "斤" },
+                  { id: "公斤", name: "公斤" },
+                  { id: "箱", name: "箱" },
+                  { id: "盒", name: "盒" },
+                  { id: "包", name: "包" },
+                  { id: "瓶", name: "瓶" },
+                  { id: "顆", name: "顆" },
+                  { id: "本", name: "本" },
+                ]}
+              />
+            </Box>
+          </Box>
+
+          {/* 第三列：數量 + 單價 */}
+          <Box display="flex" gap={2} mb={2}>
+            <Box flex={1}>
+              <NumberInput
+                source="qty"
+                label="數量"
+                fullWidth
+                validate={[required()]}
+              />
+            </Box>
+
+            <Box flex={1}>
+              <NumberInput
+                source="unitPrice"
+                label="單價"
+                fullWidth
+                validate={[required()]}
+              />
+            </Box>
+          </Box>
+
+          {/* 第二列：品項 + 備註 */}
+          <Box display="flex" gap={2} mb={2}>
+            <Box flex={1}>
+              <TextInput
+                source="item"
+                label="品項"
+                fullWidth
+                validate={[required()]}
+              />
+            </Box>
             <Box flex={1}>
               <TextInput
                 source="note"
@@ -94,30 +140,25 @@ export const PurchaseCreate: React.FC = () => {
             </Box>
           </Box>
 
-          {/* 第三列：數量 + 單價 */}
+          {/* 第四列：單位 + 進貨日期（兩兩相並） */}
           <Box display="flex" gap={2} mb={2}>
             <Box flex={1}>
-              <NumberInput source="qty" label="數量" fullWidth />
-            </Box>
-
-            <Box flex={1}>
-              <NumberInput source="unitPrice" label="單價" fullWidth />
+              <LhDateInput
+                source="purchaseDate"
+                label="進貨日期"
+                fullWidth
+              />
             </Box>
           </Box>
-
-          {/* 第四列：進貨日期（單欄） */}
-          <Box mb={2}>
-            <LhDateInput source="purchaseDate" label="進貨日期" fullWidth />
-          </Box>
-
         </Box>
 
+        {/* 右側付款區 */}
         <Box
           sx={(theme) => ({
             borderRadius: 2,
             width: "400px",
-            bgcolor: theme.palette.background.paper, //  卡片背景
-            border: `2px solid ${theme.palette.divider}`, //  統一邊框風格
+            bgcolor: theme.palette.background.paper,
+            border: `2px solid ${theme.palette.divider}`,
             p: 3,
             minHeight: "380px",
           })}
@@ -133,7 +174,9 @@ export const PurchaseCreate: React.FC = () => {
   );
 };
 
-/* 🔧 付款區 */
+/* -------------------------------------------------------
+ * 🔧 付款區
+ * ------------------------------------------------------- */
 const PaymentArrayInput: React.FC = () => {
   const payments = useWatch({ name: "payments" });
   const hasPayment = Array.isArray(payments) && payments.length > 0;
@@ -142,7 +185,7 @@ const PaymentArrayInput: React.FC = () => {
     <ArrayInput source="payments" label="">
       <SimpleFormIterator
         disableAdd={hasPayment}
-        disableRemove={true}
+        disableRemove
         getItemLabel={() => ""}
       >
         <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />

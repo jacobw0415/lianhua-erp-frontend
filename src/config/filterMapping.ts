@@ -25,9 +25,10 @@ export const filterMapping: Record<string, Record<string, string>> = {
     },
 
     sales: {
-        orderNo: "orderNumber",
-        customerName: "customerName",
-        saleDate: "saleDate",
+        productName: "productName",     
+        payMethod: "payMethod",         
+        saleDateFrom: "saleDateFrom",   
+        saleDateTo: "saleDateTo",       
     },
 
     purchases: {

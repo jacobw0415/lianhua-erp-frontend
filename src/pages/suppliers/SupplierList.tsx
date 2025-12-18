@@ -55,21 +55,21 @@ export const SupplierList = () => (
         <TextField source="billingCycle" label="結帳週期" />
         <TextField source="note" label="備註" />
 
-        {/* 🔥 統一高度 + 置中 */}
+        {/*  統一高度 + 置中 */}
         <FunctionField
           label="狀態"
           className="cell-centered"
           render={() => <ActiveStatusField />}
         />
 
-        {/* 🔥 Switch 完美置中 */}
+        {/*  Switch 完美置中 */}
         <FunctionField
           label="切換狀態"
           className="cell-centered"
           render={() => <SupplierStatusToggle />}
         />
 
-        {/* 🔥 操作欄固定寬度 + 置中 */}
+        {/*  操作欄固定寬度 + 置中 */}
         <FunctionField
           label="操作"
           source="action"
