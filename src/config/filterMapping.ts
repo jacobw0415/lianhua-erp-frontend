@@ -25,10 +25,10 @@ export const filterMapping: Record<string, Record<string, string>> = {
     },
 
     sales: {
-        productName: "productName",     
-        payMethod: "payMethod",         
-        saleDateFrom: "saleDateFrom",   
-        saleDateTo: "saleDateTo",       
+        productName: "productName",
+        payMethod: "payMethod",
+        saleDateFrom: "saleDateFrom",
+        saleDateTo: "saleDateTo",
     },
 
     purchases: {
@@ -52,6 +52,19 @@ export const filterMapping: Record<string, Record<string, string>> = {
         address: "address",
         billingCycle: "billingCycle",
         note: "note",
+    },
+
+    orders: {
+        customerName: "customerName",
+        note: "note",
+        status: "status",
+        orderDateFrom: "orderDateFrom",
+        orderDateTo: "orderDateTo",
+        deliveryDateFrom: "deliveryDateFrom",
+        deliveryDateTo: "deliveryDateTo",
+        totalAmountMin: "totalAmountMin",
+        totalAmountMax: "totalAmountMax",
+        accountingPeriod: "accountingPeriod",
     },
 
 };

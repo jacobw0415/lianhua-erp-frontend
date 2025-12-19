@@ -20,6 +20,8 @@ import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
 import { SaleEdit } from "@/pages/sales/SaleEdit";
 
+import { OrderList } from "@/pages/orders/orderList";
+
 import { OrderCustomerList } from "@/pages/orderCustomers/OrderCustomerList";
 import { OrderCustomerCreate } from "@/pages/orderCustomers/OrderCustomerCreate";
 import { OrderCustomerEdit } from "@/pages/orderCustomers/OrderCustomerEdit";
@@ -125,6 +127,10 @@ const App = () => {
                 list={OrderCustomerList}
                 create={OrderCustomerCreate}
                 edit={OrderCustomerEdit}
+            />
+            <Resource
+                name="orders"
+                list={OrderList}
             />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />
