@@ -18,6 +18,7 @@ import { APList } from "@/pages/ap/APList";
 
 import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
+import { SaleEdit } from "@/pages/sales/SaleEdit";
 
 
 import { ProductCategoryList } from "@/pages/productCategories/ProductCategoryList";
@@ -114,6 +115,7 @@ const App = () => {
                 name="sales"
                 list={SaleList}
                 create={SaleCreate}
+                edit={SaleEdit}
             />
             <Resource name="receipts" list={ListGuesser} />
             <Resource name="expenses" list={ListGuesser} />

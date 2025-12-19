@@ -118,6 +118,9 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
     delete payload.paidAmount;
     delete payload.balance;
     delete payload.status;
+    // 銷售紀錄唯讀欄位
+    delete payload.productName;
+    delete payload.amount;
 
     // payments 處理
     if (Array.isArray(newPayments)) {
@@ -144,10 +147,10 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
         onSuccess: async (result: unknown) => {
           const newId =
             typeof result === "object" &&
-            result !== null &&
-            "data" in result &&
-            typeof (result as { data?: unknown }).data === "object" &&
-            (result as { data?: { id?: unknown } }).data?.id
+              result !== null &&
+              "data" in result &&
+              typeof (result as { data?: unknown }).data === "object" &&
+              (result as { data?: { id?: unknown } }).data?.id
               ? (result as { data: { id: unknown } }).data.id
               : id;
 
@@ -269,12 +272,11 @@ const EditContent: React.FC<EditContentProps> = ({
       <GlobalAlertDialog
         open={openDeleteConfirm}
         title="確認刪除"
-        description={`確定要刪除「${
-          (record as { name?: string }).name ??
+        description={`確定要刪除「${(record as { name?: string }).name ??
           (record as { title?: string }).title ??
           (record as { code?: string }).code ??
           "這筆資料"
-        }」嗎？`}
+          }」嗎？`}
         severity="error"
         confirmLabel="刪除"
         cancelLabel="取消"

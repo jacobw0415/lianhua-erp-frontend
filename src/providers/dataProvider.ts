@@ -147,6 +147,9 @@ export const createDataProvider = ({
         "status",
         "payDate",
         "supplierName",
+        "saleDate",
+        "productName",
+        "amount",
       ];
 
       if (field && allowedSortFields.includes(field)) {

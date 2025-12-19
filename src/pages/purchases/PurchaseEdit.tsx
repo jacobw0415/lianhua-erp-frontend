@@ -49,7 +49,7 @@ export const PurchaseEdit: React.FC = () => {
   return (
     <GenericEditPage
       resource="purchases"
-      title="編輯進貨資料"
+      title="進貨單付款管理"
       width="970px"
       onSuccess={(data) => {
         const purchase = data as Purchase;
@@ -102,19 +102,19 @@ const PurchaseFormFields: React.FC = () => {
       >
         {/* 左側標題（永遠穩定） */}
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          📦 編輯進貨資訊
+          📦 編輯進貨付款資訊
         </Typography>
 
         {/* 右側 Read-only Summary（固定寬度） */}
         <Box
-          sx={ ({
+          sx={({
             display: "flex",
             alignItems: "center",
             gap: 1,
             px: 1.5,
             py: 0.25,
             fontSize: "0.8rem",
-            overflow: "hidden",          
+            overflow: "hidden",
           })}
         >
           {/* PO No（不截） */}
@@ -158,7 +158,7 @@ const PurchaseFormFields: React.FC = () => {
                     ? "warning"
                     : "default"
               }
-             
+
             />
           )}
         </Box>
