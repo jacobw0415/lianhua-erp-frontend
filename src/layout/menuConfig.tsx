@@ -78,7 +78,7 @@ export const menuGroups: MenuGroup[] = [
     icon: <PointOfSaleIcon />,
     items: [
       { label: "現場銷售紀錄", to: "/sales", icon: <StoreMallDirectoryTwoToneIcon /> },
-      { label: "客戶管理", to: "/order-customers", icon: <GroupIcon /> },
+      { label: "客戶管理", to: "/order_customers", icon: <GroupIcon /> },
       { label: "訂單管理", to: "/orders", icon: <ShoppingBagIcon /> },
       { label: "收款紀錄", to: "/receipts", icon: <AttachMoneyIcon /> },
       { label: "應收帳款", to: "/ar", icon: <RequestQuoteIcon /> },

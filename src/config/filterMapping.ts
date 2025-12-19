@@ -45,4 +45,13 @@ export const filterMapping: Record<string, Record<string, string>> = {
         toDate: "toDate",
     },
 
+    order_customers: {
+        name: "name",
+        contactPerson: "contactPerson",
+        phone: "phone",
+        address: "address",
+        billingCycle: "billingCycle",
+        note: "note",
+    },
+
 };

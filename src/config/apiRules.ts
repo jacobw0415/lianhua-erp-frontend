@@ -40,4 +40,9 @@ export const apiRules: Record<string, any> = {
         list: true,
         detail: true,
     },
+    order_customers: {
+        search: true,
+        list: true,
+        detail: true,
+    },
 };

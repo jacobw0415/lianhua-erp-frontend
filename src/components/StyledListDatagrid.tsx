@@ -131,6 +131,11 @@ const StyledDatagridRoot = styled(Datagrid, {
     outline: "none !important",
     boxShadow: "none !important",
   },
+
+   /** ▌客戶地址 */
+  "& th.column-address": {
+    width: "250px",
+  },
 }));
 
 /**
