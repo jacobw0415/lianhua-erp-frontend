@@ -24,16 +24,10 @@ const resolveErrorMessage = (error: unknown): string => {
     typeof (error as { body?: unknown }).body === "object" &&
     (error as { body?: { message?: unknown } }).body?.message
   ) {
-    return String(
-      (error as { body: { message: unknown } }).body.message
-    );
+    return String((error as { body: { message: unknown } }).body.message);
   }
 
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error
-  ) {
+  if (typeof error === "object" && error !== null && "message" in error) {
     return String((error as { message: unknown }).message);
   }
 
@@ -58,10 +52,12 @@ export const ActionColumns = () => {
 
   /** ⭐ 統一顯示名稱（避免 undefined） */
   const displayName =
+    (safeRecord as { purchaseNo?: string }).purchaseNo ||
+    (safeRecord as { orderNo?: string }).orderNo ||
     (safeRecord as { name?: string }).name ||
-    (safeRecord as { item?: string }).item ||
     (safeRecord as { productName?: string }).productName ||
     (safeRecord as { title?: string }).title ||
+    (safeRecord as { item?: string }).item ||
     `#${safeRecord.id}`;
 
   /** --------------------------------------------------------

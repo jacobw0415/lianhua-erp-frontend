@@ -103,11 +103,7 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const handleSubmit = async (values: unknown) => {
     if (typeof values !== "object" || values === null) return;
 
-    const {
-      id,
-      newPayments,
-      ...rest
-    } = values as Record<string, unknown>;
+    const { id, newPayments, ...rest } = values as Record<string, unknown>;
 
     const payload: Record<string, unknown> = { ...rest };
 
@@ -147,10 +143,10 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
         onSuccess: async (result: unknown) => {
           const newId =
             typeof result === "object" &&
-              result !== null &&
-              "data" in result &&
-              typeof (result as { data?: unknown }).data === "object" &&
-              (result as { data?: { id?: unknown } }).data?.id
+            result !== null &&
+            "data" in result &&
+            typeof (result as { data?: unknown }).data === "object" &&
+            (result as { data?: { id?: unknown } }).data?.id
               ? (result as { data: { id: unknown } }).data.id
               : id;
 
@@ -272,11 +268,14 @@ const EditContent: React.FC<EditContentProps> = ({
       <GlobalAlertDialog
         open={openDeleteConfirm}
         title="確認刪除"
-        description={`確定要刪除「${(record as { name?: string }).name ??
+        description={`確定要刪除「${
+          (record as { purchaseNo?: string }).purchaseNo ??
+          (record as { orderNo?: string }).orderNo ??
+          (record as { name?: string }).name ??
           (record as { title?: string }).title ??
           (record as { code?: string }).code ??
           "這筆資料"
-          }」嗎？`}
+        }」嗎？`}
         severity="error"
         confirmLabel="刪除"
         cancelLabel="取消"

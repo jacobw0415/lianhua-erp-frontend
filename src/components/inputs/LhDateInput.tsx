@@ -7,17 +7,22 @@ interface LhDateInputProps {
   source: string;
   label?: string;
   fullWidth?: boolean;
+  validate?: unknown;
 }
 
 export const LhDateInput = ({
   source,
   label,
   fullWidth = true,
+  validate,
 }: LhDateInputProps) => {
   const {
     field,
     fieldState: { error },
-  } = useInput({ source }) as UseInputValue;
+  } = useInput({
+    source,
+    validate: validate as Parameters<typeof useInput>[0]["validate"],
+  }) as UseInputValue;
 
   return (
     <DatePicker

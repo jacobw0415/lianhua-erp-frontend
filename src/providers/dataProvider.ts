@@ -1,7 +1,4 @@
-import {
-  fetchUtils,
-  type DataProvider,
-} from "react-admin";
+import { fetchUtils, type DataProvider } from "react-admin";
 
 import { apiRules } from "@/config/apiRules";
 import { filterMapping } from "@/config/filterMapping";
@@ -11,13 +8,13 @@ import { filterMapping } from "@/config/filterMapping";
  * ======================================================== */
 type ApiError =
   | {
-    message?: string;
-    body?: {
       message?: string;
-      error?: string;
-    };
-    status?: number;
-  }
+      body?: {
+        message?: string;
+        error?: string;
+      };
+      status?: number;
+    }
   | unknown;
 
 const apiUrl: string =
@@ -31,7 +28,6 @@ export const createDataProvider = ({
 }: {
   handleApiError: (error: ApiError) => void;
 }): DataProvider => {
-
   /* ========================================================
    * 原始 httpClient（只處理 header 與 fetch）
    * ======================================================== */
@@ -41,8 +37,7 @@ export const createDataProvider = ({
 
     const hasBody = options.body != null;
     const isFormData =
-      typeof FormData !== "undefined" &&
-      options.body instanceof FormData;
+      typeof FormData !== "undefined" && options.body instanceof FormData;
 
     if (hasBody && !isFormData && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
@@ -60,12 +55,22 @@ export const createDataProvider = ({
   ) => {
     try {
       return await httpClient(url, options);
-
     } catch (error: unknown) {
-      const msg =
-        (error as any)?.body?.message ||
-        (error as any)?.message ||
-        "";
+      const apiError = error as ApiError;
+      let msg = "";
+
+      if (apiError && typeof apiError === "object") {
+        if (
+          "body" in apiError &&
+          apiError.body &&
+          typeof apiError.body === "object" &&
+          "message" in apiError.body
+        ) {
+          msg = String(apiError.body.message || "");
+        } else if ("message" in apiError) {
+          msg = String(apiError.message || "");
+        }
+      }
 
       /* --------------------------------------------
        * ⭐ 特例：查無匹配 → 視為空資料（非錯誤）
@@ -94,15 +99,16 @@ export const createDataProvider = ({
   /* ========================================================
    * 共用：List Response 正規化
    * ======================================================== */
-  const normalizeListResponse = (json: any) => {
-    const data = Array.isArray(json?.data)
-      ? json.data
+  const normalizeListResponse = (json: unknown) => {
+    const jsonObj = json as Record<string, unknown>;
+    const data = Array.isArray(jsonObj?.data)
+      ? jsonObj.data
       : Array.isArray(json)
-        ? json
-        : [];
+      ? json
+      : [];
 
     const total =
-      typeof json?.total === "number" ? json.total : data.length;
+      typeof jsonObj?.total === "number" ? jsonObj.total : data.length;
 
     return { data, total };
   };
@@ -111,7 +117,6 @@ export const createDataProvider = ({
    * DataProvider 主體
    * ======================================================== */
   return {
-
     /* ===================== getList ===================== */
     getList(resource, params) {
       const mapping = filterMapping[resource] ?? {};
@@ -150,6 +155,9 @@ export const createDataProvider = ({
         "saleDate",
         "productName",
         "amount",
+        "orderDate",
+        "deliveryDate",
+        "orderNo",
       ];
 
       if (field && allowedSortFields.includes(field)) {
@@ -157,7 +165,7 @@ export const createDataProvider = ({
       }
 
       const hasFilter = Object.values(filters).some(
-        v => v !== "" && v !== undefined && v !== null
+        (v) => v !== "" && v !== undefined && v !== null
       );
 
       Object.entries(filters).forEach(([key, value]) => {
@@ -174,9 +182,7 @@ export const createDataProvider = ({
 
       return httpClientSafe(`${basePath}?${query}`).then(({ json }) => {
         const payload = json?.data ?? json;
-        const data = Array.isArray(payload)
-          ? payload
-          : payload?.content ?? [];
+        const data = Array.isArray(payload) ? payload : payload?.content ?? [];
 
         const total = Array.isArray(payload)
           ? payload.length
@@ -187,9 +193,9 @@ export const createDataProvider = ({
 
     /* ===================== getOne ===================== */
     getOne: (resource, params) =>
-      httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(
-        ({ json }) => ({ data: json?.data ?? json })
-      ),
+      httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
+        data: json?.data ?? json,
+      })),
 
     /* ===================== getMany ===================== */
     getMany: (resource, params) =>
@@ -207,7 +213,7 @@ export const createDataProvider = ({
       const { data } = normalizeListResponse(json);
 
       const filtered = data.filter(
-        (r: any) => r?.[params.target] === params.id
+        (r: Record<string, unknown>) => r?.[params.target] === params.id
       );
 
       const { field, order } = params.sort ?? {
@@ -237,17 +243,15 @@ export const createDataProvider = ({
       const endpoint = params.meta?.endpoint;
 
       if (endpoint === "activate") {
-        return httpClientSafe(
-          `${apiUrl}/${resource}/${params.id}/activate`,
-          { method: "PUT" }
-        ).then(({ json }) => ({ data: json?.data ?? json }));
+        return httpClientSafe(`${apiUrl}/${resource}/${params.id}/activate`, {
+          method: "PUT",
+        }).then(({ json }) => ({ data: json?.data ?? json }));
       }
 
       if (endpoint === "deactivate") {
-        return httpClientSafe(
-          `${apiUrl}/${resource}/${params.id}/deactivate`,
-          { method: "PUT" }
-        ).then(({ json }) => ({ data: json?.data ?? json }));
+        return httpClientSafe(`${apiUrl}/${resource}/${params.id}/deactivate`, {
+          method: "PUT",
+        }).then(({ json }) => ({ data: json?.data ?? json }));
       }
 
       return httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {
@@ -279,7 +283,7 @@ export const createDataProvider = ({
       httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {
         method: "DELETE",
       }).then(({ json }) => ({
-        data: (json?.data ?? params.previousData) as any,
+        data: json?.data ?? params.previousData,
       })),
 
     /* ===================== deleteMany ===================== */
@@ -294,9 +298,9 @@ export const createDataProvider = ({
 
     /* ===================== get (custom) ===================== */
     get(resource: string) {
-      return httpClientSafe(`${apiUrl}/${resource}`).then(
-        ({ json }) => ({ data: json?.data ?? json })
-      );
+      return httpClientSafe(`${apiUrl}/${resource}`).then(({ json }) => ({
+        data: json?.data ?? json,
+      }));
     },
   };
 };

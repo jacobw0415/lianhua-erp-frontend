@@ -67,4 +67,16 @@ export const filterMapping: Record<string, Record<string, string>> = {
         accountingPeriod: "accountingPeriod",
     },
 
+    items: {
+        orderNo: "orderNo",
+        orderId: "orderId",
+        productId: "productId",
+        productName: "productName",
+        qty: "qty",
+        unitPrice: "unitPrice",
+        discount: "discount",
+        tax: "tax",
+        subtotal: "subtotal",
+    },
+
 };

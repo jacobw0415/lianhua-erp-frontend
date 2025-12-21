@@ -64,21 +64,48 @@ export const PurchaseCreate: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 4 }}>
         {/* 左側欄位 */}
         <Box sx={{ maxWidth: 600, width: "100%" }}>
-          {/* 第一列：供應商 */}
-          <Box display="flex" gap={2} mb={2}>
+        {/* 第一列：品項 + 備註 */}
+         <Box display="flex" gap={2} mb={2}>
             <Box flex={1}>
-              <SelectInput
-                source="supplierId"
-                label="供應商"
-                choices={suppliers}
-                optionText="name"
-                optionValue="id"
+              <TextInput
+                source="item"
+                label="品項"
                 fullWidth
-                isLoading={loading}
                 validate={[required()]}
               />
             </Box>
+            <Box flex={1}>
+              <TextInput
+                source="note"
+                label="備註"
+                fullWidth
+                minRows={2}
+              />
+            </Box>
+          </Box>
 
+          {/* 第二列：數量 + 單價 */}
+          <Box display="flex" gap={2} mb={2}>
+            <Box flex={1}>
+              <NumberInput
+                source="qty"
+                label="數量"
+                fullWidth
+                validate={[required()]}
+              />
+            </Box>
+            <Box flex={1}>
+              <NumberInput
+                source="unitPrice"
+                label="單價"
+                fullWidth
+                validate={[required()]}
+              />
+            </Box>
+          </Box>
+
+          {/* 第三列：供應商 */}
+          <Box display="flex" gap={2} mb={2}>
             <Box flex={1}>
               <SelectInput
                 source="unit"
@@ -97,45 +124,16 @@ export const PurchaseCreate: React.FC = () => {
                 ]}
               />
             </Box>
-          </Box>
-
-          {/* 第三列：數量 + 單價 */}
-          <Box display="flex" gap={2} mb={2}>
             <Box flex={1}>
-              <NumberInput
-                source="qty"
-                label="數量"
+              <SelectInput
+                source="supplierId"
+                label="供應商"
+                choices={suppliers}
+                optionText="name"
+                optionValue="id"
                 fullWidth
+                isLoading={loading}
                 validate={[required()]}
-              />
-            </Box>
-
-            <Box flex={1}>
-              <NumberInput
-                source="unitPrice"
-                label="單價"
-                fullWidth
-                validate={[required()]}
-              />
-            </Box>
-          </Box>
-
-          {/* 第二列：品項 + 備註 */}
-          <Box display="flex" gap={2} mb={2}>
-            <Box flex={1}>
-              <TextInput
-                source="item"
-                label="品項"
-                fullWidth
-                validate={[required()]}
-              />
-            </Box>
-            <Box flex={1}>
-              <TextInput
-                source="note"
-                label="備註"
-                fullWidth
-                minRows={2}
               />
             </Box>
           </Box>

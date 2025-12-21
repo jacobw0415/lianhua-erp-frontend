@@ -20,7 +20,8 @@ import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
 import { SaleEdit } from "@/pages/sales/SaleEdit";
 
-import { OrderList } from "@/pages/orders/orderList";
+import { OrderList } from "@/pages/orders/OrderList";
+import { OrderCreate } from "@/pages/orders/OrderCreate";
 
 import { OrderCustomerList } from "@/pages/orderCustomers/OrderCustomerList";
 import { OrderCustomerCreate } from "@/pages/orderCustomers/OrderCustomerCreate";
@@ -34,13 +35,11 @@ import { ProductList } from "@/pages/products/ProductList";
 import { ProductCreate } from "@/pages/products/ProductCreate";
 import { ProductEdit } from "@/pages/products/ProductEdit";
 
-
-
 import { CustomLayout } from "@/layout/CustomLayout";
 
 import {
-    ErrorHandlerProvider,
-    useErrorHandler,
+  ErrorHandlerProvider,
+  useErrorHandler,
 } from "@/context/ErrorHandlerContext";
 
 import { GlobalAlertProvider } from "@/contexts/GlobalAlertContext";
@@ -50,92 +49,86 @@ import { useColorMode } from "@/contexts/useColorMode";
 import { LianhuaLightTheme } from "@/theme/LianhuaTheme";
 import { LianhuaDarkTheme } from "@/theme/LianhuaTheme";
 
-
 // ============================
 // 🚀 App 外層 Provider
 // ============================
 export const AppWithProvider = () => {
-    return (
-        <ErrorHandlerProvider>
-            <GlobalAlertProvider>
-                <ColorModeProvider>
-                    <App />
-                </ColorModeProvider>
-            </GlobalAlertProvider>
-        </ErrorHandlerProvider>
-    );
+  return (
+    <ErrorHandlerProvider>
+      <GlobalAlertProvider>
+        <ColorModeProvider>
+          <App />
+        </ColorModeProvider>
+      </GlobalAlertProvider>
+    </ErrorHandlerProvider>
+  );
 };
-
 
 // ============================
 // 🚀 主 App（Theme 由 ColorMode 控制）
 // ============================
 const App = () => {
-    const { handleApiError } = useErrorHandler();
-    const { mode } = useColorMode();
+  const { handleApiError } = useErrorHandler();
+  const { mode } = useColorMode();
 
-    const dataProvider = React.useMemo(() => {
-        return createDataProvider({ handleApiError });
-    }, [handleApiError]);
+  const dataProvider = React.useMemo(() => {
+    return createDataProvider({ handleApiError });
+  }, [handleApiError]);
 
-    return (
-        <Admin
-            layout={CustomLayout}
-            dashboard={Dashboard}
-            dataProvider={dataProvider}
-            notification={NoopNotification}
-
-            /* ⭐ 關鍵：讓 RA 自己切 Theme */
-            theme={LianhuaLightTheme}
-            darkTheme={LianhuaDarkTheme}
-            defaultTheme={mode}
-        >
-            <Resource
-                name="suppliers"
-                list={SupplierList}
-                create={SupplierCreate}
-                edit={SupplierEdit}
-            />
-            <Resource
-                name="purchases"
-                list={PurchaseList}
-                create={PurchaseCreate}
-                edit={PurchaseEdit}
-            />
-            <Resource name="payments" list={PaymentList} />
-            <Resource name="ap" list={APList} />
-            <Resource
-                name="product_categories"
-                list={ProductCategoryList}
-                create={ProductCategoryCreate}
-                edit={ProductCategoryEdit}
-            />
-            <Resource
-                name="products"
-                list={ProductList}
-                create={ProductCreate}
-                edit={ProductEdit}
-            />
-            <Resource
-                name="sales"
-                list={SaleList}
-                create={SaleCreate}
-                edit={SaleEdit}
-            />
-            <Resource
-                name="order_customers"
-                list={OrderCustomerList}
-                create={OrderCustomerCreate}
-                edit={OrderCustomerEdit}
-            />
-            <Resource
-                name="orders"
-                list={OrderList}
-            />
-            <Resource name="receipts" list={ListGuesser} />
-            <Resource name="expenses" list={ListGuesser} />
-        </Admin>
-    );
+  return (
+    <Admin
+      layout={CustomLayout}
+      dashboard={Dashboard}
+      dataProvider={dataProvider}
+      notification={NoopNotification}
+      /* ⭐ 關鍵：讓 RA 自己切 Theme */
+      theme={LianhuaLightTheme}
+      darkTheme={LianhuaDarkTheme}
+      defaultTheme={mode}
+    >
+      <Resource
+        name="suppliers"
+        list={SupplierList}
+        create={SupplierCreate}
+        edit={SupplierEdit}
+      />
+      <Resource
+        name="purchases"
+        list={PurchaseList}
+        create={PurchaseCreate}
+        edit={PurchaseEdit}
+      />
+      <Resource name="payments" list={PaymentList} />
+      <Resource name="ap" list={APList} />
+      <Resource
+        name="product_categories"
+        list={ProductCategoryList}
+        create={ProductCategoryCreate}
+        edit={ProductCategoryEdit}
+      />
+      <Resource
+        name="products"
+        list={ProductList}
+        create={ProductCreate}
+        edit={ProductEdit}
+      />
+      <Resource
+        name="sales"
+        list={SaleList}
+        create={SaleCreate}
+        edit={SaleEdit}
+      />
+      <Resource
+        name="order_customers"
+        list={OrderCustomerList}
+        create={OrderCustomerCreate}
+        edit={OrderCustomerEdit}
+      />
+      <Resource name="orders" list={OrderList} create={OrderCreate} />
+      <Resource name="receipts" list={ListGuesser} />
+      <Resource name="expenses" list={ListGuesser} />
+    </Admin>
+  );
 };
 
 export default AppWithProvider;
