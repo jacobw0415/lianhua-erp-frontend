@@ -43,6 +43,7 @@ export const LhDateInput = ({
           error: !!error,
           helperText: error?.message,
           disabled,
+          size,
         },
 
         /**  永遠讓彈窗出現在 icon 的右方 */
