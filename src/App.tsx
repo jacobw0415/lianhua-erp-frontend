@@ -20,13 +20,15 @@ import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
 import { SaleEdit } from "@/pages/sales/SaleEdit";
 
-import { OrderList } from "@/pages/orders/OrderList";
-import { OrderCreate } from "@/pages/orders/OrderCreate";
-import { OrderEdit } from "@/pages/orders/OrderEdit";
+import { OrderList } from "@/pages/Orders/OrderList";
+import { OrderCreate } from "@/pages/Orders/OrderCreate";
+import { OrderEdit } from "@/pages/Orders/OrderEdit";
 
-import { OrderCustomerList } from "@/pages/orderCustomers/OrderCustomerList";
-import { OrderCustomerCreate } from "@/pages/orderCustomers/OrderCustomerCreate";
-import { OrderCustomerEdit } from "@/pages/orderCustomers/OrderCustomerEdit";
+import { OrderCustomerList } from "@/pages/OrderCustomers/OrderCustomerList";
+import { OrderCustomerCreate } from "@/pages/OrderCustomers/OrderCustomerCreate";
+import { OrderCustomerEdit } from "@/pages/OrderCustomers/OrderCustomerEdit";
+
+import { ReceiptList } from "@/pages/Receipts/ReceiptList";
 
 import { ProductCategoryList } from "@/pages/productCategories/ProductCategoryList";
 import { ProductCategoryCreate } from "@/pages/productCategories/ProductCategoryCreate";
@@ -131,7 +133,8 @@ const App = () => {
         create={OrderCreate}
         edit={OrderEdit}
       />
-      <Resource name="receipts" list={ListGuesser} />
+      <Resource name="receipts" 
+       list={ReceiptList} />
       <Resource name="expenses" list={ListGuesser} />
     </Admin>
   );

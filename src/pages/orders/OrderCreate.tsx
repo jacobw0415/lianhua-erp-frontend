@@ -127,11 +127,7 @@ export const OrderCreate: React.FC = () => {
               validate={[required()]}
             />
 
-            <LhDateInput
-              source="deliveryDate"
-              label="交貨日期"
-              fullWidth
-            />
+            <LhDateInput source="deliveryDate" label="交貨日期" fullWidth />
           </Box>
 
           {/* 備註 */}

@@ -33,14 +33,16 @@ const orderStatusMap: Record<OrderStatus, string> = {
 /* =======================================================
  * 權限判斷
  * ======================================================= */
+interface OrderRecord {
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+}
+
 const useOrderEditPermission = () => {
-  const record = useRecordContext<any>();
+  const record = useRecordContext<OrderRecord>();
   if (!record) return { editable: false };
 
-  const { orderStatus, paymentStatus } = record as {
-    orderStatus: OrderStatus;
-    paymentStatus: PaymentStatus;
-  };
+  const { orderStatus, paymentStatus } = record;
 
   const editable =
     orderStatus !== "DELIVERED" &&
@@ -63,10 +65,7 @@ const OrderEditForm = () => {
 
   return (
     <Box sx={{ maxWidth: 860, mx: "auto" }}>
-      <Typography
-        variant="h6"
-        sx={{ mb: 1.5, fontWeight: 600 }}
-      >
+      <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
         ✏️ 編輯訂單
       </Typography>
 
@@ -199,10 +198,7 @@ const OrderEditForm = () => {
  * ======================================================= */
 export const OrderEdit = () => {
   return (
-    <GenericEditPage
-      resource="orders"
-      title="編輯訂單"
-    >
+    <GenericEditPage resource="orders" title="編輯訂單">
       <OrderEditForm />
     </GenericEditPage>
   );
