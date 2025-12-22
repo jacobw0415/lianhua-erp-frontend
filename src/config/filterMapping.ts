@@ -67,6 +67,15 @@ export const filterMapping: Record<string, Record<string, string>> = {
         accountingPeriod: "accountingPeriod",
     },
 
+    receipts: {
+        customerName: "customerName",
+        orderNo: "orderNo",
+        method: "method",
+        accountingPeriod: "accountingPeriod",
+        fromDate: "fromDate",
+        toDate: "toDate",
+    },
+
     items: {
         orderNo: "orderNo",
         orderId: "orderId",

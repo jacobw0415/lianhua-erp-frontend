@@ -8,6 +8,8 @@ interface LhDateInputProps {
   label?: string;
   fullWidth?: boolean;
   validate?: unknown;
+  disabled?: boolean;
+  size?: "small" | "medium";
 }
 
 export const LhDateInput = ({
@@ -15,6 +17,8 @@ export const LhDateInput = ({
   label,
   fullWidth = true,
   validate,
+  disabled = false,
+  size = "medium",
 }: LhDateInputProps) => {
   const {
     field,
@@ -32,11 +36,13 @@ export const LhDateInput = ({
         const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
         field.onChange(formatted);
       }}
+      disabled={disabled}
       slotProps={{
         textField: {
           fullWidth,
           error: !!error,
           helperText: error?.message,
+          disabled,
         },
 
         /**  永遠讓彈窗出現在 icon 的右方 */

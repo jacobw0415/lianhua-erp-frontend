@@ -55,6 +55,11 @@ export const apiRules: Record<string, ApiRule> = {
     list: true,
     detail: true,
   },
+  receipts: {
+    search: true,
+    list: true,
+    detail: true,
+  },
   items: {
     search: false,
     list: true,

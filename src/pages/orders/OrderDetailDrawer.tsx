@@ -8,7 +8,6 @@ import {
   Paper,
   Chip,
   CircularProgress,
-  LinearProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -16,9 +15,9 @@ import {
   Datagrid,
   TextField,
   NumberField,
-  DateField,
   RecordContextProvider,
   useDataProvider,
+  useNotify,
 } from "react-admin";
 
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -26,13 +25,6 @@ import { CurrencyField } from "@/components/money/CurrencyField";
 /* =========================================================
  * 型別定義
  * ========================================================= */
-
-interface PaymentRow {
-  amount: number;
-  payDate: string;
-  method: "CASH" | "TRANSFER" | "CARD" | "CHECK";
-  note?: string;
-}
 
 interface OrderDetailRow {
   id: number;
@@ -50,16 +42,13 @@ interface OrderDetailRow {
 
 interface OrderDetailResponse {
   data:
-    | OrderDetailRow[]
-    | { content: OrderDetailRow[]; totalElements?: number };
+  | OrderDetailRow[]
+  | { content: OrderDetailRow[]; totalElements?: number };
 }
 
-type OrderStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "SHIPPED"
-  | "COMPLETED"
-  | "CANCELLED";
+// 與 OrderList / OrderEdit 對齊
+type OrderStatus = "PENDING" | "CONFIRMED" | "DELIVERED" | "CANCELLED";
+type PaymentStatus = "UNPAID" | "PARTIAL" | "PAID";
 
 interface OrderDetailDrawerProps {
   open: boolean;
@@ -72,10 +61,8 @@ interface OrderDetailDrawerProps {
     deliveryDate?: string;
     status: OrderStatus;
     totalAmount: number;
-    paidAmount?: number;
-    balance?: number;
+    paymentStatus?: PaymentStatus;
     note?: string;
-    payments?: PaymentRow[];
   };
 }
 
@@ -87,11 +74,16 @@ const statusConfig: Record<
   OrderStatus,
   { label: string; color: "default" | "primary" | "info" | "success" | "error" }
 > = {
-  PENDING: { label: "待處理", color: "default" },
+  PENDING: { label: "待確認", color: "default" },
   CONFIRMED: { label: "已確認", color: "primary" },
-  SHIPPED: { label: "已出貨", color: "info" },
-  COMPLETED: { label: "已完成", color: "success" },
+  DELIVERED: { label: "已交付", color: "info" },
   CANCELLED: { label: "已取消", color: "error" },
+};
+
+const paymentStatusLabel: Record<PaymentStatus, string> = {
+  UNPAID: "未收款",
+  PARTIAL: "部分收款",
+  PAID: "已全額收款",
 };
 
 /* =========================================================
@@ -104,6 +96,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
   order,
 }) => {
   const dataProvider = useDataProvider();
+  const notify = useNotify();
   const [details, setDetails] = useState<OrderDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -138,9 +131,10 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
       .catch((error: unknown) => {
         console.error("Failed to fetch order details from:", apiPath, error);
         setDetails([]);
+        notify("載入訂單明細失敗，請稍後再試。", { type: "error" });
       })
       .finally(() => setLoading(false));
-  }, [open, order?.id, dataProvider]);
+  }, [open, order?.id, dataProvider, notify]);
 
   if (!order) return null;
 
@@ -149,19 +143,13 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
     customerName,
     orderDate,
     status,
-    totalAmount,
-    paidAmount = 0,
-    payments = [],
+    paymentStatus,
   } = order;
 
   const totalQty = details.reduce((sum, d) => sum + d.qty, 0);
   const detailTotalAmount = details.reduce((sum, d) => sum + d.subtotal, 0);
 
-  const progress =
-    totalAmount > 0 ? Math.min((paidAmount / totalAmount) * 100, 100) : 0;
-
   const statusMeta = statusConfig[status];
-  const enablePaymentScroll = payments.length > 3;
 
   return (
     <Drawer
@@ -180,12 +168,28 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
         </Box>
 
         <Box display="flex" justifyContent="space-between" mt={1}>
-          <Chip
-            size="small"
-            label={statusMeta.label}
-            color={statusMeta.color}
-            sx={{ fontWeight: 600 }}
-          />
+          <Box display="flex" gap={1}>
+            <Chip
+              size="small"
+              label={statusMeta.label}
+              color={statusMeta.color}
+              sx={{ fontWeight: 600 }}
+            />
+            {paymentStatus && (
+              <Chip
+                size="small"
+                label={paymentStatusLabel[paymentStatus]}
+                color={
+                  paymentStatus === "PAID"
+                    ? "success"
+                    : paymentStatus === "PARTIAL"
+                      ? "warning"
+                      : "default"
+                }
+                sx={{ fontWeight: 600 }}
+              />
+            )}
+          </Box>
           <RecordContextProvider value={order}>
             <Typography color="success.main" fontWeight={700}>
               總金額：
@@ -222,26 +226,6 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
             </Box>
           </Box>
         </Paper>
-
-        {/* ================= 收款進度 ================= */}
-        <Box mb={2}>
-          <Typography variant="caption" color="text.secondary">
-            收款進度
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              mt: 0.5,
-              height: 10,
-              borderRadius: 5,
-              bgcolor: "action.hover",
-              "& .MuiLinearProgress-bar": {
-                borderRadius: 5,
-              },
-            }}
-          />
-        </Box>
 
         <Divider sx={{ my: 2 }} />
 
@@ -291,71 +275,6 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
             </Typography>
           </Paper>
         )}
-
-        {/* ================= 已收款紀錄 ================= */}
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            💰 已收款紀錄
-          </Typography>
-
-          {payments.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              尚未有收款紀錄
-            </Typography>
-          ) : (
-            <Box
-              sx={{
-                maxHeight: enablePaymentScroll ? 180 : "auto",
-                overflowY: enablePaymentScroll ? "auto" : "visible",
-              }}
-            >
-              <Datagrid
-                data={payments}
-                bulkActionButtons={false}
-                rowClick={false}
-              >
-                <DateField source="payDate" label="收款日期" />
-                <CurrencyField source="amount" label="金額" />
-                <TextField source="method" label="方式" />
-                <TextField source="note" label="備註" />
-              </Datagrid>
-            </Box>
-          )}
-        </Paper>
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* ================= 金額摘要（UI 強化） ================= */}
-        <RecordContextProvider value={order}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              bgcolor: "background.default",
-            }}
-          >
-            <Box display="flex" justifyContent="space-between">
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  已收款
-                </Typography>
-                <Typography fontWeight={700} fontSize={18} color="success.main">
-                  <CurrencyField source="paidAmount" />
-                </Typography>
-              </Box>
-
-              <Box textAlign="right">
-                <Typography variant="caption" color="text.secondary">
-                  尚欠款
-                </Typography>
-                <Typography fontWeight={700} fontSize={18} color="error.main">
-                  <CurrencyField source="balance" />
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-        </RecordContextProvider>
       </Box>
     </Drawer>
   );

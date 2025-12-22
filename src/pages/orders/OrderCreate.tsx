@@ -17,7 +17,7 @@ import { useActiveOrderCustomers } from "@/hooks/useActiveOrderCustomers";
 import { useActiveProducts } from "@/hooks/useActiveProducts";
 
 /* -------------------------------------------------------
- * 🔐 Order 型別定義
+ * 🔐 Order 型別定義（對齊後端）
  * ------------------------------------------------------- */
 interface Order {
   id: number;
@@ -25,7 +25,7 @@ interface Order {
   customerId: number;
   orderDate: string;
   deliveryDate?: string;
-  status?: "PENDING" | "CONFIRMED" | "SHIPPED" | "COMPLETED" | "CANCELLED";
+  orderStatus: "PENDING" | "CONFIRMED";
   note?: string;
   items: Array<{
     productId: number | "";
@@ -34,7 +34,7 @@ interface Order {
 }
 
 /* =======================================================
- * 📄 OrderCreate（最終穩定版）
+ * 📄 OrderCreate（v2.7 對齊版）
  * ======================================================= */
 export const OrderCreate: React.FC = () => {
   const { customers, loading: customersLoading } = useActiveOrderCustomers();
@@ -65,7 +65,7 @@ export const OrderCreate: React.FC = () => {
       </Typography>
 
       {/* ===================================================
-       * 🔲 主版型（RWD Grid，與 PurchaseCreate 一致）
+       * 🔲 主版型
        * =================================================== */}
       <Box
         sx={{
@@ -79,7 +79,7 @@ export const OrderCreate: React.FC = () => {
       >
         {/* ================= 左側：訂單主資料 ================= */}
         <Box sx={{ width: "100%", minWidth: 0 }}>
-          {/* 客戶 + 狀態 */}
+          {/* 客戶 + 訂單狀態 */}
           <Box
             sx={{
               display: "grid",
@@ -100,16 +100,13 @@ export const OrderCreate: React.FC = () => {
             />
 
             <SelectInput
-              source="status"
-              label="狀態"
+              source="orderStatus"
+              label="訂單狀態"
               fullWidth
               defaultValue="PENDING"
               choices={[
-                { id: "PENDING", name: "待處理" },
+                { id: "PENDING", name: "待確認" },
                 { id: "CONFIRMED", name: "已確認" },
-                { id: "DELIVERED", name: "已出貨" },
-                { id: "PAID", name: "已付款" },
-                { id: "CANCELLED", name: "已取消" },
               ]}
             />
           </Box>
@@ -124,16 +121,16 @@ export const OrderCreate: React.FC = () => {
             }}
           >
             <LhDateInput
-              source="deliveryDate"
-              label="交貨日期"
-              fullWidth
-            />
-
-            <LhDateInput
               source="orderDate"
               label="訂單日期"
               fullWidth
               validate={[required()]}
+            />
+
+            <LhDateInput
+              source="deliveryDate"
+              label="交貨日期"
+              fullWidth
             />
           </Box>
 
@@ -141,7 +138,7 @@ export const OrderCreate: React.FC = () => {
           <TextInput source="note" label="備註" fullWidth />
         </Box>
 
-        {/* ================= 右側：訂單項目（固定一筆） ================= */}
+        {/* ================= 右側：訂單項目 ================= */}
         <Box
           sx={(theme) => ({
             borderRadius: 2,
@@ -162,11 +159,11 @@ export const OrderCreate: React.FC = () => {
           <ArrayInput
             source="items"
             label=""
-            defaultValue={[{ productId: "", qty: 1 }]}   // ✅ 關鍵
+            defaultValue={[{ productId: "", qty: 1 }]}
           >
             <SimpleFormIterator
-              disableAdd        
-              disableRemove     
+              disableAdd
+              disableRemove
               getItemLabel={() => ""}
             >
               <SelectInput

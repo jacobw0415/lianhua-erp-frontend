@@ -136,6 +136,9 @@ const StyledDatagridRoot = styled(Datagrid, {
   "& th.column-address": {
     width: "250px",
   },
+  "th.column-orderNo": {
+    width: "150px",
+  },
 }));
 
 /**

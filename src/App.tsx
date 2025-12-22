@@ -16,12 +16,15 @@ import { PurchaseEdit } from "@/pages/purchases/PurchaseEdit";
 import { PaymentList } from "@/pages/payments/PaymentList";
 import { APList } from "@/pages/ap/APList";
 
+import { ReceiptList } from "@/pages/receipts/ReceiptList";
+
 import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
 import { SaleEdit } from "@/pages/sales/SaleEdit";
 
 import { OrderList } from "@/pages/orders/OrderList";
 import { OrderCreate } from "@/pages/orders/OrderCreate";
+import { OrderEdit } from "@/pages/orders/OrderEdit";
 
 import { OrderCustomerList } from "@/pages/orderCustomers/OrderCustomerList";
 import { OrderCustomerCreate } from "@/pages/orderCustomers/OrderCustomerCreate";
@@ -124,8 +127,13 @@ const App = () => {
         create={OrderCustomerCreate}
         edit={OrderCustomerEdit}
       />
-      <Resource name="orders" list={OrderList} create={OrderCreate} />
-      <Resource name="receipts" list={ListGuesser} />
+      <Resource
+        name="orders"
+        list={OrderList}
+        create={OrderCreate}
+        edit={OrderEdit}
+      />
+      <Resource name="receipts" list={ReceiptList} />
       <Resource name="expenses" list={ListGuesser} />
     </Admin>
   );
