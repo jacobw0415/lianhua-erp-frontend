@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   List,
   DateField,
@@ -7,14 +6,11 @@ import {
   useRedirect,
 } from "react-admin";
 import { Button } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
-
-import { ReceiptDetailDrawer } from "./ReceiptDetailDrawer";
 
 /* ================================
  * 型別定義（對齊 ReceiptListResponseDto）
@@ -36,122 +32,90 @@ export interface ReceiptListRow {
  * Component
  * ================================ */
 export const ReceiptList = () => {
-  const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptListRow | null>(
-    null
-  );
-
-  const openDetails = (record: ReceiptListRow) => {
-    setSelectedReceipt(record);
-    setOpenDetailDrawer(true);
-  };
-
   return (
-    <>
-      <List
-        title="收款管理"
-        actions={false}
-        empty={false}
-        pagination={<CustomPaginationBar showPerPage />}
-        perPage={10}
-      >
-        <StyledListWrapper
-          quickFilters={[
-            { type: "text", source: "orderNo", label: "訂單編號" },
-            { type: "text", source: "customerName", label: "客戶名稱" },
-          ]}
-          advancedFilters={[
-            {
-              type: "select",
-              source: "method",
-              label: "收款方式",
-              choices: [
-                { id: "CASH", name: "現金" },
-                { id: "TRANSFER", name: "轉帳" },
-                { id: "CARD", name: "刷卡" },
-                { id: "CHECK", name: "支票" },
-                { id: "SYSTEM_AUTO", name: "系統產生" },
-              ],
-            },
-            {
-              type: "dateRange",
-              sourceFrom: "receivedDateFrom",
-              sourceTo: "receivedDateTo",
-              label: "收款日期",
-            },
-          ]}
-          exportConfig={{
-            filename: "receipt_export",
-            format: "excel",
-            columns: [
-              { header: "收款日期", key: "receivedDate", width: 15 },
-              { header: "訂單編號", key: "orderNo", width: 18 },
-              { header: "客戶名稱", key: "customerName", width: 25 },
-              { header: "收款金額", key: "amount", width: 18 },
-              { header: "收款方式", key: "method", width: 15 },
+    <List
+      title="收款管理"
+      actions={false}
+      empty={false}
+      pagination={<CustomPaginationBar showPerPage />}
+      perPage={10}
+    >
+      <StyledListWrapper
+        quickFilters={[
+          { type: "text", source: "orderNo", label: "訂單編號" },
+          { type: "text", source: "customerName", label: "客戶名稱" },
+        ]}
+        advancedFilters={[
+          {
+            type: "select",
+            source: "method",
+            label: "收款方式",
+            choices: [
+              { id: "CASH", name: "現金" },
+              { id: "TRANSFER", name: "轉帳" },
+              { id: "CARD", name: "刷卡" },
+              { id: "CHECK", name: "支票" },
+              { id: "SYSTEM_AUTO", name: "系統產生" },
             ],
-          }}
-        >
-          <StyledListDatagrid>
-            {/* 收款日期 */}
-            <DateField source="receivedDate" label="收款日期" />
+          },
+          {
+            type: "dateRange",
+            sourceFrom: "receivedDateFrom",
+            sourceTo: "receivedDateTo",
+            label: "收款日期",
+          },
+        ]}
+        exportConfig={{
+          filename: "receipt_export",
+          format: "excel",
+          columns: [
+            { header: "收款日期", key: "receivedDate", width: 15 },
+            { header: "訂單編號", key: "orderNo", width: 18 },
+            { header: "客戶名稱", key: "customerName", width: 25 },
+            { header: "收款金額", key: "amount", width: 18 },
+            { header: "收款方式", key: "method", width: 15 },
+            { header: "備註", key: "note", width: 30 },
+          ],
+        }}
+      >
+        <StyledListDatagrid>
+          {/* 收款日期 */}
+          <DateField source="receivedDate" label="收款日期" />
 
-            {/* 訂單編號（可點擊） */}
-            <FunctionField
-              label="訂單編號"
-              render={(record: ReceiptListRow) => (
-                <ReceiptOrderNoField record={record} />
-              )}
-            />
+          {/* 訂單編號（可點擊） */}
+          <FunctionField
+            label="訂單編號"
+            render={(record: ReceiptListRow) => (
+              <ReceiptOrderNoField record={record} />
+            )}
+          />
 
-            {/* 客戶 */}
-            <TextField source="customerName" label="客戶" />
+          {/* 客戶 */}
+          <TextField source="customerName" label="客戶" />
 
-            {/* 收款金額 */}
-            <CurrencyField source="amount" label="收款金額" />
+          {/* 收款金額 */}
+          <CurrencyField source="amount" label="收款金額" />
 
-            {/* 收款方式 */}
-            <FunctionField
-              label="收款方式"
-              render={(record: ReceiptListRow) => {
-                const methodMap: Record<ReceiptMethod, string> = {
-                  CASH: "現金",
-                  TRANSFER: "轉帳",
-                  CARD: "刷卡",
-                  CHECK: "支票",
-                  SYSTEM_AUTO: "系統產生",
-                };
-                return methodMap[record.method] || record.method;
-              }}
-            />
+          {/* 收款方式 */}
+          <FunctionField
+            label="收款方式"
+            render={(record: ReceiptListRow) => {
+              const methodMap: Record<ReceiptMethod, string> = {
+                CASH: "現金",
+                TRANSFER: "轉帳",
+                CARD: "刷卡",
+                CHECK: "支票",
+                SYSTEM_AUTO: "系統產生",
+              };
+              return methodMap[record.method] || record.method;
+            }}
+          />
 
-            {/* 操作 */}
-            <FunctionField
-              label="操作"
-              render={(record: ReceiptListRow) => (
-                <Button
-                  size="small"
-                  variant="text"
-                  startIcon={<VisibilityIcon fontSize="small" />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDetails(record);
-                  }}
-                >
-                  檢視
-                </Button>
-              )}
-            />
-          </StyledListDatagrid>
-        </StyledListWrapper>
-      </List>
-
-      <ReceiptDetailDrawer
-        open={openDetailDrawer}
-        onClose={() => setOpenDetailDrawer(false)}
-        receipt={selectedReceipt ?? undefined}
-      />
-    </>
+          {/* 備註 */}
+          <TextField source="note" label="備註" />
+        </StyledListDatagrid>
+      </StyledListWrapper>
+    </List>
   );
 };
 
