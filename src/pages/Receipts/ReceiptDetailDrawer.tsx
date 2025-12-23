@@ -6,7 +6,6 @@ import {
   IconButton,
   Divider,
   Paper,
-  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { RecordContextProvider } from "react-admin";
@@ -17,7 +16,6 @@ import { CurrencyField } from "@/components/money/CurrencyField";
  * 型別定義
  * ========================================================= */
 
-type ReceiptStatus = "ACTIVE" | "VOID";
 type ReceiptMethod = "CASH" | "TRANSFER" | "CARD" | "CHECK" | "SYSTEM_AUTO";
 
 interface ReceiptDetailDrawerProps {
@@ -31,7 +29,6 @@ interface ReceiptDetailDrawerProps {
     receivedDate: string;
     amount: number;
     method: ReceiptMethod;
-    status: ReceiptStatus;
     note?: string;
   };
 }
@@ -149,21 +146,6 @@ export const ReceiptDetailDrawer: React.FC<ReceiptDetailDrawerProps> = ({
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
                 {methodMap[receipt.method] || receipt.method}
               </Typography>
-            </Box>
-
-            {/* 狀態 */}
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                狀態
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>
-                <Chip
-                  size="small"
-                  label={receipt.status === "ACTIVE" ? "正常" : "作廢"}
-                  color={receipt.status === "ACTIVE" ? "success" : "default"}
-                  variant="outlined"
-                />
-              </Box>
             </Box>
 
             {/* 備註 */}

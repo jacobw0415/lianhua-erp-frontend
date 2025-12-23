@@ -29,6 +29,7 @@ import { OrderCustomerCreate } from "@/pages/OrderCustomers/OrderCustomerCreate"
 import { OrderCustomerEdit } from "@/pages/OrderCustomers/OrderCustomerEdit";
 
 import { ReceiptList } from "@/pages/Receipts/ReceiptList";
+import { ReceiptCreate } from "@/pages/Receipts/ReceiptCreate";
 
 import { ProductCategoryList } from "@/pages/productCategories/ProductCategoryList";
 import { ProductCategoryCreate } from "@/pages/productCategories/ProductCategoryCreate";
@@ -133,8 +134,11 @@ const App = () => {
         create={OrderCreate}
         edit={OrderEdit}
       />
-      <Resource name="receipts" 
-       list={ReceiptList} />
+      <Resource
+        name="receipts"
+        list={ReceiptList}
+        create={ReceiptCreate}
+      />
       <Resource name="expenses" list={ListGuesser} />
     </Admin>
   );

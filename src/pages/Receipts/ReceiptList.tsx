@@ -4,27 +4,21 @@ import {
   DateField,
   FunctionField,
   TextField,
-  useDataProvider,
-  useNotify,
-  useRefresh,
   useRedirect,
 } from "react-admin";
-import { Button, Stack, Chip } from "@mui/material";
+import { Button } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import CancelIcon from "@mui/icons-material/Cancel";
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
-import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 
 import { ReceiptDetailDrawer } from "./ReceiptDetailDrawer";
 
 /* ================================
  * 型別定義（對齊 ReceiptListResponseDto）
  * ================================ */
-type ReceiptStatus = "ACTIVE" | "VOID";
 type ReceiptMethod = "CASH" | "TRANSFER" | "CARD" | "CHECK" | "SYSTEM_AUTO";
 
 export interface ReceiptListRow {
@@ -35,7 +29,6 @@ export interface ReceiptListRow {
   receivedDate: string;
   amount: number;
   method: ReceiptMethod;
-  status: ReceiptStatus;
   note?: string;
 }
 
@@ -81,15 +74,6 @@ export const ReceiptList = () => {
               ],
             },
             {
-              type: "select",
-              source: "status",
-              label: "狀態",
-              choices: [
-                { id: "ACTIVE", name: "正常" },
-                { id: "VOID", name: "作廢" },
-              ],
-            },
-            {
               type: "dateRange",
               sourceFrom: "receivedDateFrom",
               sourceTo: "receivedDateTo",
@@ -105,7 +89,6 @@ export const ReceiptList = () => {
               { header: "客戶名稱", key: "customerName", width: 25 },
               { header: "收款金額", key: "amount", width: 18 },
               { header: "收款方式", key: "method", width: 15 },
-              { header: "狀態", key: "status", width: 12 },
             ],
           }}
         >
@@ -142,24 +125,21 @@ export const ReceiptList = () => {
               }}
             />
 
-            {/* 狀態 */}
-            <FunctionField
-              label="狀態"
-              render={(record: ReceiptListRow) => (
-                <Chip
-                  size="small"
-                  label={record.status === "ACTIVE" ? "正常" : "作廢"}
-                  color={record.status === "ACTIVE" ? "success" : "default"}
-                  variant="outlined"
-                />
-              )}
-            />
-
             {/* 操作 */}
             <FunctionField
               label="操作"
               render={(record: ReceiptListRow) => (
-                <ReceiptActions record={record} onView={openDetails} />
+                <Button
+                  size="small"
+                  variant="text"
+                  startIcon={<VisibilityIcon fontSize="small" />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDetails(record);
+                  }}
+                >
+                  檢視
+                </Button>
               )}
             />
           </StyledListDatagrid>
@@ -202,102 +182,4 @@ const ReceiptOrderNoField = ({ record }: { record: ReceiptListRow }) => {
   );
 };
 
-/* =========================================================
- * 收款操作（檢視 / 作廢）
- * ========================================================= */
-const ReceiptActions = ({
-  record,
-  onView,
-}: {
-  record: ReceiptListRow;
-  onView: (record: ReceiptListRow) => void;
-}) => {
-  const dataProvider = useDataProvider();
-  const notify = useNotify();
-  const refresh = useRefresh();
-  const [openVoidConfirm, setOpenVoidConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const handleVoid = async () => {
-    if (loading || record.status === "VOID") return;
-
-    setLoading(true);
-    try {
-      await dataProvider.update("receipts", {
-        id: record.id,
-        data: { status: "VOID" },
-        previousData: record,
-      });
-
-      notify("收款記錄已作廢", { type: "success" });
-      refresh();
-    } catch (error: unknown) {
-      let message = "作廢失敗";
-
-      if (error && typeof error === "object") {
-        if (
-          "body" in error &&
-          error.body &&
-          typeof error.body === "object" &&
-          "message" in error.body
-        ) {
-          message = String(error.body.message || "");
-        } else if ("message" in error) {
-          message = String((error as { message?: string }).message || "");
-        }
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-
-      notify(message, { type: "error" });
-    } finally {
-      setLoading(false);
-      setOpenVoidConfirm(false);
-    }
-  };
-
-  return (
-    <>
-      <Stack direction="row" spacing={1}>
-        <Button
-          size="small"
-          variant="text"
-          startIcon={<VisibilityIcon fontSize="small" />}
-          onClick={(e) => {
-            e.stopPropagation();
-            onView(record);
-          }}
-        >
-          檢視
-        </Button>
-
-        {record.status === "ACTIVE" && (
-          <Button
-            size="small"
-            color="error"
-            variant="text"
-            startIcon={<CancelIcon fontSize="small" />}
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenVoidConfirm(true);
-            }}
-            disabled={loading}
-          >
-            作廢
-          </Button>
-        )}
-      </Stack>
-
-      <GlobalAlertDialog
-        open={openVoidConfirm}
-        title="確認作廢"
-        description={`確定要作廢收款記錄「${record.orderNo}」嗎？`}
-        severity="error"
-        confirmLabel="作廢"
-        cancelLabel="取消"
-        onClose={() => setOpenVoidConfirm(false)}
-        onConfirm={handleVoid}
-      />
-    </>
-  );
-};

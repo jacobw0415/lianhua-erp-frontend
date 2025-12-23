@@ -70,6 +70,7 @@ export const filterMapping: Record<string, Record<string, string>> = {
     receipts: {
         customerName: "customerName",
         orderNo: "orderNo",
+        orderId: "orderId",
         method: "method",
         accountingPeriod: "accountingPeriod",
         fromDate: "fromDate",
