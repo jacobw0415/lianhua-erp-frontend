@@ -247,18 +247,29 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
               📄 訂單項目明細
             </Typography>
 
-            <Datagrid data={details} bulkActionButtons={false} rowClick={false}>
-              <TextField source="productName" label="品項" />
-              <NumberField
-                source="qty"
-                label="數量"
-                textAlign="left"
-                options={{ minimumFractionDigits: 0 }}
-              />
-              <CurrencyField source="unitPrice" label="單價" />
-              <CurrencyField source="subtotal" label="小計" />
+            <Box
+              sx={{
+                maxHeight: "208px", // 約 4 行的高度 (52px * 4)
+                overflowY: "auto",
+                overflowX: "hidden",
+                "& .MuiTableContainer-root": {
+                  maxHeight: "none",
+                },
+              }}
+            >
+              <Datagrid data={details} bulkActionButtons={false} rowClick={false}>
+                <TextField source="productName" label="品項" />
+                <NumberField
+                  source="qty"
+                  label="數量"
+                  textAlign="left"
+                  options={{ minimumFractionDigits: 0 }}
+                />
+                <CurrencyField source="unitPrice" label="單價" />
+                <CurrencyField source="subtotal" label="小計" />
 
-            </Datagrid>
+              </Datagrid>
+            </Box>
 
             <Divider sx={{ my: 1 }} />
             <Box display="flex" justifyContent="space-between">

@@ -1,13 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  NumberInput,
   TextInput,
   SelectInput,
-  ArrayInput,
-  SimpleFormIterator,
   required,
   useRedirect,
 } from "react-admin";
+import { useFormContext } from "react-hook-form";
 import { Box, Typography } from "@mui/material";
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
@@ -15,6 +13,11 @@ import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useActiveOrderCustomers } from "@/hooks/useActiveOrderCustomers";
 import { useActiveProducts } from "@/hooks/useActiveProducts";
+
+import {
+  OrderProductSelector,
+  type OrderItem,
+} from "@/pages/Orders/OrderProductSelector";
 
 /* -------------------------------------------------------
  * 🔐 Order 型別定義（對齊後端）
@@ -27,20 +30,25 @@ interface Order {
   deliveryDate?: string;
   orderStatus: "PENDING" | "CONFIRMED";
   note?: string;
-  items: Array<{
-    productId: number | "";
-    qty: number;
-  }>;
+  items: OrderItem[];
 }
 
 /* =======================================================
- * 📄 OrderCreate（v2.7 對齊版）
+ * 📄 OrderCreate（商品選擇器正式版）
  * ======================================================= */
 export const OrderCreate: React.FC = () => {
-  const { customers, loading: customersLoading } = useActiveOrderCustomers();
-  const { products, loading: productsLoading } = useActiveProducts();
+  const { customers, loading: customersLoading } =
+    useActiveOrderCustomers();
+  const { products, loading: productsLoading } =
+    useActiveProducts();
+
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  /* ===============================
+   * 訂單項目狀態（核心）
+   * =============================== */
+  const [items, setItems] = useState<OrderItem[]>([]);
 
   return (
     <GenericCreatePage
@@ -60,17 +68,19 @@ export const OrderCreate: React.FC = () => {
         setTimeout(() => redirect("list", "orders"));
       }}
     >
+      <ItemsFormSync items={items} setItems={setItems} />
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         📋 新增訂單資訊
       </Typography>
 
       {/* ===================================================
-       * 🔲 主版型
+       * 🔲 主版型（左右高度拉齊）
        * =================================================== */}
       <Box
         sx={{
           display: "grid",
           gap: 4,
+          alignItems: "stretch", // ⭐ 核心：左右欄底部對齊
           gridTemplateColumns: {
             xs: "1fr",
             lg: "minmax(0, 1fr) 420px",
@@ -78,7 +88,14 @@ export const OrderCreate: React.FC = () => {
         }}
       >
         {/* ================= 左側：訂單主資料 ================= */}
-        <Box sx={{ width: "100%", minWidth: 0 }}>
+        <Box
+          sx={{
+            width: "100%",
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* 客戶 + 訂單狀態 */}
           <Box
             sx={{
@@ -127,63 +144,81 @@ export const OrderCreate: React.FC = () => {
               validate={[required()]}
             />
 
-            <LhDateInput source="deliveryDate" label="交貨日期" fullWidth />
+            <LhDateInput
+              source="deliveryDate"
+              label="交貨日期"
+              fullWidth
+            />
           </Box>
 
           {/* 備註 */}
-          <TextInput source="note" label="備註" fullWidth />
+          <TextInput
+            source="note"
+            label="備註"
+            fullWidth
+            multiline
+            minRows={5.5}
+            sx={{
+              "& .MuiInputBase-root": {
+                borderRadius: 2,
+              },
+            }}
+          />
         </Box>
 
-        {/* ================= 右側：訂單項目 ================= */}
-        <Box
-          sx={(theme) => ({
-            borderRadius: 2,
-            width: "100%",
-            maxWidth: 420,
-            bgcolor: theme.palette.background.paper,
-            border: `2px solid ${theme.palette.divider}`,
-            p: 3,
-            minHeight: 380,
-            maxHeight: 600,
-            overflowY: "auto",
-          })}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            📄 訂單項目
-          </Typography>
-
-          <ArrayInput
-            source="items"
-            label=""
-            defaultValue={[{ productId: "", qty: 1 }]}
-          >
-            <SimpleFormIterator
-              disableAdd
-              disableRemove
-              getItemLabel={() => ""}
+        {/* ================= 右側：訂單項目（表頭固定 + 摘要） ================= */}
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <OrderProductSelector
+            products={products}
+            value={items}
+            onChange={setItems}
+            disabled={productsLoading}
+            visibleRows={4}
+          />
+          {items.length === 0 && (
+            <Typography
+              variant="caption"
+              color="error"
+              sx={{ mt: 1, ml: 1 }}
             >
-              <SelectInput
-                source="productId"
-                label="產品"
-                choices={products}
-                optionText="name"
-                optionValue="id"
-                fullWidth
-                isLoading={productsLoading}
-                validate={[required()]}
-              />
-
-              <NumberInput
-                source="qty"
-                label="數量"
-                fullWidth
-                min={1}
-                validate={[required()]}
-              />
-            </SimpleFormIterator>
-          </ArrayInput>
+              請至少選擇一項商品
+            </Typography>
+          )}
         </Box>
       </Box>
     </GenericCreatePage>
+  );
+};
+
+/* -------------------------------------------------------
+ * 同步 items 到表單字段的組件
+ * 將 items 狀態同步到隱藏的表單字段，以便提交
+ * ------------------------------------------------------- */
+const ItemsFormSync: React.FC<{
+  items: OrderItem[];
+  setItems: (items: OrderItem[]) => void;
+}> = ({ items }) => {
+  const { setValue } = useFormContext();
+
+  // 同步 items 到表單字段
+  useEffect(() => {
+    setValue("items", items, { shouldValidate: false, shouldDirty: false });
+  }, [items, setValue]);
+
+  // 隱藏的字段，用於表單驗證和提交
+  return (
+    <TextInput
+      source="items"
+      label=""
+      sx={{ display: "none" }}
+      validate={[
+        (value) => {
+          if (!value || (Array.isArray(value) && value.length === 0)) {
+            return "請至少選擇一項商品";
+          }
+          return undefined;
+        },
+      ]}
+    />
   );
 };
