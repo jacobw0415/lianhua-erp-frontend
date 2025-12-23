@@ -249,7 +249,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
 
             <Box
               sx={{
-                maxHeight: "208px", // 約 4 行的高度 (52px * 4)
+                maxHeight: "200px", // 約 4 行的高度 (52px * 4)
                 overflowY: "auto",
                 overflowX: "hidden",
                 "& .MuiTableContainer-root": {
