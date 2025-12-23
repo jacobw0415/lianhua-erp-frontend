@@ -257,7 +257,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
               />
               <CurrencyField source="unitPrice" label="單價" />
               <CurrencyField source="subtotal" label="小計" />
-              <TextField source="note" label="備註" />
+
             </Datagrid>
 
             <Divider sx={{ my: 1 }} />

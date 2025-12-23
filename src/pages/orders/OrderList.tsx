@@ -43,7 +43,6 @@ export const OrderList = () => {
     setOpenDetailDrawer(true);
   };
 
-  // Map OrderListRow to OrderDetailDrawer order format（保持型別對齊，僅重命名欄位）
   const mapOrderForDrawer = (order: OrderListRow) => ({
     id: order.id,
     orderNo: order.orderNo,
@@ -66,11 +65,43 @@ export const OrderList = () => {
         perPage={10}
       >
         <StyledListWrapper
+          /* =========================
+           * 快速篩選
+           * ========================= */
           quickFilters={[
+            { type: "text", source: "orderNo", label: "訂單編號" },
             { type: "text", source: "customerName", label: "客戶名稱" },
-            { type: "text", source: "note", label: "備註" },
           ]}
+
+          /* =========================
+           * 進階篩選（含日期區間＋會計期間）
+           * ========================= */
           advancedFilters={[
+            {
+              type: "month",
+              source: "accountingPeriod",
+              label: "會計期間 (YYYY-MM)",
+            },
+            {
+              type: "date",
+              source: "orderDateFrom",
+              label: "訂單日期（起）",
+            },
+            {
+              type: "date",
+              source: "orderDateTo",
+              label: "訂單日期（迄）",
+            },
+            {
+              type: "date",
+              source: "deliveryDateFrom",
+              label: "交貨日期（起）",
+            },
+            {
+              type: "date",
+              source: "deliveryDateTo",
+              label: "交貨日期（迄）",
+            },
             {
               type: "select",
               source: "orderStatus",
@@ -79,7 +110,6 @@ export const OrderList = () => {
                 { id: "PENDING", name: "待確認" },
                 { id: "CONFIRMED", name: "已確認" },
                 { id: "DELIVERED", name: "已交付" },
-                { id: "CANCELLED", name: "已取消" },
               ],
             },
             {
@@ -88,11 +118,14 @@ export const OrderList = () => {
               label: "付款狀態",
               choices: [
                 { id: "UNPAID", name: "未收款" },
-                { id: "PARTIAL", name: "部分收款" },
-                { id: "PAID", name: "已全額收款" },
+                { id: "PAID", name: "已收款" },
               ],
             },
           ]}
+
+          /* =========================
+           * 匯出設定
+           * ========================= */
           exportConfig={{
             filename: "order_export",
             format: "excel",
