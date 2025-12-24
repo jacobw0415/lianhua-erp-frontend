@@ -8,13 +8,13 @@ import { filterMapping } from "@/config/filterMapping";
  * ======================================================== */
 type ApiError =
   | {
+    message?: string;
+    body?: {
       message?: string;
-      body?: {
-        message?: string;
-        error?: string;
-      };
-      status?: number;
-    }
+      error?: string;
+    };
+    status?: number;
+  }
   | unknown;
 
 const apiUrl: string =
@@ -104,8 +104,8 @@ export const createDataProvider = ({
     const data = Array.isArray(jsonObj?.data)
       ? jsonObj.data
       : Array.isArray(json)
-      ? json
-      : [];
+        ? json
+        : [];
 
     const total =
       typeof jsonObj?.total === "number" ? jsonObj.total : data.length;
@@ -254,6 +254,24 @@ export const createDataProvider = ({
         }).then(({ json }) => ({ data: json?.data ?? json }));
       }
 
+      if (endpoint === "void") {
+        const voidUrl = `${apiUrl}/${resource}/${params.id}/void`;
+        const voidMethod = "POST";
+
+        if (import.meta.env.DEV) {
+          console.log('🔍 調用 void 端點:', {
+            url: voidUrl,
+            method: voidMethod,
+            resource,
+            id: params.id,
+          });
+        }
+
+        return httpClientSafe(voidUrl, {
+          method: voidMethod,
+        }).then(({ json }) => ({ data: json?.data ?? json }));
+      }
+
       return httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {
         method: "PUT",
         body: JSON.stringify(params.data),
@@ -297,8 +315,24 @@ export const createDataProvider = ({
       ).then((ids) => ({ data: ids })),
 
     /* ===================== get (custom) ===================== */
-    get(resource: string) {
-      return httpClientSafe(`${apiUrl}/${resource}`).then(({ json }) => ({
+    get(resource: string, options?: { meta?: Record<string, unknown> }) {
+      let url = `${apiUrl}/${resource}`;
+
+      // 如果有 meta 參數，將其轉換為查詢參數
+      if (options?.meta) {
+        const query = new URLSearchParams();
+        Object.entries(options.meta).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            query.append(key, String(value));
+          }
+        });
+        const queryString = query.toString();
+        if (queryString) {
+          url += `?${queryString}`;
+        }
+      }
+
+      return httpClientSafe(url).then(({ json }) => ({
         data: json?.data ?? json,
       }));
     },

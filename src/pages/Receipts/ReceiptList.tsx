@@ -11,11 +11,13 @@ import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { ReceiptStatusField } from "@/components/common/ReceiptStatusField";
 
 /* ================================
  * 型別定義（對齊 ReceiptListResponseDto）
  * ================================ */
-type ReceiptMethod = "CASH" | "TRANSFER" | "CARD" | "CHECK" | "SYSTEM_AUTO";
+type ReceiptMethod = "CASH" | "TRANSFER" | "CARD" | "CHECK";
+type ReceiptStatus = "ACTIVE" | "VOIDED";
 
 export interface ReceiptListRow {
   id: number;
@@ -25,6 +27,7 @@ export interface ReceiptListRow {
   receivedDate: string;
   amount: number;
   method: ReceiptMethod;
+  status?: ReceiptStatus;
   note?: string;
 }
 
@@ -55,8 +58,21 @@ export const ReceiptList = () => {
               { id: "TRANSFER", name: "轉帳" },
               { id: "CARD", name: "刷卡" },
               { id: "CHECK", name: "支票" },
-              { id: "SYSTEM_AUTO", name: "系統產生" },
             ],
+          },
+          {
+            type: "select",
+            source: "status",
+            label: "狀態",
+            choices: [
+              { id: "ACTIVE", name: "有效" },
+              { id: "VOIDED", name: "作廢" },
+            ],
+          },
+          {
+            type: "month",
+            source: "accountingPeriod",
+            label: "會計期間 (YYYY-MM)",
           },
           {
             type: "dateRange",
@@ -74,6 +90,8 @@ export const ReceiptList = () => {
             { header: "客戶名稱", key: "customerName", width: 25 },
             { header: "收款金額", key: "amount", width: 18 },
             { header: "收款方式", key: "method", width: 15 },
+            { header: "狀態", key: "status", width: 12 },
+            { header: "會計期間", key: "accountingPeriod", width: 15 },
             { header: "備註", key: "note", width: 30 },
           ],
         }}
@@ -105,11 +123,22 @@ export const ReceiptList = () => {
                 TRANSFER: "轉帳",
                 CARD: "刷卡",
                 CHECK: "支票",
-                SYSTEM_AUTO: "系統產生",
               };
               return methodMap[record.method] || record.method;
             }}
           />
+
+          {/* 狀態 */}
+          <FunctionField
+            label="狀態"
+            className="cell-centered"
+            render={(record: ReceiptListRow) => (
+              <ReceiptStatusField record={record} />
+            )}
+          />
+
+          {/* 會計期間 */}
+          <TextField source="accountingPeriod" label="會計期間" />
 
           {/* 備註 */}
           <TextField source="note" label="備註" />

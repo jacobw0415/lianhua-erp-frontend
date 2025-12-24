@@ -8,6 +8,7 @@ import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { OrderPaymentStatusField } from "@/components/common/OrderPaymentStatusField";
 
 import { OrderDetailDrawer } from "./OrderDetailDrawer";
 
@@ -145,7 +146,7 @@ export const OrderList = () => {
             <TextField source="orderNo" label="訂單編號" />
             <TextField source="customerName" label="客戶" />
             <TextField source="orderStatus" label="訂單狀態" />
-            <TextField source="paymentStatus" label="付款狀態" />
+            <OrderPaymentStatusField source="paymentStatus" label="付款狀態" />
             <CurrencyField source="totalAmount" label="訂單金額" />
             <DateField source="orderDate" label="訂單日期" />
             <DateField source="deliveryDate" label="交貨日期" />

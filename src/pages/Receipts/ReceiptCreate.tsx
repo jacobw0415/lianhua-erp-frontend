@@ -1,11 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   TextInput,
   SelectInput,
   required,
   useRedirect,
+  useDataProvider,
 } from "react-admin";
-import { useWatch } from "react-hook-form";
+import { useWatch, useFormContext } from "react-hook-form";
 import { Box, Typography, Paper, Alert } from "@mui/material";
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
@@ -32,10 +33,49 @@ interface Receipt {
  * ========================================================= */
 const ReceiptFormContent: React.FC = () => {
   const { orders, loading: ordersLoading } = useActiveOrders();
+  const { setError, clearErrors } = useFormContext();
+  const dataProvider = useDataProvider();
+  const [ordersWithReceipts, setOrdersWithReceipts] = useState<Set<number>>(
+    new Set()
+  );
+  const [loadingReceiptsCheck, setLoadingReceiptsCheck] = useState(false);
 
+  // 獲取所有收款記錄，找出有收款記錄的訂單ID
+  useEffect(() => {
+    if (orders.length === 0) return;
+
+    setLoadingReceiptsCheck(true);
+    dataProvider
+      .getList("receipts", {
+        pagination: { page: 1, perPage: 10000 },
+        sort: { field: "id", order: "ASC" },
+        filter: {},
+      })
+      .then((res: { data: Array<{ orderId: number }> | { content: Array<{ orderId: number }> } }) => {
+        const receiptList = Array.isArray(res.data)
+          ? res.data
+          : res.data?.content ?? [];
+        // 提取所有有收款記錄的訂單ID（無論是ACTIVE還是VOIDED）
+        const orderIdsWithReceipts = new Set(
+          receiptList.map((r) => r.orderId).filter((id) => id != null)
+        );
+        setOrdersWithReceipts(orderIdsWithReceipts);
+      })
+      .catch((error: unknown) => {
+        console.error("❌ 載入收款記錄失敗：", error);
+        setOrdersWithReceipts(new Set());
+      })
+      .finally(() => setLoadingReceiptsCheck(false));
+  }, [orders.length, dataProvider]);
+
+  // 過濾掉有收款記錄的訂單（包括作廢的）
   const availableOrders = useMemo(
-    () => orders.filter((o) => o.paymentStatus !== "PAID"),
-    [orders]
+    () =>
+      orders.filter(
+        (o) =>
+          o.paymentStatus !== "PAID" && !ordersWithReceipts.has(o.id)
+      ),
+    [orders, ordersWithReceipts]
   );
 
   const selectedOrderId = useWatch({ name: "orderId" });
@@ -49,8 +89,23 @@ const ReceiptFormContent: React.FC = () => {
   );
 
   const { order, loading: orderLoading } = useOrderDetail(stableOrderId);
-  const { paidAmount, loading: receiptsLoading } =
+  const { paidAmount, receipts, loading: receiptsLoading } =
     useOrderReceipts(stableOrderId, order?.orderNo);
+
+  // 檢查是否已有收款記錄（一個訂單只能有一條收款記錄）
+  const hasExistingReceipt = useMemo(() => {
+    return receipts && receipts.length > 0;
+  }, [receipts]);
+
+  // 檢查是否有作廢的收款記錄
+  const hasVoidedReceipt = useMemo(() => {
+    return receipts && receipts.some((r) => r.status === "VOIDED");
+  }, [receipts]);
+
+  // 獲取現有的收款記錄（如果有的話）
+  const existingReceipt = useMemo(() => {
+    return receipts && receipts.length > 0 ? receipts[0] : null;
+  }, [receipts]);
 
   const receivableAmount = useMemo(() => {
     if (!order || !order.totalAmount) return 0;
@@ -58,6 +113,21 @@ const ReceiptFormContent: React.FC = () => {
   }, [order, paidAmount]);
 
   const isPaid = receivableAmount <= 0 && !!order;
+
+  // 當檢測到已有收款記錄時（包括作廢的），設置表單錯誤以阻止提交
+  useEffect(() => {
+    if (hasExistingReceipt && selectedOrderId) {
+      const errorMessage = hasVoidedReceipt
+        ? "此訂單的收款記錄已作廢，無法重新建立"
+        : "此訂單已有收款記錄，無法重複建立";
+      setError("orderId", {
+        type: "manual",
+        message: errorMessage,
+      });
+    } else {
+      clearErrors("orderId");
+    }
+  }, [hasExistingReceipt, hasVoidedReceipt, selectedOrderId, setError, clearErrors]);
 
   return (
     <>
@@ -98,10 +168,12 @@ const ReceiptFormContent: React.FC = () => {
               }
               optionValue="id"
               fullWidth
-              isLoading={ordersLoading}
+              isLoading={ordersLoading || loadingReceiptsCheck}
               validate={[required()]}
               emptyText={
-                availableOrders.length === 0 && !ordersLoading
+                availableOrders.length === 0 &&
+                !ordersLoading &&
+                !loadingReceiptsCheck
                   ? "目前沒有可收款的訂單"
                   : undefined
               }
@@ -184,7 +256,14 @@ const ReceiptFormContent: React.FC = () => {
                       </Typography>
                     </Box>
 
-                    {isPaid && (
+                    {hasExistingReceipt && (
+                      <Alert severity="error" sx={{ mt: 1.5 }}>
+                        {hasVoidedReceipt
+                          ? `此訂單的收款記錄已作廢（ID: ${existingReceipt?.id}），無法重新建立。`
+                          : `此訂單已有收款記錄（ID: ${existingReceipt?.id}），無法重複建立。請至收款列表編輯現有記錄。`}
+                      </Alert>
+                    )}
+                    {isPaid && !hasExistingReceipt && (
                       <Alert severity="warning" sx={{ mt: 1.5 }}>
                         此訂單已完成收款，無法再新增收款記錄
                       </Alert>
@@ -313,6 +392,18 @@ export const ReceiptCreate: React.FC = () => {
           hideCancel: true,
         });
         setTimeout(() => redirect("list", "receipts"));
+      }}
+      onError={(error: unknown) => {
+        // 檢查是否為唯一約束錯誤
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes("uk_receipts_order_id") || errorMessage.includes("已存在")) {
+          showAlert({
+            title: "建立失敗",
+            message: "此訂單已有收款記錄，無法重複建立。請至收款列表查看或編輯現有記錄。",
+            severity: "error",
+            hideCancel: true,
+          });
+        }
       }}
     >
       <ReceiptFormContent />

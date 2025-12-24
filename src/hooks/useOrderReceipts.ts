@@ -8,6 +8,8 @@ import { useDataProvider } from "react-admin";
 export interface Receipt {
   id: number;
   amount: number;
+  orderId?: number;
+  status?: string;
 }
 
 interface ReceiptListResponse {
@@ -15,7 +17,7 @@ interface ReceiptListResponse {
 }
 
 /* =========================================================
- * Hook：取得訂單的已收款總額
+ * Hook：取得訂單的已收款總額和收款記錄列表
  * ========================================================= */
 
 export const useOrderReceipts = (
@@ -24,6 +26,7 @@ export const useOrderReceipts = (
 ) => {
   const dataProvider = useDataProvider();
   const [paidAmount, setPaidAmount] = useState<number>(0);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -63,13 +66,20 @@ export const useOrderReceipts = (
       })
       .then((res: ReceiptListResponse) => {
         if (!abortController.signal.aborted) {
-          const receipts = Array.isArray(res.data)
+          const receiptList = Array.isArray(res.data)
             ? res.data
             : res.data?.content ?? [];
 
-          // 計算已收款總額
-          const total = receipts.reduce(
-            (sum, receipt) => sum + (receipt.amount || 0),
+          // 保存收款記錄列表
+          setReceipts(receiptList);
+
+          // 計算已收款總額（只計算有效狀態的收款）
+          const total = receiptList.reduce(
+            (sum, receipt) => {
+              // 只計算狀態為 ACTIVE 或未設置狀態的收款（向後兼容）
+              if (receipt.status === "VOIDED") return sum;
+              return sum + (receipt.amount || 0);
+            },
             0
           );
           setPaidAmount(total);
@@ -79,6 +89,7 @@ export const useOrderReceipts = (
         if (!abortController.signal.aborted) {
           console.error("❌ 載入收款記錄失敗：", error);
           setPaidAmount(0);
+          setReceipts([]);
         }
       })
       .finally(() => {
@@ -93,6 +104,6 @@ export const useOrderReceipts = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, orderNo]);
 
-  return { paidAmount, loading };
+  return { paidAmount, receipts, loading };
 };
 
