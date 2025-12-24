@@ -184,11 +184,12 @@ export const OrderProductSelector: React.FC<OrderProductSelectorProps> = ({
       {/* ================= 已選商品 Chips（固定兩排，可捲） ================= */}
       <Box
         sx={{
-          px: 2,
-          py: 1,
-          minHeight: CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS,
-          maxHeight: CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS,
+          px: 3,
+          py: 3,
+          height: CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS + 16, // 固定高度：兩排 chip 高度 + padding (8px * 2)
           overflowY: "auto",
+          display: "flex",
+          alignItems: selectedItems.length === 0 ? "center" : "flex-start",
         }}
       >
         {selectedItems.length === 0 ? (
@@ -201,6 +202,7 @@ export const OrderProductSelector: React.FC<OrderProductSelectorProps> = ({
               display: "flex",
               flexWrap: "wrap",
               gap: 1,
+              width: "100%",
             }}
           >
             {selectedItems.map((item) => (

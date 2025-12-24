@@ -157,7 +157,7 @@ export const OrderCreate: React.FC = () => {
             label="備註"
             fullWidth
             multiline
-            minRows={5.5}
+            minRows={6.3}
             sx={{
               "& .MuiInputBase-root": {
                 borderRadius: 2,
@@ -175,15 +175,20 @@ export const OrderCreate: React.FC = () => {
             disabled={productsLoading}
             visibleRows={4}
           />
-          {items.length === 0 && (
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{ mt: 1, ml: 1 }}
-            >
-              請至少選擇一項商品
-            </Typography>
-          )}
+          {/* 錯誤提示區域：固定高度，避免布局跳動 */}
+          <Box
+            sx={{
+              height: 15, // 固定高度，對應 variant="caption" 的高度 + margin
+              mt: 1,
+              ml: 1,
+            }}
+          >
+            {items.length === 0 && (
+              <Typography variant="caption" color="error">
+                請至少選擇一項商品
+              </Typography>
+            )}
+          </Box>
         </Box>
       </Box>
     </GenericCreatePage>
