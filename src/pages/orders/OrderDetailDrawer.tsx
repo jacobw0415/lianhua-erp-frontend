@@ -196,15 +196,12 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
     });
   }, [receipts]);
 
-  // 計算實際付款狀態：如果有作廢的收款記錄，表示曾經付款過，應該顯示為 PAID
-  const displayPaymentStatus = useMemo(() => {
-    const currentStatus = order?.paymentStatus || "UNPAID";
-    // 如果有作廢的收款記錄，且當前狀態不是 PAID，則強制顯示為 PAID
-    if (hasVoidedReceipts && currentStatus !== "PAID") {
-      return "PAID";
-    }
-    return currentStatus;
-  }, [order?.paymentStatus, hasVoidedReceipts]);
+  // ⭐ 直接使用後端計算的 paymentStatus
+  // 後端已在 OrderServiceImpl.calculatePaymentStatus() 中處理了所有邏輯：
+  // - 計算有效收款金額（排除已作廢的收款）
+  // - 如果訂單曾經有收款記錄（包括已作廢的），即使現在有效收款為0，也保持 PAID 狀態
+  // - 根據收款金額和訂單總金額計算付款狀態（UNPAID, PARTIAL, PAID）
+  const displayPaymentStatus = order?.paymentStatus || "UNPAID";
 
   const handleVoidReceipt = async () => {
     if (!selectedReceipt) return;
