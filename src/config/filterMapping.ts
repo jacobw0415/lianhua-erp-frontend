@@ -35,6 +35,7 @@ export const filterMapping: Record<string, Record<string, string>> = {
         supplier: "supplierId",
         date: "purchaseDate",
         status: "status",
+        purchaseNo: "purchaseNo",
     },
 
     payments: {
@@ -43,6 +44,7 @@ export const filterMapping: Record<string, Record<string, string>> = {
         accountingPeriod: "accountingPeriod",
         fromDate: "fromDate",
         toDate: "toDate",
+        purchaseNo: "purchaseNo",
     },
 
     order_customers: {

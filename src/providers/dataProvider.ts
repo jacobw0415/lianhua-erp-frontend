@@ -158,6 +158,7 @@ export const createDataProvider = ({
         "orderDate",
         "deliveryDate",
         "orderNo",
+        "receivedDate",
       ];
 
       if (field && allowedSortFields.includes(field)) {
@@ -257,6 +258,7 @@ export const createDataProvider = ({
       if (endpoint === "void") {
         const voidUrl = `${apiUrl}/${resource}/${params.id}/void`;
         const voidMethod = "POST";
+        const reason = params.data?.reason;
 
         if (import.meta.env.DEV) {
           console.log('🔍 調用 void 端點:', {
@@ -264,11 +266,17 @@ export const createDataProvider = ({
             method: voidMethod,
             resource,
             id: params.id,
+            reason,
           });
         }
 
+        const body = reason !== undefined && reason !== null
+          ? JSON.stringify({ reason: String(reason) })
+          : JSON.stringify({});
+
         return httpClientSafe(voidUrl, {
           method: voidMethod,
+          body,
         }).then(({ json }) => ({ data: json?.data ?? json }));
       }
 

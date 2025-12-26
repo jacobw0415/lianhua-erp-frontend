@@ -4,7 +4,8 @@ import {
   TextField,
   DateField,
   FunctionField,
-  NumberField
+  NumberField,
+  useRefresh,
 } from "react-admin";
 
 import { IconButton } from "@mui/material";
@@ -69,6 +70,10 @@ type SelectedPurchase = {
   paidAmount: number;
   balance: number;
 
+  recordStatus?: "ACTIVE" | "VOIDED";
+  voidedAt?: string;
+  voidReason?: string;
+
   details: PurchaseDetailRow[];
   payments: PaymentRow[];
 };
@@ -81,6 +86,7 @@ export const PurchaseList = () => {
   const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
   const [selectedPurchase, setSelectedPurchase] =
     useState<SelectedPurchase | null>(null);
+  const refresh = useRefresh();
 
   const openDetails = (record: PurchaseListRow) => {
     setSelectedPurchase({
@@ -92,11 +98,24 @@ export const PurchaseList = () => {
       totalAmount: record.totalAmount,
       paidAmount: record.paidAmount,
       balance: record.balance,
+      recordStatus: (record as any).recordStatus,
+      voidedAt: (record as any).voidedAt,
+      voidReason: (record as any).voidedReason,
       details: [],                  // 明細由 Drawer 內補
       payments: record.payments ?? [],
     });
 
     setOpenDetailDrawer(true);
+  };
+
+  const handleRefresh = () => {
+    refresh();
+    // 如果抽屜打開，重新載入選中的進貨單資料
+    if (selectedPurchase?.id) {
+      // 這裡可以選擇重新打開抽屜或關閉它
+      // 為了簡單起見，我們關閉抽屜並刷新列表
+      setOpenDetailDrawer(false);
+    }
   };
 
   return (
@@ -152,7 +171,7 @@ export const PurchaseList = () => {
             <TextField source="supplierName" label="供應商名稱" />
             <DateField source="purchaseDate" label="進貨日期" />
             <TextField source="item" label="品項" />
-            <NumberField source="qty" label="數量" /> 
+            <NumberField source="qty" label="數量" />
             <TextField source="unit" label="單位" />
             <CurrencyField source="unitPrice" label="單價" />
             <CurrencyField source="totalAmount" label="總金額" />
@@ -182,6 +201,7 @@ export const PurchaseList = () => {
         open={openDetailDrawer}
         onClose={() => setOpenDetailDrawer(false)}
         purchase={selectedPurchase ?? undefined}
+        onRefresh={handleRefresh}
       />
     </>
   );

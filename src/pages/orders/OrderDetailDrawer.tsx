@@ -31,7 +31,7 @@ import {
 
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { ReceiptStatusField } from "@/components/common/ReceiptStatusField";
-import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
+import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
 /* =========================================================
@@ -203,7 +203,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
   // - 根據收款金額和訂單總金額計算付款狀態（UNPAID, PARTIAL, PAID）
   const displayPaymentStatus = order?.paymentStatus || "UNPAID";
 
-  const handleVoidReceipt = async () => {
+  const handleVoidReceipt = async (reason?: string) => {
     if (!selectedReceipt) return;
 
     try {
@@ -211,7 +211,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
 
       await dataProvider.update("receipts", {
         id: selectedReceipt.id,
-        data: {},
+        data: { reason },
         previousData: selectedReceipt,
         meta: { endpoint: "void" },
       });
@@ -420,11 +420,10 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
         </Paper>
       </Box>
 
-      <GlobalAlertDialog
+      <VoidReasonDialog
         open={openVoidConfirm}
-        title="確認作廢"
+        title="作廢收款"
         description="確定要作廢此筆收款嗎？此操作無法復原。"
-        severity="warning"
         confirmLabel="確認作廢"
         cancelLabel="取消"
         onClose={() => {
