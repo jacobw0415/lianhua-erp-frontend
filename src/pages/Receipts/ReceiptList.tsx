@@ -45,7 +45,6 @@ export const ReceiptList = () => {
     >
       <StyledListWrapper
         quickFilters={[
-          { type: "text", source: "orderNo", label: "訂單編號" },
           { type: "text", source: "customerName", label: "客戶名稱" },
         ]}
         advancedFilters={[
@@ -97,8 +96,6 @@ export const ReceiptList = () => {
         }}
       >
         <StyledListDatagrid>
-          {/* 收款日期 */}
-          <DateField source="receivedDate" label="收款日期" />
 
           {/* 訂單編號（可點擊） */}
           <FunctionField
@@ -110,6 +107,9 @@ export const ReceiptList = () => {
 
           {/* 客戶 */}
           <TextField source="customerName" label="客戶" />
+
+          {/* 收款日期 */}
+          <DateField source="receivedDate" label="收款日期" />
 
           {/* 收款金額 */}
           <CurrencyField source="amount" label="收款金額" />

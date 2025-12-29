@@ -128,10 +128,11 @@ export const PurchaseList = () => {
       >
         <StyledListWrapper
           quickFilters={[
+            { type: "text", source: "purchaseNo", label: "進貨單號" },
             { type: "text", source: "supplierName", label: "供應商名稱" },
-            { type: "text", source: "item", label: "品項" },
           ]}
           advancedFilters={[
+            { type: "text", source: "item", label: "品項" },
             {
               type: "select",
               source: "status",
