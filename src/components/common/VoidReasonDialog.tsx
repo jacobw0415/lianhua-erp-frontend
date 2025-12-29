@@ -7,6 +7,7 @@ import {
   Typography,
   TextField,
   Box,
+  Alert,
 } from "@mui/material";
 
 interface VoidReasonDialogProps {
@@ -29,6 +30,7 @@ export const VoidReasonDialog: React.FC<VoidReasonDialogProps> = ({
   onConfirm,
 }) => {
   const [reason, setReason] = useState("");
+  const MAX_LENGTH = 20; 
 
   // 當對話框關閉時重置輸入
   useEffect(() => {
@@ -36,6 +38,13 @@ export const VoidReasonDialog: React.FC<VoidReasonDialogProps> = ({
       setReason("");
     }
   }, [open]);
+
+  const handleReasonChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= MAX_LENGTH) {
+      setReason(value);
+    }
+  };
 
   // Enter 鍵處理
   useEffect(() => {
@@ -95,34 +104,69 @@ export const VoidReasonDialog: React.FC<VoidReasonDialogProps> = ({
           {description}
         </Typography>
 
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          placeholder="請輸入作廢原因（選填）"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              bgcolor: "#1F1F1F",
-              color: "white",
-              "& fieldset": {
-                borderColor: "#555",
+        <Box sx={{ position: "relative" }}>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            placeholder="請輸入作廢原因（選填，最多20字）"
+            value={reason}
+            onChange={handleReasonChange}
+            inputProps={{
+              maxLength: MAX_LENGTH,
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#1F1F1F",
+                color: "white",
+                "& fieldset": {
+                  borderColor: "#555",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#777",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#0288D1",
+                },
               },
-              "&:hover fieldset": {
-                borderColor: "#777",
+              "& .MuiInputBase-input::placeholder": {
+                color: "#888",
+                opacity: 1,
               },
-              "&.Mui-focused fieldset": {
-                borderColor: "#0288D1",
+            }}
+            autoFocus
+          />
+          <Typography
+            variant="caption"
+            sx={{
+              position: "absolute",
+              bottom: 8,
+              right: 12,
+              color: reason.length >= MAX_LENGTH ? "#f44336" : "#888",
+              fontSize: "0.75rem",
+              pointerEvents: "none",
+            }}
+          >
+            {reason.length}/{MAX_LENGTH}
+          </Typography>
+        </Box>
+        {reason.length >= MAX_LENGTH && (
+          <Alert
+            severity="warning"
+            sx={{
+              mt: 1.5,
+              bgcolor: "rgba(237, 108, 2, 0.1)",
+              color: "#ff9800",
+              "& .MuiAlert-icon": {
+                color: "#ff9800",
               },
-            },
-            "& .MuiInputBase-input::placeholder": {
-              color: "#888",
-              opacity: 1,
-            },
-          }}
-          autoFocus
-        />
+            }}
+          >
+            <Typography variant="caption">
+              已達最大字數限制（{MAX_LENGTH}字），無法繼續輸入
+            </Typography>
+          </Alert>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: "center", mt: 2 }}>

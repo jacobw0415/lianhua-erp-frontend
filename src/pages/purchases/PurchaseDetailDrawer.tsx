@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Drawer,
   Box,
@@ -29,6 +29,7 @@ import { CurrencyField } from "@/components/money/CurrencyField";
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { PurchaseStatusField } from "@/components/common/PurchaseStatusField";
 import { PaymentStatusField } from "@/components/common/PaymentStatusField";
+import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
 /* =========================================================
  * 型別定義
@@ -103,6 +104,44 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   const [update, { isLoading: isVoiding }] = useUpdate();
   const dataProvider = useDataProvider();
   const notify = useNotify();
+  const { showAlert } = useGlobalAlert();
+
+  // 確保所有 hooks 都在早期返回之前調用
+  const payments = purchase?.payments || [];
+
+  // 計算已作廢付款的總金額
+  const voidedPaymentsTotal = useMemo(() => {
+    if (!payments || payments.length === 0) return 0;
+    return payments
+      .filter((p) => {
+        const status = p?.status?.toUpperCase();
+        return status === "VOIDED";
+      })
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+  }, [payments]);
+
+  // 獲取已作廢付款的作廢原因（取第一個已作廢付款的 voidReason）
+  const voidedPaymentReason = useMemo(() => {
+    if (!payments || payments.length === 0) return null;
+    const voidedPayment = payments.find((p) => {
+      const status = p?.status?.toUpperCase();
+      return status === "VOIDED";
+    });
+    return voidedPayment?.voidReason || null;
+  }, [payments]);
+
+  // 優先使用進貨單本身的作廢原因，如果沒有則使用已作廢付款的作廢原因
+  const voidReasonToDisplay = purchase?.voidReason || voidedPaymentReason;
+
+  // 限制作廢原因的顯示長度（最多顯示 50 個字元）
+  const displayVoidReason = useMemo(() => {
+    if (!voidReasonToDisplay) return null;
+    const maxLength = 50;
+    if (voidReasonToDisplay.length > maxLength) {
+      return voidReasonToDisplay.substring(0, maxLength) + "...";
+    }
+    return voidReasonToDisplay;
+  }, [voidReasonToDisplay]);
 
   if (!purchase) return null;
 
@@ -116,20 +155,13 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
     paidAmount,
     recordStatus,
     voidedAt,
-    voidReason,
     details = [],
-    payments = [],
   } = purchase;
 
   const isVoided = recordStatus === "VOIDED";
 
   // 檢查是否有付款紀錄（至少有一筆付款紀錄才能作廢）
   const hasPayments = payments && payments.length > 0;
-
-  // 計算已作廢付款的總金額
-  const voidedPaymentsTotal = payments
-    .filter((p) => p.status === "VOIDED")
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const progress =
     totalAmount > 0 ? Math.min((paidAmount / totalAmount) * 100, 100) : 0;
@@ -152,7 +184,13 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
       },
       {
         onSuccess: () => {
-          notify("進貨單已成功作廢", { type: "success" });
+          showAlert({
+            title: "作廢成功",
+            message: `進貨單編號：（${purchase?.purchaseNo || ""}）已成功作廢`,
+            severity: "success",
+            hideCancel: true,
+          });
+
           setOpenVoidDialog(false);
           // 重新載入資料
           if (onRefresh) {
@@ -171,8 +209,15 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
         },
         onError: (error) => {
           const errorMessage =
-            (error as any)?.body?.message || (error as any)?.message || "作廢失敗";
-          notify(errorMessage, { type: "error" });
+            (error as any)?.body?.message ||
+            (error as any)?.message ||
+            "作廢操作失敗，請稍後再試";
+          showAlert({
+            title: "作廢失敗",
+            message: errorMessage,
+            severity: "error",
+            hideCancel: true,
+          });
         },
       }
     );
@@ -220,20 +265,71 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
 
         {/* 作廢資訊顯示 */}
         {isVoided && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            <Typography variant="body2" fontWeight={600}>
-              此進貨單已作廢
-            </Typography>
-            {voidedAt && (
-              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                作廢時間：{voidedAt}
-              </Typography>
-            )}
-            {voidReason && (
-              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                作廢原因：{voidReason}
-              </Typography>
-            )}
+          <Alert
+            severity="error"
+            sx={{
+              mt: 2,
+              "& .MuiAlert-message": {
+                width: "100%",
+              },
+            }}
+          >
+            <Box sx={{ display: "flex", gap: 2, width: "100%", alignItems: "stretch" }}>
+              {/* 左側：作廢資訊 */}
+              <Box sx={{ flex: "0 0 auto", minWidth: 170, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <Typography variant="body2" fontWeight={600}>
+                  此進貨單已作廢
+                </Typography>
+                {voidedAt && (
+                  <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                    作廢時間：{voidedAt}
+                  </Typography>
+                )}
+                {voidedPaymentsTotal > 0 && (
+                  <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                    已作廢付款：NT${voidedPaymentsTotal.toLocaleString()}
+                  </Typography>
+                )}
+              </Box>
+              {/* 右側：作廢原因 */}
+              {displayVoidReason && (
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    py: 1,
+                    px: 1,
+                    bgcolor: "rgba(0, 0, 0, 0.05)",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.5, mb: 0.5 }}>
+                    作廢原因
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mt: 0,
+                      wordBreak: "break-word",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {displayVoidReason}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Alert>
         )}
 
