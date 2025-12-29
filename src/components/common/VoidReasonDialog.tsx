@@ -30,7 +30,7 @@ export const VoidReasonDialog: React.FC<VoidReasonDialogProps> = ({
   onConfirm,
 }) => {
   const [reason, setReason] = useState("");
-  const MAX_LENGTH = 20; 
+  const MAX_LENGTH = 50; 
 
   // 當對話框關閉時重置輸入
   useEffect(() => {
@@ -109,7 +109,7 @@ export const VoidReasonDialog: React.FC<VoidReasonDialogProps> = ({
             fullWidth
             multiline
             rows={3}
-            placeholder="請輸入作廢原因（選填，最多20字）"
+            placeholder="請輸入作廢原因（選填，最多50字）"
             value={reason}
             onChange={handleReasonChange}
             inputProps={{

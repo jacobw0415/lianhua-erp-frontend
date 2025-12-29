@@ -297,11 +297,8 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                   sx={{
                     flex: 1,
                     minWidth: 0,
-                    py: 1,
+                    py: 0,
                     px: 1,
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    borderRadius: 1,
-                    border: "1px solid",
                     borderColor: "divider",
                     display: "flex",
                     flexDirection: "column",
@@ -309,20 +306,15 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                     overflow: "hidden",
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.5, mb: 0.5 }}>
+                  <Typography variant="body2"  fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3, mb: 0.5 }}>
                     作廢原因
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{
-                      mt: 0,
                       wordBreak: "break-word",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      lineHeight: 1.5,
+                      whiteSpace: "pre-wrap", 
+                      lineHeight: 1.3, 
                     }}
                   >
                     {displayVoidReason}
@@ -430,7 +422,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           ) : (
             <Box
               sx={{
-                maxHeight: enablePaymentScroll ? 140 : "auto",
+                maxHeight: enablePaymentScroll ? 165 : "auto",
                 overflowY: enablePaymentScroll ? "auto" : "visible",
               }}
             >
@@ -453,7 +445,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           )}
         </Paper>
 
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 1 }} />
 
         {/* ================= 金額摘要（UI 強化） ================= */}
         <RecordContextProvider value={purchase}>

@@ -391,7 +391,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
               },
             }}
           >
-            <Box sx={{ display: "flex", gap: 2, width: "100%", alignItems: "stretch" }}>
+            <Box sx={{ display: "flex", gap: 2, width: "100%", alignItems: "flex-start" }}>
               {/* 左側：作廢資訊 */}
               <Box sx={{ flex: "0 0 auto", minWidth: 170, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <Typography variant="body2" fontWeight={600}>
@@ -416,9 +416,6 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
                     minWidth: 0,
                     py: 0,
                     px: 1,
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    borderRadius: 1,
-                    border: "1px solid",
                     borderColor: "divider",
                     display: "flex",
                     flexDirection: "column",
@@ -426,19 +423,15 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
                     overflow: "hidden",
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.5 }}>
+                  <Typography variant="body2"  fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3 }}>
                     作廢原因
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{
-                      mt: 0,
                       wordBreak: "break-word",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 1,
-                      WebkitBoxOrient: "vertical",
+                      whiteSpace: "pre-wrap", 
+                      lineHeight: 1.3,        
                     }}
                   >
                     {displayVoidReason}
