@@ -422,7 +422,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           ) : (
             <Box
               sx={{
-                maxHeight: enablePaymentScroll ? 165 : "auto",
+                maxHeight: enablePaymentScroll ? 150 : "auto",
                 overflowY: enablePaymentScroll ? "auto" : "visible",
               }}
             >

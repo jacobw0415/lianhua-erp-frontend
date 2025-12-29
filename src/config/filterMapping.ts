@@ -45,6 +45,7 @@ export const filterMapping: Record<string, Record<string, string>> = {
         fromDate: "fromDate",
         toDate: "toDate",
         purchaseNo: "purchaseNo",
+        status: "status",
     },
 
     order_customers: {

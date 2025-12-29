@@ -107,6 +107,15 @@ export const PaymentList = () => {
             ],
           },
           {
+            type: "select",
+            source: "status",
+            label: "狀態",
+            choices: [
+              { id: "ACTIVE", name: "有效" },
+              { id: "VOIDED", name: "作廢" },
+            ],
+          },
+          {
             type: "month",
             source: "accountingPeriod",
             label: "會計期間 (YYYY-MM)",
@@ -118,11 +127,12 @@ export const PaymentList = () => {
           filename: "payment_export",
           format: "excel",
           columns: [
+            { header: "進貨單號", key: "purchaseNo", width: 18 },
             { header: "付款日期", key: "payDate", width: 14 },
             { header: "供應商", key: "supplierName", width: 20 },
             { header: "金額", key: "amount", width: 12 },
             { header: "付款方式", key: "method", width: 10 },
-            { header: "進貨單號", key: "purchaseNo", width: 18 },
+            { header: "狀態", key: "status", width: 10 },
             { header: "會計期間", key: "accountingPeriod", width: 10 },
             { header: "備註", key: "note", width: 20 },
           ],
