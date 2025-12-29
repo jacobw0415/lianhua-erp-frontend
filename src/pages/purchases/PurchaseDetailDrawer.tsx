@@ -123,7 +123,8 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
 
   const isVoided = recordStatus === "VOIDED";
 
-
+  // 檢查是否有付款紀錄（至少有一筆付款紀錄才能作廢）
+  const hasPayments = payments && payments.length > 0;
 
   // 計算已作廢付款的總金額
   const voidedPaymentsTotal = payments
@@ -236,8 +237,8 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           </Alert>
         )}
 
-        {/* 作廢按鈕 */}
-        {!isVoided && id && (
+        {/* 作廢按鈕 - 只有在有付款紀錄時才能作廢 */}
+        {!isVoided && id && hasPayments && (
           <Box mt={2} display="flex" justifyContent="flex-end">
             <Button
               variant="outlined"
