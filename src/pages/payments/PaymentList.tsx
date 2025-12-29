@@ -9,9 +9,7 @@ import {
   useNotify,
   useRefresh,
 } from "react-admin";
-import { Typography, IconButton, Tooltip } from "@mui/material";
-import BlockIcon from "@mui/icons-material/Block";
-
+import { Typography, } from "@mui/material";
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -50,50 +48,38 @@ export const PaymentList = () => {
   const redirect = useRedirect();
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
-  const [update, { isLoading: isVoiding }] = useUpdate();
+  const [update, ] = useUpdate();
   const notify = useNotify();
   const refresh = useRefresh();
 
-  const handleVoidClick = (paymentId: number) => {
-    setSelectedPaymentId(paymentId);
-    setOpenVoidDialog(true);
-  };
 
-  const handleVoid = async (reason?: string) => {
+  const handleVoid = (reason?: string) => {
     if (!selectedPaymentId) {
       notify("無法取得付款單 ID", { type: "error" });
       return;
     }
 
-    try {
-      await update(
-        "payments",
-        {
-          id: selectedPaymentId,
-          data: { reason },
-          meta: { endpoint: "void" },
+    update(
+      "payments",
+      {
+        id: selectedPaymentId,
+        data: { reason },
+        meta: { endpoint: "void" },
+      },
+      {
+        onSuccess: () => {
+          notify("付款單已成功作廢", { type: "success" });
+          setOpenVoidDialog(false);
+          setSelectedPaymentId(null);
+          refresh();
         },
-        {
-          onSuccess: () => {
-            notify("付款單已成功作廢", { type: "success" });
-            setOpenVoidDialog(false);
-            setSelectedPaymentId(null);
-            refresh();
-          },
-          onError: (error) => {
-            const errorMessage =
-              (error as any)?.body?.message || (error as any)?.message || "作廢失敗";
-            notify(errorMessage, { type: "error" });
-          },
-        }
-      );
-    } catch (error) {
-      const errorMessage =
-        (error as any)?.body?.message ||
-        (error as any)?.message ||
-        "作廢失敗";
-      notify(errorMessage, { type: "error" });
-    }
+        onError: (error) => {
+          const errorMessage =
+            (error as any)?.body?.message || (error as any)?.message || "作廢失敗";
+          notify(errorMessage, { type: "error" });
+        },
+      }
+    );
   };
 
   return (
@@ -147,7 +133,7 @@ export const PaymentList = () => {
           <FunctionField
             label="進貨單號"
             render={(record: PaymentListRow) =>
-              record.purchaseNo ? (
+              record.purchaseNo && record.purchaseId ? (
                 <Typography
                   sx={{
                     color: "primary.main",
@@ -174,8 +160,8 @@ export const PaymentList = () => {
           <DateField source="payDate" label="付款日期" />
           <CurrencyField source="amount" label="金額" />
           <TextField source="method" label="付款方式" />
-              {/* 狀態欄位 */}
-              <FunctionField
+          {/* 狀態欄位 */}
+          <FunctionField
             label="狀態"
             render={(record: PaymentListRow) => (
               <PaymentStatusField

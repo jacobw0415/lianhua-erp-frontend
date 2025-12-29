@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import CancelIcon from "@mui/icons-material/Cancel";
+import BlockIcon from "@mui/icons-material/Block";
 
 import {
   Datagrid,
@@ -27,6 +27,7 @@ import {
   useRefresh,
   useRedirect,
   RecordContextProvider,
+  useUpdate,
 } from "react-admin";
 
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -134,6 +135,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
   const refresh = useRefresh();
   const redirect = useRedirect();
   const { showAlert } = useGlobalAlert();
+  const [update, { isLoading: isVoiding }] = useUpdate();
 
   const [details, setDetails] = useState<OrderDetailRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptItem[]>([]);
@@ -144,7 +146,6 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptItem | null>(
     null
   );
-  const [voiding, setVoiding] = useState(false);
 
   /* ================= 訂單明細 ================= */
   useEffect(() => {
@@ -203,45 +204,50 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
   // - 根據收款金額和訂單總金額計算付款狀態（UNPAID, PARTIAL, PAID）
   const displayPaymentStatus = order?.paymentStatus || "UNPAID";
 
-  const handleVoidReceipt = async (reason?: string) => {
+  const handleVoidReceipt = (reason?: string) => {
     if (!selectedReceipt) return;
 
-    try {
-      setVoiding(true);
-
-      await dataProvider.update("receipts", {
+    update(
+      "receipts",
+      {
         id: selectedReceipt.id,
         data: { reason },
         previousData: selectedReceipt,
         meta: { endpoint: "void" },
-      });
+      },
+      {
+        onSuccess: () => {
+          showAlert({
+            title: "作廢成功",
+            message: "收款已成功作廢",
+            severity: "success",
+            hideCancel: true,
+          });
 
-      showAlert({
-        title: "作廢成功",
-        message: "收款已成功作廢",
-        severity: "success",
-        hideCancel: true,
-      });
+          setOpenVoidConfirm(false);
+          setSelectedReceipt(null);
+          refresh();
 
-      setOpenVoidConfirm(false);
-      setSelectedReceipt(null);
-      refresh();
-
-      // 關閉 Drawer 並重定向到訂單列表
-      onClose();
-      setTimeout(() => {
-        redirect("list", "orders");
-      }, 100);
-    } catch {
-      showAlert({
-        title: "作廢失敗",
-        message: "作廢操作失敗，請稍後再試",
-        severity: "error",
-        hideCancel: true,
-      });
-    } finally {
-      setVoiding(false);
-    }
+          // 關閉 Drawer 並重定向到訂單列表
+          onClose();
+          setTimeout(() => {
+            redirect("list", "orders");
+          }, 100);
+        },
+        onError: (error) => {
+          const errorMessage =
+            (error as any)?.body?.message ||
+            (error as any)?.message ||
+            "作廢操作失敗，請稍後再試";
+          showAlert({
+            title: "作廢失敗",
+            message: errorMessage,
+            severity: "error",
+            hideCancel: true,
+          });
+        },
+      }
+    );
   };
 
   if (!order) return null;
@@ -397,12 +403,12 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
                         <Button
                           size="small"
                           color="error"
-                          startIcon={<CancelIcon />}
+                          startIcon={<BlockIcon />}
                           onClick={() => {
                             setSelectedReceipt(r);
                             setOpenVoidConfirm(true);
                           }}
-                          disabled={voiding}
+                          disabled={isVoiding}
                         >
                           作廢
                         </Button>

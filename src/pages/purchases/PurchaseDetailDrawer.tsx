@@ -136,53 +136,45 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   const statusMeta = statusConfig[status];
   const enablePaymentScroll = payments.length > 3;
 
-  const handleVoid = async (reason?: string) => {
+  const handleVoid = (reason?: string) => {
     if (!id) {
       notify("無法取得進貨單 ID", { type: "error" });
       return;
     }
 
-    try {
-      await update(
-        "purchases",
-        {
-          id,
-          data: { reason },
-          meta: { endpoint: "void" },
+    update(
+      "purchases",
+      {
+        id,
+        data: { reason },
+        meta: { endpoint: "void" },
+      },
+      {
+        onSuccess: () => {
+          notify("進貨單已成功作廢", { type: "success" });
+          setOpenVoidDialog(false);
+          // 重新載入資料
+          if (onRefresh) {
+            onRefresh();
+          } else {
+            // 如果沒有提供 onRefresh，則重新取得資料
+            dataProvider
+              .getOne("purchases", { id })
+              .then(() => {
+                // 可以通過 callback 更新父組件的資料
+              })
+              .catch(() => {
+                // 錯誤處理
+              });
+          }
         },
-        {
-          onSuccess: () => {
-            notify("進貨單已成功作廢", { type: "success" });
-            setOpenVoidDialog(false);
-            // 重新載入資料
-            if (onRefresh) {
-              onRefresh();
-            } else {
-              // 如果沒有提供 onRefresh，則重新取得資料
-              dataProvider
-                .getOne("purchases", { id })
-                .then(() => {
-                  // 可以通過 callback 更新父組件的資料
-                })
-                .catch(() => {
-                  // 錯誤處理
-                });
-            }
-          },
-          onError: (error) => {
-            const errorMessage =
-              (error as any)?.body?.message || (error as any)?.message || "作廢失敗";
-            notify(errorMessage, { type: "error" });
-          },
-        }
-      );
-    } catch (error) {
-      const errorMessage =
-        (error as any)?.body?.message ||
-        (error as any)?.message ||
-        "作廢失敗";
-      notify(errorMessage, { type: "error" });
-    }
+        onError: (error) => {
+          const errorMessage =
+            (error as any)?.body?.message || (error as any)?.message || "作廢失敗";
+          notify(errorMessage, { type: "error" });
+        },
+      }
+    );
   };
 
   return (
