@@ -4,7 +4,6 @@ import {
   TextField,
   DateField,
   FunctionField,
-  NumberField,
   useRefresh,
 } from "react-admin";
 
@@ -30,12 +29,16 @@ interface PaymentRow {
   note?: string;
 }
 
-interface PurchaseDetailRow {
+interface PurchaseItemRow {
   id: number;
+  purchaseId: number;
   item: string;
+  unit: string;
   qty: number;
   unitPrice: number;
-  totalAmount: number;
+  taxRate: number;
+  taxAmount: number;
+  subtotal: number;
   note?: string;
 }
 
@@ -74,7 +77,7 @@ type SelectedPurchase = {
   voidedAt?: string;
   voidReason?: string;
 
-  details: PurchaseDetailRow[];
+  items: PurchaseItemRow[];
   payments: PaymentRow[];
 };
 
@@ -100,8 +103,8 @@ export const PurchaseList = () => {
       balance: record.balance,
       recordStatus: (record as any).recordStatus,
       voidedAt: (record as any).voidedAt,
-      voidReason: (record as any).voidedReason,
-      details: [],                  // 明細由 Drawer 內補
+      voidReason: (record as any).voidReason,
+      items: [],                    // 明細由 Drawer 內補
       payments: record.payments ?? [],
     });
 
@@ -132,7 +135,6 @@ export const PurchaseList = () => {
             { type: "text", source: "supplierName", label: "供應商名稱" },
           ]}
           advancedFilters={[
-            { type: "text", source: "item", label: "品項" },
             {
               type: "select",
               source: "status",
@@ -158,11 +160,10 @@ export const PurchaseList = () => {
               { header: "進貨單號", key: "purchaseNo", width: 18 },
               { header: "供應商名稱", key: "supplierName", width: 20 },
               { header: "進貨日期", key: "purchaseDate", width: 15 },
-              { header: "品項", key: "item", width: 15 },
-              { header: "數量", key: "qty", width: 15 },
-              { header: "單位", key: "unit", width: 15 },
-              { header: "單價", key: "unitPrice", width: 15 },
               { header: "總金額", key: "totalAmount", width: 15 },
+              { header: "已付款", key: "paidAmount", width: 15 },
+              { header: "餘額", key: "balance", width: 15 },
+              { header: "狀態", key: "status", width: 15 },
               { header: "備註", key: "note", width: 25 },
             ],
           }}
@@ -171,11 +172,20 @@ export const PurchaseList = () => {
             <TextField source="purchaseNo" label="進貨單號" />
             <TextField source="supplierName" label="供應商名稱" />
             <DateField source="purchaseDate" label="進貨日期" />
-            <TextField source="item" label="品項" />
-            <NumberField source="qty" label="數量" />
-            <TextField source="unit" label="單位" />
-            <CurrencyField source="unitPrice" label="單價" />
             <CurrencyField source="totalAmount" label="總金額" />
+            <CurrencyField source="paidAmount" label="已付款" />
+            <CurrencyField source="balance" label="餘額" />
+            <FunctionField
+              label="狀態"
+              render={(record: PurchaseListRow) => {
+                const statusMap: Record<string, string> = {
+                  PENDING: "未付款",
+                  PARTIAL: "部分付款",
+                  PAID: "已付款",
+                };
+                return statusMap[record.status] || record.status;
+              }}
+            />
 
             {/* 📦 明細 */}
             <FunctionField

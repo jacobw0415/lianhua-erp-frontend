@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Drawer,
   Box,
@@ -8,6 +8,7 @@ import {
   Paper,
   Chip,
   LinearProgress,
+  CircularProgress,
   Button,
   Alert,
 } from "@mui/material";
@@ -17,6 +18,7 @@ import BlockIcon from "@mui/icons-material/Block";
 import {
   Datagrid,
   TextField,
+  NumberField,
   DateField,
   FunctionField,
   RecordContextProvider,
@@ -45,13 +47,21 @@ interface PaymentRow {
   voidReason?: string;
 }
 
-interface PurchaseDetailRow {
+interface PurchaseItemRow {
   id: number;
+  purchaseId: number;
   item: string;
+  unit: string;
   qty: number;
   unitPrice: number;
-  totalAmount: number;
+  taxRate: number;
+  taxAmount: number;
+  subtotal: number;
   note?: string;
+}
+
+interface PurchaseItemsResponse {
+  data: PurchaseItemRow[] | { content: PurchaseItemRow[] };
 }
 
 type PurchaseStatus = "PENDING" | "PARTIAL" | "PAID";
@@ -71,7 +81,7 @@ interface PurchaseDetailDrawerProps {
     recordStatus?: "ACTIVE" | "VOIDED";
     voidedAt?: string;
     voidReason?: string;
-    details?: PurchaseDetailRow[];
+    items?: PurchaseItemRow[];
     payments?: PaymentRow[];
   };
   onRefresh?: () => void;
@@ -105,9 +115,32 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const { showAlert } = useGlobalAlert();
+  const [items, setItems] = useState<PurchaseItemRow[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
 
   // 確保所有 hooks 都在早期返回之前調用
   const payments = purchase?.payments || [];
+
+  /* ================= 進貨項目明細 ================= */
+  useEffect(() => {
+    if (!open || !purchase?.id) return;
+
+    setItemsLoading(true);
+
+    dataProvider
+      .get(`purchases/${purchase.id}/items`, { meta: { includeVoided: true } })
+      .then((res: PurchaseItemsResponse) => {
+        const content = Array.isArray(res.data)
+          ? res.data
+          : res.data?.content ?? [];
+        setItems(content);
+      })
+      .catch(() => {
+        setItems([]);
+        notify("載入進貨項目明細失敗", { type: "error" });
+      })
+      .finally(() => setItemsLoading(false));
+  }, [open, purchase?.id, dataProvider, notify]);
 
   // 計算已作廢付款的總金額
   const voidedPaymentsTotal = useMemo(() => {
@@ -155,7 +188,6 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
     paidAmount,
     recordStatus,
     voidedAt,
-    details = [],
   } = purchase;
 
   const isVoided = recordStatus === "VOIDED";
@@ -306,15 +338,15 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                     overflow: "hidden",
                   }}
                 >
-                  <Typography variant="body2"  fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3, mb: 0.5 }}>
+                  <Typography variant="body2" fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3, mb: 0.5 }}>
                     作廢原因
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{
                       wordBreak: "break-word",
-                      whiteSpace: "pre-wrap", 
-                      lineHeight: 1.3, 
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.3,
                     }}
                   >
                     {displayVoidReason}
@@ -400,14 +432,49 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
         )}
 
         {/* ================= 進貨項目明細 ================= */}
-        {details.length > 0 && (
-          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              📄 進貨項目明細
-            </Typography>
+        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            📄 進貨項目明細
+          </Typography>
 
-          </Paper>
-        )}
+          {itemsLoading ? (
+            <Box display="flex" justifyContent="center" py={2}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : items.length > 0 ? (
+            <>
+              <Box
+                sx={{
+                  maxHeight: items.length > 3 ? 200 : "auto",
+                  overflowY: items.length > 3 ? "auto" : "visible",
+                }}
+              >
+                <Datagrid data={items} bulkActionButtons={false} rowClick={false}>
+                  <TextField source="item" label="品項" />
+                  <NumberField source="qty" label="數量" />
+                  <TextField source="unit" label="單位" />
+                  <CurrencyField source="unitPrice" label="單價" />
+                  <CurrencyField source="subtotal" label="小計" />
+                </Datagrid>
+              </Box>
+              <Divider sx={{ my: 1 }} />
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2">
+                  總數量：{items.reduce((sum, d) => sum + (d.qty || 0), 0)}
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  明細合計：NT${Math.round(
+                    items.reduce((sum, d) => sum + (d.subtotal || 0), 0)
+                  ).toLocaleString()}
+                </Typography>
+              </Box>
+            </>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              尚無進貨項目
+            </Typography>
+          )}
+        </Paper>
 
         {/* ================= 已付款紀錄 ================= */}
         <Paper variant="outlined" sx={{ p: 2 }}>

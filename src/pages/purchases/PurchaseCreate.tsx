@@ -1,20 +1,25 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  NumberInput,
   TextInput,
   SelectInput,
+  NumberInput,
   ArrayInput,
   SimpleFormIterator,
   required,
   useRedirect,
+  minValue,
 } from "react-admin";
-import { useWatch } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Box, Typography } from "@mui/material";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { CustomClearButton } from "@/components/forms/CustomClearButton";
 import { useActiveSuppliers } from "@/hooks/useActiveSuppliers";
+import {
+  PurchaseItemSelector,
+  type PurchaseItem,
+} from "@/pages/purchases/PurchaseItemSelector";
 
 /* -------------------------------------------------------
  * 🔐 Purchase 型別定義（Create 成功回傳用）
@@ -23,11 +28,8 @@ interface Purchase {
   id: number;
   purchaseNo: string;
   supplierId: number;
-  note?: string;
-  qty?: number;
-  unit?: string;
-  unitPrice?: number;
   purchaseDate?: string;
+  items: PurchaseItem[];
   payments?: Array<{
     amount?: number;
     payDate?: string;
@@ -35,10 +37,18 @@ interface Purchase {
   }>;
 }
 
+/* =======================================================
+ * 📄 PurchaseCreate（進貨項目選擇器版）
+ * ======================================================= */
 export const PurchaseCreate: React.FC = () => {
-  const { suppliers, loading } = useActiveSuppliers();
+  const { suppliers, loading: suppliersLoading } = useActiveSuppliers();
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  /* ===============================
+   * 進貨項目狀態（核心）
+   * =============================== */
+  const [items, setItems] = useState<PurchaseItem[]>([]);
 
   return (
     <GenericCreatePage
@@ -57,115 +67,121 @@ export const PurchaseCreate: React.FC = () => {
         setTimeout(() => redirect("list", "purchases"));
       }}
     >
+      <ItemsFormSync items={items} setItems={setItems} />
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         📦 新增進貨資訊
       </Typography>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 4 }}>
-        {/* 左側欄位 */}
-        <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 第一列：品項 + 備註 */}
-         <Box display="flex" gap={2} mb={2}>
-            <Box flex={1}>
-              <TextInput
-                source="item"
-                label="品項"
-                fullWidth
-                validate={[required()]}
-              />
-            </Box>
-            <Box flex={1}>
-              <TextInput
-                source="note"
-                label="備註"
-                fullWidth
-                minRows={2}
-              />
-            </Box>
+      {/* ===================================================
+       * 🔲 主版型（左右高度拉齊）
+       * =================================================== */}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 4,
+          alignItems: "stretch", // ⭐ 核心：左右欄底部對齊
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "minmax(0, 1fr) 420px",
+          },
+        }}
+      >
+        {/* ================= 左側：進貨主資料 ================= */}
+        <Box
+          sx={{
+            width: "100%",
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* 供應商 + 進貨日期 */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 2,
+              mb: 3,
+              alignItems: "start",
+              // 統一兩個輸入框的對齊方式
+              "& .RaInput-input, & .MuiFormControl-root": {
+                marginTop: 0,
+                marginBottom: 0,
+              },
+              // 確保標籤在同一水平線
+              "& .MuiInputLabel-root": {
+                top: 0,
+                transformOrigin: "top left",
+              },
+              // 統一輸入框高度
+              "& .MuiInputBase-root": {
+                marginTop: 0,
+              },
+            }}
+          >
+            <SelectInput
+              source="supplierId"
+              label="供應商"
+              choices={suppliers}
+              optionText="name"
+              optionValue="id"
+              fullWidth
+              isLoading={suppliersLoading}
+              validate={[required()]}
+            />
+
+            <LhDateInput
+              source="purchaseDate"
+              label="進貨日期"
+              fullWidth
+            />
           </Box>
 
-          {/* 第二列：數量 + 單價 */}
-          <Box display="flex" gap={2} mb={2}>
-            <Box flex={1}>
-              <NumberInput
-                source="qty"
-                label="數量"
-                fullWidth
-                validate={[required()]}
-              />
-            </Box>
-            <Box flex={1}>
-              <NumberInput
-                source="unitPrice"
-                label="單價"
-                fullWidth
-                validate={[required()]}
-              />
-            </Box>
-          </Box>
-
-          {/* 第三列：供應商 */}
-          <Box display="flex" gap={2} mb={2}>
-            <Box flex={1}>
-              <SelectInput
-                source="unit"
-                label="單位"
-                fullWidth
-                validate={[required()]}
-                choices={[
-                  { id: "斤", name: "斤" },
-                  { id: "公斤", name: "公斤" },
-                  { id: "箱", name: "箱" },
-                  { id: "盒", name: "盒" },
-                  { id: "包", name: "包" },
-                  { id: "瓶", name: "瓶" },
-                  { id: "顆", name: "顆" },
-                  { id: "本", name: "本" },
-                ]}
-              />
-            </Box>
-            <Box flex={1}>
-              <SelectInput
-                source="supplierId"
-                label="供應商"
-                choices={suppliers}
-                optionText="name"
-                optionValue="id"
-                fullWidth
-                isLoading={loading}
-                validate={[required()]}
-              />
-            </Box>
-          </Box>
-
-          {/* 第四列：單位 + 進貨日期（兩兩相並） */}
-          <Box display="flex" gap={2} mb={2}>
-            <Box flex={1}>
-              <LhDateInput
-                source="purchaseDate"
-                label="進貨日期"
-                fullWidth
-              />
+          {/* 新增付款紀錄 */}
+          <Box
+            sx={(theme) => ({
+              borderRadius: 2,
+              bgcolor: theme.palette.background.paper,
+              border: `2px solid ${theme.palette.divider}`,
+              mt: -3,
+              p: 1.5,
+              flex: 0.9,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            })}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              ➕ 新增付款紀錄
+            </Typography>
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <PaymentArrayInput />
             </Box>
           </Box>
         </Box>
 
-        {/* 右側付款區 */}
-        <Box
-          sx={(theme) => ({
-            borderRadius: 2,
-            width: "400px",
-            bgcolor: theme.palette.background.paper,
-            border: `2px solid ${theme.palette.divider}`,
-            p: 3,
-            minHeight: "380px",
-          })}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            ➕ 新增付款紀錄
-          </Typography>
-
-          <PaymentArrayInput />
+        {/* ================= 右側：進貨項目（表頭固定 + 摘要） ================= */}
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <PurchaseItemSelector
+            value={items}
+            onChange={setItems}
+            disabled={false}
+            visibleRows={2}
+          />
+          {/* 錯誤提示區域：固定高度，避免布局跳動 */}
+          <Box
+            sx={{
+              height: 15, // 固定高度，對應 variant="caption" 的高度 + margin
+              mt: 1,
+              ml: 1,
+            }}
+          >
+            {items.length === 0 && (
+              <Typography variant="caption" color="error">
+                請至少新增一項進貨項目
+              </Typography>
+            )}
+          </Box>
         </Box>
       </Box>
     </GenericCreatePage>
@@ -180,27 +196,66 @@ const PaymentArrayInput: React.FC = () => {
   const hasPayment = Array.isArray(payments) && payments.length > 0;
 
   return (
-    <ArrayInput source="payments" label="">
+    <ArrayInput
+      source="payments"
+      label=""
+      sx={{
+        "& .MuiFormHelperText-root": { display: "none" },
+      }}
+    >
       <SimpleFormIterator
         disableAdd={hasPayment}
         disableRemove
         getItemLabel={() => ""}
+        sx={{
+          "& .RaSimpleFormIterator-line": {
+            padding: 0,
+          },
+          "& .RaSimpleFormIterator-form": {
+            gap: 1,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
       >
-        <NumberInput source="amount" label="金額" sx={{ flex: 1 }} />
-
-        <LhDateInput source="payDate" label="付款日期" />
-
-        <SelectInput
-          source="method"
-          label="付款方式"
-          choices={[
-            { id: "CASH", name: "現金" },
-            { id: "TRANSFER", name: "轉帳" },
-            { id: "CARD", name: "刷卡" },
-            { id: "CHECK", name: "支票" },
-          ]}
-          sx={{ flex: 1, marginTop: 2.5 }}
+        <NumberInput
+          source="amount"
+          label="金額"
+          fullWidth
+          min={0}
+          step={1}
+          validate={[minValue(0, "金額不能為負數")]}
         />
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 1,
+            alignItems: "start",
+            "& .MuiFormControl-root": {
+              marginTop: 0,
+            },
+            "& .MuiInputLabel-root": {
+              top: 0,
+              transformOrigin: "top left",
+            },
+          }}
+        >
+          <LhDateInput source="payDate" label="付款日期" fullWidth />
+
+          <SelectInput
+            source="method"
+            label="付款方式"
+            fullWidth
+            choices={[
+              { id: "CASH", name: "現金" },
+              { id: "TRANSFER", name: "轉帳" },
+              { id: "CARD", name: "刷卡" },
+              { id: "CHECK", name: "支票" },
+            ]}
+          />
+        </Box>
 
         <CustomClearButton
           onClear={({ setValue }) => {
@@ -211,5 +266,39 @@ const PaymentArrayInput: React.FC = () => {
         />
       </SimpleFormIterator>
     </ArrayInput>
+  );
+};
+
+
+/* -------------------------------------------------------
+ * 同步 items 到表單字段的組件
+ * 將 items 狀態同步到隱藏的表單字段，以便提交
+ * ------------------------------------------------------- */
+const ItemsFormSync: React.FC<{
+  items: PurchaseItem[];
+  setItems: (items: PurchaseItem[]) => void;
+}> = ({ items }) => {
+  const { setValue } = useFormContext();
+
+  // 同步 items 到表單字段
+  useEffect(() => {
+    setValue("items", items, { shouldValidate: false, shouldDirty: false });
+  }, [items, setValue]);
+
+  // 隱藏的字段，用於表單驗證和提交
+  return (
+    <TextInput
+      source="items"
+      label=""
+      sx={{ display: "none" }}
+      validate={[
+        (value) => {
+          if (!value || (Array.isArray(value) && value.length === 0)) {
+            return "請至少新增一項進貨項目";
+          }
+          return undefined;
+        },
+      ]}
+    />
   );
 };

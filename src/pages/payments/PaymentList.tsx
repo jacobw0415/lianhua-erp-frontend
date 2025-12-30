@@ -4,12 +4,12 @@ import {
   TextField,
   DateField,
   FunctionField,
-  useRedirect,
   useUpdate,
   useNotify,
   useRefresh,
+  useRedirect,
 } from "react-admin";
-import { Typography, } from "@mui/material";
+import { Button } from "@mui/material";
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -45,10 +45,9 @@ interface PaymentListRow {
  * ========================================================= */
 
 export const PaymentList = () => {
-  const redirect = useRedirect();
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
-  const [update, ] = useUpdate();
+  const [update] = useUpdate();
   const notify = useNotify();
   const refresh = useRefresh();
 
@@ -144,22 +143,7 @@ export const PaymentList = () => {
             label="進貨單號"
             render={(record: PaymentListRow) =>
               record.purchaseNo && record.purchaseId ? (
-                <Typography
-                  sx={{
-                    color: "primary.main",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    redirect(`/purchases/${record.purchaseId}`);
-                  }}
-                >
-                  #{record.purchaseNo}
-                </Typography>
+                <PaymentPurchaseNoField record={record} />
               ) : (
                 "-"
               )
@@ -199,5 +183,32 @@ export const PaymentList = () => {
         onConfirm={handleVoid}
       />
     </List>
+  );
+};
+
+/* =========================================================
+ * 進貨單號欄位（可點擊跳轉）
+ * ========================================================= */
+const PaymentPurchaseNoField = ({ record }: { record: PaymentListRow }) => {
+  const redirect = useRedirect();
+
+  return (
+    <Button
+      variant="text"
+      size="small"
+      onClick={(e) => {
+        e.stopPropagation();
+        redirect(`/purchases/${record.purchaseId}`);
+      }}
+      sx={{
+        color: "primary.main",
+        fontWeight: 600,
+        textTransform: "none",
+        px: 0.5,
+        "&:hover": { textDecoration: "underline" },
+      }}
+    >
+      {record.purchaseNo}
+    </Button>
   );
 };
