@@ -145,7 +145,7 @@ export const PurchaseCreate: React.FC = () => {
               border: `2px solid ${theme.palette.divider}`,
               mt: -3,
               p: 1.5,
-              flex: 0.9,
+              flex: 0.92,
               display: "flex",
               flexDirection: "column",
               minHeight: 0,
