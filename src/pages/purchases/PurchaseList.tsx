@@ -7,8 +7,9 @@ import {
   useRefresh,
 } from "react-admin";
 
-import { IconButton } from "@mui/material";
+import { IconButton, Box } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import ListIcon from "@mui/icons-material/List";
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
@@ -17,6 +18,7 @@ import { CurrencyField } from "@/components/money/CurrencyField";
 import { ActionColumns } from "@/components/common/ActionColumns";
 
 import { PurchaseDetailDrawer } from "./PurchaseDetailDrawer";
+import { PurchaseItemDetailDrawer } from "./PurchaseItemDetailDrawer";
 
 /* =========================================================
  * 型別定義
@@ -87,6 +89,7 @@ type SelectedPurchase = {
 
 export const PurchaseList = () => {
   const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
+  const [openItemDrawer, setOpenItemDrawer] = useState(false);
   const [selectedPurchase, setSelectedPurchase] =
     useState<SelectedPurchase | null>(null);
   const refresh = useRefresh();
@@ -111,6 +114,25 @@ export const PurchaseList = () => {
     setOpenDetailDrawer(true);
   };
 
+  const openItemDetails = (record: PurchaseListRow) => {
+    setSelectedPurchase({
+      id: record.id,
+      purchaseNo: record.purchaseNo,
+      supplierName: record.supplierName,
+      purchaseDate: record.purchaseDate,
+      status: record.status,
+      totalAmount: record.totalAmount,
+      paidAmount: record.paidAmount,
+      balance: record.balance,
+      recordStatus: (record as any).recordStatus,
+      voidedAt: (record as any).voidedAt,
+      voidReason: (record as any).voidReason,
+      items: [],
+      payments: record.payments ?? [],
+    });
+    setOpenItemDrawer(true);
+  };
+
   const handleRefresh = () => {
     refresh();
     // 如果抽屜打開，重新載入選中的進貨單資料
@@ -118,6 +140,7 @@ export const PurchaseList = () => {
       // 這裡可以選擇重新打開抽屜或關閉它
       // 為了簡單起見，我們關閉抽屜並刷新列表
       setOpenDetailDrawer(false);
+      setOpenItemDrawer(false);
     }
   };
 
@@ -191,9 +214,22 @@ export const PurchaseList = () => {
             <FunctionField
               label="明細"
               render={(record: PurchaseListRow) => (
-                <IconButton size="small" onClick={() => openDetails(record)}>
-                  <VisibilityIcon fontSize="small" />
-                </IconButton>
+                <Box display="flex" gap={0.5} alignItems="center">
+                  <IconButton
+                    size="small"
+                    onClick={() => openDetails(record)}
+                    title="查看完整明細"
+                  >
+                    <VisibilityIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => openItemDetails(record)}
+                    title="查看進貨項目明細"
+                  >
+                    <ListIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               )}
             />
 
@@ -213,6 +249,14 @@ export const PurchaseList = () => {
         onClose={() => setOpenDetailDrawer(false)}
         purchase={selectedPurchase ?? undefined}
         onRefresh={handleRefresh}
+      />
+
+      <PurchaseItemDetailDrawer
+        open={openItemDrawer}
+        onClose={() => setOpenItemDrawer(false)}
+        purchaseId={selectedPurchase?.id}
+        purchaseNo={selectedPurchase?.purchaseNo}
+        supplierName={selectedPurchase?.supplierName}
       />
     </>
   );

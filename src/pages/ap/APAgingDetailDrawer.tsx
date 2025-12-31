@@ -12,7 +12,8 @@ import {
   TableRow,
   TableContainer,
   Paper,
-  Tooltip,
+  Button,
+  useTheme,
 } from "@mui/material";
 
 import CloseIcon from "@mui/icons-material/Close";
@@ -20,6 +21,7 @@ import { useDataProvider, useRedirect } from "react-admin";
 import dayjs from "dayjs";
 
 import { PlainCurrency } from "@/components/money/PlainCurrency";
+import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 
 /* ================= 型別 ================= */
 
@@ -55,6 +57,7 @@ export const APAgingDetailDrawer = ({
 }) => {
   const dataProvider = useDataProvider();
   const redirect = useRedirect();
+  const theme = useTheme();
 
   const [rows, setRows] = useState<APAgingPurchaseRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,11 +100,7 @@ export const APAgingDetailDrawer = ({
         <TableContainer
           component={Paper}
           variant="outlined"
-          sx={{
-            maxHeight: 260,
-            overflowY: "auto",
-            scrollbarGutter: "stable",
-          }}
+          sx={getDrawerScrollableStyles(theme, 260, true)}
         >
           <Table
             stickyHeader
@@ -136,21 +135,23 @@ export const APAgingDetailDrawer = ({
               {rows.map((row) => (
                 <TableRow key={row.purchaseId} hover>
                   <TableCell>
-                    <Tooltip title={row.purchaseNo}>
-                      <Typography
-                        noWrap
-                        sx={{
-                          color: "primary.main",
-                          cursor: "pointer",
-                          fontWeight: 600,
-                        }}
-                        onClick={() =>
-                          redirect(`/purchases/${row.purchaseId}`)
-                        }
-                      >
-                        #{row.purchaseNo}
-                      </Typography>
-                    </Tooltip>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        redirect(`/purchases/${row.purchaseId}`);
+                      }}
+                      sx={{
+                        color: "primary.main",
+                        fontWeight: 600,
+                        textTransform: "none",
+                        px: 0.5,
+                        "&:hover": { textDecoration: "underline" },
+                      }}
+                    >
+                      {row.purchaseNo}
+                    </Button>
                   </TableCell>
 
                   <TableCell>

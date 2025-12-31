@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
   Alert,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import BlockIcon from "@mui/icons-material/Block";
@@ -22,7 +23,7 @@ import BlockIcon from "@mui/icons-material/Block";
 import {
   Datagrid,
   TextField,
-  NumberField,
+  FunctionField,
   useDataProvider,
   useNotify,
   useRefresh,
@@ -35,6 +36,7 @@ import { CurrencyField } from "@/components/money/CurrencyField";
 import { ReceiptStatusField } from "@/components/common/ReceiptStatusField";
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 
 /* =========================================================
  * 型別定義
@@ -133,6 +135,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
   onClose,
   order,
 }) => {
+  const theme = useTheme();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const refresh = useRefresh();
@@ -423,15 +426,15 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
                     overflow: "hidden",
                   }}
                 >
-                  <Typography variant="body2"  fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3 }}>
+                  <Typography variant="body2" fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3 }}>
                     作廢原因
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{
                       wordBreak: "break-word",
-                      whiteSpace: "pre-wrap", 
-                      lineHeight: 1.3,        
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.3,
                     }}
                   >
                     {displayVoidReason}
@@ -500,14 +503,26 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
           ) : details.length > 0 ? (
             <>
               <Box
-                sx={{
-                  maxHeight: details.length > 3 ? 140 : "auto",
-                  overflowY: details.length > 3 ? "auto" : "visible",
-                }}
+                sx={getDrawerScrollableStyles(theme, 140, details.length > 3)}
               >
-                <Datagrid data={details} bulkActionButtons={false} rowClick={false}>
+                <Datagrid
+                  data={details}
+                  bulkActionButtons={false}
+                  rowClick={false}
+                  sx={{
+                    "& th": {
+                      textAlign: "left",
+                    },
+                    "& td": {
+                      textAlign: "left",
+                    },
+                  }}
+                >
                   <TextField source="productName" label="品項" />
-                  <NumberField source="qty" label="數量" />
+                  <FunctionField
+                    label="數量"
+                    render={(record: OrderDetailRow) => record.qty || 0}
+                  />
                   <CurrencyField source="unitPrice" label="單價" />
                   <CurrencyField source="subtotal" label="小計" />
                 </Datagrid>

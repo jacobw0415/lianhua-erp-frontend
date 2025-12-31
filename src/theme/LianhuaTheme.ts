@@ -1,5 +1,5 @@
 import { defaultTheme } from "react-admin";
-import { createTheme } from "@mui/material/styles";
+import { createTheme, type Theme } from "@mui/material/styles";
 
 
 /**
@@ -19,6 +19,44 @@ const disableFocusStyles = {
 
 const disableIconActive = {
   backgroundColor: "transparent !important",
+};
+
+/* =======================================================
+ * Drawer 滾動條樣式工具函數
+ * ======================================================= */
+
+/**
+ * 取得 Drawer 滾動條樣式（支援亮色與暗色模式）
+ * @param theme - MUI 主題對象
+ * @param maxHeight - 最大高度（px）
+ * @param enableScroll - 是否啟用滾動
+ * @returns 樣式對象
+ */
+export const getDrawerScrollableStyles = (
+  theme: Theme,
+  maxHeight: number,
+  enableScroll: boolean
+) => {
+  const isDark = theme.palette.mode === "dark";
+
+  return {
+    maxHeight: enableScroll ? `${maxHeight}px` : "auto",
+    overflowY: enableScroll ? "auto" : "visible",
+    "&::-webkit-scrollbar": {
+      width: "6px",
+    },
+    "&::-webkit-scrollbar-track": {
+      background: isDark ? "#2A2A2A" : "#f1f1f1",
+      borderRadius: "4px",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      background: isDark ? "#555" : "#c1c1c1",
+      borderRadius: "4px",
+    },
+    "&::-webkit-scrollbar-thumb:hover": {
+      background: isDark ? "#777" : "#a1a1a1",
+    },
+  };
 };
 
 /* =======================================================
@@ -190,6 +228,46 @@ export const LianhuaLightTheme = createTheme({
       },
     },
 
+    /* --------------------------------------------------
+     * Select 下拉選單滾動條樣式（亮色模式）
+     * -------------------------------------------------- */
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#c1c1c1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#a1a1a1",
+          },
+        },
+        list: {
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#c1c1c1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#a1a1a1",
+          },
+        },
+      },
+    },
+
     MuiCard: {
       styleOverrides: {
         root: {
@@ -354,6 +432,46 @@ export const LianhuaDarkTheme = createTheme({
         root: {
           "& button": {
             ...disableFocusStyles,
+          },
+        },
+      },
+    },
+
+    /* --------------------------------------------------
+     * Select 下拉選單滾動條樣式（暗色模式）
+     * -------------------------------------------------- */
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#2A2A2A",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#555",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#777",
+          },
+        },
+        list: {
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#2A2A2A",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#555",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#777",
           },
         },
       },

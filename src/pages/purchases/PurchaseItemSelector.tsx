@@ -8,10 +8,12 @@ import {
   Chip,
   TextField,
   Button,
+  useTheme,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 
 export interface PurchaseItem {
   item: string;
@@ -52,6 +54,7 @@ export const PurchaseItemSelector: React.FC<PurchaseItemSelectorProps> = ({
   disabled = false,
   visibleRows = DEFAULT_VISIBLE_ROWS,
 }) => {
+  const theme = useTheme();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newItem, setNewItem] = useState<PurchaseItem>({
     item: "",
@@ -235,10 +238,9 @@ export const PurchaseItemSelector: React.FC<PurchaseItemSelectorProps> = ({
         sx={{
           px: 1,
           py: 1,
-          overflowY: "auto",
           flex: "1 1 auto",
           minHeight: ROW_HEIGHT * visibleRows,
-          maxHeight: ROW_HEIGHT * visibleRows,
+          ...getDrawerScrollableStyles(theme, ROW_HEIGHT * visibleRows, true),
         }}
       >
         <Stack spacing={0.75}>
@@ -251,7 +253,10 @@ export const PurchaseItemSelector: React.FC<PurchaseItemSelectorProps> = ({
               <Box
                 key={index}
                 sx={(theme) => ({
-                  p: 0.2,
+                  pl: 1.5,
+                  pr: 0.2,
+                  pt: 0.2,
+                  pb: 0.2,
                   borderRadius: 1,
                   border: `1px solid ${theme.palette.divider}`,
                   bgcolor: theme.palette.background.default,
@@ -465,9 +470,9 @@ export const PurchaseItemSelector: React.FC<PurchaseItemSelectorProps> = ({
           px: 2,
           py: 2,
           height: CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS + 32, // 固定高度：一排 chip 高度 + padding (16px * 2)
-          overflowY: "auto",
           display: "flex",
           alignItems: value.length === 0 ? "center" : "flex-start",
+          ...getDrawerScrollableStyles(theme, CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS + 32, true),
         }}
       >
         {value.length === 0 ? (

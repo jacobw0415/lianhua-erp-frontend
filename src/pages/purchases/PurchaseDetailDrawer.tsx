@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Drawer,
   Box,
@@ -8,17 +8,17 @@ import {
   Paper,
   Chip,
   LinearProgress,
-  CircularProgress,
   Button,
   Alert,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import BlockIcon from "@mui/icons-material/Block";
+import ListIcon from "@mui/icons-material/List";
 
 import {
   Datagrid,
   TextField,
-  NumberField,
   DateField,
   FunctionField,
   RecordContextProvider,
@@ -32,6 +32,8 @@ import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { PurchaseStatusField } from "@/components/common/PurchaseStatusField";
 import { PaymentStatusField } from "@/components/common/PaymentStatusField";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { PurchaseItemDetailDrawer } from "./PurchaseItemDetailDrawer";
+import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 
 /* =========================================================
  * 型別定義
@@ -45,23 +47,6 @@ interface PaymentRow {
   status?: "ACTIVE" | "VOIDED";
   voidedAt?: string;
   voidReason?: string;
-}
-
-interface PurchaseItemRow {
-  id: number;
-  purchaseId: number;
-  item: string;
-  unit: string;
-  qty: number;
-  unitPrice: number;
-  taxRate: number;
-  taxAmount: number;
-  subtotal: number;
-  note?: string;
-}
-
-interface PurchaseItemsResponse {
-  data: PurchaseItemRow[] | { content: PurchaseItemRow[] };
 }
 
 type PurchaseStatus = "PENDING" | "PARTIAL" | "PAID";
@@ -81,7 +66,6 @@ interface PurchaseDetailDrawerProps {
     recordStatus?: "ACTIVE" | "VOIDED";
     voidedAt?: string;
     voidReason?: string;
-    items?: PurchaseItemRow[];
     payments?: PaymentRow[];
   };
   onRefresh?: () => void;
@@ -110,37 +94,16 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   purchase,
   onRefresh,
 }) => {
+  const theme = useTheme();
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
+  const [openItemDrawer, setOpenItemDrawer] = useState(false);
   const [update, { isLoading: isVoiding }] = useUpdate();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const { showAlert } = useGlobalAlert();
-  const [items, setItems] = useState<PurchaseItemRow[]>([]);
-  const [itemsLoading, setItemsLoading] = useState(false);
 
   // 確保所有 hooks 都在早期返回之前調用
   const payments = purchase?.payments || [];
-
-  /* ================= 進貨項目明細 ================= */
-  useEffect(() => {
-    if (!open || !purchase?.id) return;
-
-    setItemsLoading(true);
-
-    dataProvider
-      .get(`purchases/${purchase.id}/items`, { meta: { includeVoided: true } })
-      .then((res: PurchaseItemsResponse) => {
-        const content = Array.isArray(res.data)
-          ? res.data
-          : res.data?.content ?? [];
-        setItems(content);
-      })
-      .catch(() => {
-        setItems([]);
-        notify("載入進貨項目明細失敗", { type: "error" });
-      })
-      .finally(() => setItemsLoading(false));
-  }, [open, purchase?.id, dataProvider, notify]);
 
   // 計算已作廢付款的總金額
   const voidedPaymentsTotal = useMemo(() => {
@@ -266,7 +229,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
         {/* ================= Header ================= */}
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">
-            📦 進貨明細 — {supplierName}
+            📦 進貨付款明細 — {supplierName}
           </Typography>
           <IconButton size="small" onClick={onClose}>
             <CloseIcon />
@@ -357,18 +320,27 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           </Alert>
         )}
 
-        {/* 作廢按鈕 - 只有在有付款紀錄時才能作廢 */}
-        {!isVoided && id && hasPayments && (
-          <Box mt={2} display="flex" justifyContent="flex-end">
+        {/* 操作按鈕 */}
+        {!isVoided && id && (
+          <Box mt={2} display="flex" justifyContent="space-between" gap={1}>
             <Button
               variant="outlined"
-              color="error"
-              startIcon={<BlockIcon />}
-              onClick={() => setOpenVoidDialog(true)}
-              disabled={isVoiding}
+              startIcon={<ListIcon />}
+              onClick={() => setOpenItemDrawer(true)}
             >
-              {isVoiding ? "處理中..." : "作廢進貨單"}
+              查看進貨項目明細
             </Button>
+            {hasPayments && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<BlockIcon />}
+                onClick={() => setOpenVoidDialog(true)}
+                disabled={isVoiding}
+              >
+                {isVoiding ? "處理中..." : "作廢進貨單"}
+              </Button>
+            )}
           </Box>
         )}
 
@@ -431,51 +403,6 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           </>
         )}
 
-        {/* ================= 進貨項目明細 ================= */}
-        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            📄 進貨項目明細
-          </Typography>
-
-          {itemsLoading ? (
-            <Box display="flex" justifyContent="center" py={2}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : items.length > 0 ? (
-            <>
-              <Box
-                sx={{
-                  maxHeight: items.length > 3 ? 200 : "auto",
-                  overflowY: items.length > 3 ? "auto" : "visible",
-                }}
-              >
-                <Datagrid data={items} bulkActionButtons={false} rowClick={false}>
-                  <TextField source="item" label="品項" />
-                  <NumberField source="qty" label="數量" />
-                  <TextField source="unit" label="單位" />
-                  <CurrencyField source="unitPrice" label="單價" />
-                  <CurrencyField source="subtotal" label="小計" />
-                </Datagrid>
-              </Box>
-              <Divider sx={{ my: 1 }} />
-              <Box display="flex" justifyContent="space-between">
-                <Typography variant="body2">
-                  總數量：{items.reduce((sum, d) => sum + (d.qty || 0), 0)}
-                </Typography>
-                <Typography variant="body2" fontWeight={600}>
-                  明細合計：NT${Math.round(
-                    items.reduce((sum, d) => sum + (d.subtotal || 0), 0)
-                  ).toLocaleString()}
-                </Typography>
-              </Box>
-            </>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              尚無進貨項目
-            </Typography>
-          )}
-        </Paper>
-
         {/* ================= 已付款紀錄 ================= */}
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
@@ -488,10 +415,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
             </Typography>
           ) : (
             <Box
-              sx={{
-                maxHeight: enablePaymentScroll ? 150 : "auto",
-                overflowY: enablePaymentScroll ? "auto" : "visible",
-              }}
+              sx={getDrawerScrollableStyles(theme, 150, enablePaymentScroll)}
             >
               <Datagrid data={payments} bulkActionButtons={false} rowClick={false}>
                 <DateField source="payDate" label="付款日期" />
@@ -579,6 +503,15 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
         cancelLabel="取消"
         onClose={() => setOpenVoidDialog(false)}
         onConfirm={handleVoid}
+      />
+
+      {/* 進貨項目明細 Drawer */}
+      <PurchaseItemDetailDrawer
+        open={openItemDrawer}
+        onClose={() => setOpenItemDrawer(false)}
+        purchaseId={purchase?.id}
+        purchaseNo={purchase?.purchaseNo}
+        supplierName={purchase?.supplierName}
       />
     </Drawer>
   );
