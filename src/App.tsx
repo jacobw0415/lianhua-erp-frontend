@@ -15,6 +15,7 @@ import { PurchaseEdit } from "@/pages/purchases/PurchaseEdit";
 
 import { PaymentList } from "@/pages/payments/PaymentList";
 import { APList } from "@/pages/ap/APList";
+import { ARList } from "@/pages/ar/ARList";
 
 import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
@@ -104,6 +105,7 @@ const App = () => {
       />
       <Resource name="payments" list={PaymentList} />
       <Resource name="ap" list={APList} />
+      <Resource name="ar" list={ARList} />
       <Resource
         name="product_categories"
         list={ProductCategoryList}

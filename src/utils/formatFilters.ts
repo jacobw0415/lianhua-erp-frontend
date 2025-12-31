@@ -1,6 +1,28 @@
 import { filterLabelMap } from "./filterLabelMap";
 import { enumValueMap } from "./enumValueMap";
 
+// 🏷️ 定義只顯示 value 的 filter keys（不顯示 label:value 格式）
+// 這些 keys 在 chips 中只顯示 value，不顯示 "label: value" 格式
+const valueOnlyKeys = new Set([
+  // 付款/應付相關
+  "method",           // 付款方式
+  "status",           // 狀態
+  "agingBucket",      // 帳齡區間
+  "onlyUnpaid",       // 僅顯示未付款/未收款
+  "accountingPeriod", // 會計期間
+
+  // 文字搜尋
+  "purchaseNo",       // 進貨單號
+  "supplierName",     // 供應商名稱
+  "customerName",     // 客戶名稱
+
+  // 日期範圍（base keys）
+  "fromDate",         // 進貨日（起）/ 付款日（起）
+  "toDate",           // 進貨日（迄）/ 付款日（迄）
+  "purchaseDate",     // 進貨日期
+  "payDate",          // 付款日期
+]);
+
 export const formatFilters = (filters: Record<string, any>) => {
   const chips: { key: string; display: string }[] = [];
   const used = new Set<string>();
@@ -21,6 +43,7 @@ export const formatFilters = (filters: Record<string, any>) => {
 
     const value = rawValue;
     const label = filterLabelMap[key] || "";
+    const showValueOnly = valueOnlyKeys.has(key); // 是否只顯示 value
 
     /* -------------------------
        📌 1. 日期區間："Start" + "End"
@@ -38,9 +61,10 @@ export const formatFilters = (filters: Record<string, any>) => {
         used.add(endKey);
 
         const display = `${fmtDate(value)} – ${fmtDate(filters[endKey])}`;
+        const showValueOnly = valueOnlyKeys.has(base);
         chips.push({
           key: base,
-          display: label ? `${label}: ${display}` : display,
+          display: showValueOnly ? display : (label ? `${label}: ${display}` : display),
         });
 
         continue;
@@ -61,10 +85,11 @@ export const formatFilters = (filters: Record<string, any>) => {
         used.add(maxKey);
 
         const display = `${fmtNum(value)} – ${fmtNum(filters[maxKey])}`;
+        const showValueOnly = valueOnlyKeys.has(base);
 
         chips.push({
           key: base,
-          display: label ? `${label}: ${display}` : display,
+          display: showValueOnly ? display : (label ? `${label}: ${display}` : display),
         });
 
         continue;
@@ -82,9 +107,25 @@ export const formatFilters = (filters: Record<string, any>) => {
 
       chips.push({
         key,
-        display: label ? `${label}: ${translated}` : `${translated}`,
+        display: showValueOnly ? translated : (label ? `${label}: ${translated}` : translated),
       });
 
+      continue;
+    }
+
+    /* -------------------------
+       📌 3.5. Boolean 類型（如 onlyUnpaid）
+    -------------------------- */
+    if (typeof value === "boolean") {
+      // 只顯示 true 的情況，false 不顯示
+      if (value === true) {
+        // 對於 boolean 類型，使用 label 作為顯示文字（label 本身就是有意義的描述）
+        const display = label || key;
+        chips.push({
+          key,
+          display: display, // boolean 類型直接顯示 label，不需要 value
+        });
+      }
       continue;
     }
 
@@ -96,7 +137,7 @@ export const formatFilters = (filters: Record<string, any>) => {
 
       chips.push({
         key,
-        display: label ? `${label}: ${display}` : display,
+        display: showValueOnly ? display : (label ? `${label}: ${display}` : display),
       });
 
       continue;
@@ -105,12 +146,14 @@ export const formatFilters = (filters: Record<string, any>) => {
     /* -------------------------
        📌 5. 單值（安全版本）
     -------------------------- */
-    const safeValue = typeof value === "string" ? value.trim() : value;
+    const safeValue = typeof value === "string" ? value.trim() : String(value).trim();
 
-    if (safeValue !== "") {
+    // 🛡️ 只顯示實際使用者輸入的內容
+    // 過濾掉空值、純空白、或無意義的值
+    if (safeValue !== "" && safeValue.trim().length > 0) {
       chips.push({
         key,
-        display: label ? `${label}: ${safeValue}` : `${safeValue}`,
+        display: showValueOnly ? safeValue : (label ? `${label}: ${safeValue}` : safeValue),
       });
     }
   }

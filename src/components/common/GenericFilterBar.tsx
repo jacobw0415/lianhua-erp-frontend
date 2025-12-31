@@ -75,8 +75,20 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   /** 🔍 搜尋 */
   const handleSearch = () => {
-    const hasAny = Object.values(localInputValues)
-      .some(v => v !== undefined && v !== null && v.toString().trim() !== "");
+    // 🛡️ 過濾掉空值、undefined、null、純空白字串
+    const validFilters: Record<string, string> = {};
+    for (const [key, value] of Object.entries(localInputValues)) {
+      if (
+        value !== undefined &&
+        value !== null &&
+        typeof value === "string" &&
+        value.trim() !== ""
+      ) {
+        validFilters[key] = value.trim();
+      }
+    }
+
+    const hasAny = Object.keys(validFilters).length > 0;
 
     if (!hasAny) {
       alert.trigger("請輸入搜尋條件");
@@ -84,7 +96,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
       return;
     }
 
-    setFilters({ ...localInputValues }, null, false);
+    // 只設定有效的篩選值，確保 chips 只顯示使用者實際輸入的內容
+    setFilters(validFilters, null, false);
     (document.activeElement as HTMLElement)?.blur();
   };
 
