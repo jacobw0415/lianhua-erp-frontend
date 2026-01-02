@@ -1,8 +1,8 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-export const exportExcel = async (
-  data: any[],
+export const exportExcel = async <T extends Record<string, unknown>>(
+  data: T[],
   filename: string,
   columns: { header: string; key: string; width?: number }[]
 ) => {
@@ -20,16 +20,12 @@ export const exportExcel = async (
 
   // 加入資料
   data.forEach((item) => {
-    const row: any = {};
+    const row: Record<string, unknown> = {};
     columns.forEach((col) => {
       let value = item[col.key];
 
       if (value instanceof Date) {
         value = value.toISOString().split("T")[0];
-      }
-
-      if (typeof value === "number") {
-        value = value;
       }
 
       row[col.key] = value;

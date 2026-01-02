@@ -5,6 +5,7 @@ import {
   NumberField,
   DateField,
   ListContextProvider,
+  type ListControllerResult,
 } from "react-admin";
 import {
   Drawer,
@@ -24,7 +25,7 @@ interface GenericSubTableDrawerProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  rows: any[];
+  rows: Record<string, unknown>[];
   columns: ColumnConfig[];
   showTotal?: boolean;              // 是否顯示合計
   totalField?: string;             // 合計使用的欄位
@@ -47,13 +48,13 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
     ? rows.reduce((sum, r) => sum + (Number(r[totalField]) || 0), 0)
     : null;
 
-  const listContext: any = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const listContext: Partial<ListControllerResult<any>> = {
     data: rows,
     total: rows.length,
     isLoading: false,
     resource: "generic-subtable",
-    sort: { field: "id", order: "ASC" },
-    currentSort: { field: "id", order: "ASC" },
+    sort: { field: "id", order: "ASC" as const },
   };
 
   return (
@@ -156,7 +157,8 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
               尚無資料
             </Box>
           ) : (
-            <ListContextProvider value={listContext}>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <ListContextProvider value={listContext as ListControllerResult<any>}>
               {/* Layer 2：滾動專用容器 */}
                <Box
                 sx={(theme) => ({

@@ -71,6 +71,7 @@ export const useOrderDetail = (orderId: number | null | undefined) => {
     return () => {
       abortController.abort();
     };
+    // dataProvider 是稳定的引用，不需要添加到依赖项
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
