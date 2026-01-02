@@ -98,7 +98,7 @@ export const menuGroups: MenuGroup[] = [
     label: "費用管理",
     icon: <SegmentIcon />,
     items: [
-      { label: "費用分類", to: "/expense-categories", icon: <LabelImportantIcon /> },
+      { label: "費用分類", to: "/expense_categories", icon: <LabelImportantIcon /> },
       { label: "支出紀錄", to: "/expenses", icon: <MoneyOffIcon /> },
       { label: "員工管理", to: "/employees", icon: <BadgeIcon /> },
     ],

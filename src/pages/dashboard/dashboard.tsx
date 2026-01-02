@@ -1,6 +1,5 @@
 // src/pages/dashboard/Dashboard.tsx
-import * as React from 'react';
-import { Card, CardContent, Typography, Box, Grid } from '@mui/material';
+import { Card, CardContent, Typography, Box } from '@mui/material';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import StoreIcon from '@mui/icons-material/Store';
@@ -30,8 +29,18 @@ const Dashboard = () => {
             </Card>
 
             {/* 統計卡片區 */}
-            <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={3}>
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(4, 1fr)',
+                    },
+                    gap: 3,
+                }}
+            >
+                <Box>
                     <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -49,9 +58,9 @@ const Dashboard = () => {
                             </Box>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} sm={6} md={3}>
+                <Box>
                     <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -69,9 +78,9 @@ const Dashboard = () => {
                             </Box>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} sm={6} md={3}>
+                <Box>
                     <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -89,9 +98,9 @@ const Dashboard = () => {
                             </Box>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} sm={6} md={3}>
+                <Box>
                     <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -109,8 +118,8 @@ const Dashboard = () => {
                             </Box>
                         </CardContent>
                     </Card>
-                </Grid>
-            </Grid>
+                </Box>
+            </Box>
         </Box>
     );
 };

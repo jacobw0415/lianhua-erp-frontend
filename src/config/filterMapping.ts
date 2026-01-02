@@ -19,9 +19,9 @@ export const filterMapping: Record<string, Record<string, string>> = {
     },
 
     employees: {
-        name: "employeeName",
-        phone: "phone",
+        fullName: "fullName",
         position: "position",
+        status: "status",
     },
 
     sales: {
@@ -82,8 +82,8 @@ export const filterMapping: Record<string, Record<string, string>> = {
         accountingPeriod: "accountingPeriod",
         fromDate: "fromDate",
         toDate: "toDate",
-        receivedDateFrom: "fromDate",
-        receivedDateTo: "toDate",
+        receivedDateFrom: "receivedDateFrom",
+        receivedDateTo: "receivedDateTo",
     },
 
     items: {
@@ -96,6 +96,22 @@ export const filterMapping: Record<string, Record<string, string>> = {
         discount: "discount",
         tax: "tax",
         subtotal: "subtotal",
+    },
+
+    expense_categories: {
+        name: "name",
+        accountCode: "accountCode",
+        active: "active",
+    },
+
+    expenses: {
+        categoryName: "categoryName",
+        employeeName: "employeeName",
+        accountingPeriod: "accountingPeriod",
+        fromDate: "fromDate",
+        toDate: "toDate",
+        note: "note",
+        status: "status",
     },
 
 };

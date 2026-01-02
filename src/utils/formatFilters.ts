@@ -15,12 +15,15 @@ const valueOnlyKeys = new Set([
   "purchaseNo",       // 進貨單號
   "supplierName",     // 供應商名稱
   "customerName",     // 客戶名稱
+  "categoryName",     // 費用類別名稱
+  "employeeName",     // 員工名稱
 
   // 日期範圍（base keys）
-  "fromDate",         // 進貨日（起）/ 付款日（起）
-  "toDate",           // 進貨日（迄）/ 付款日（迄）
+  "fromDate",         // 進貨日（起）/ 付款日（起）/ 支出日（起）
+  "toDate",           // 進貨日（迄）/ 付款日（迄）/ 支出日（迄）
   "purchaseDate",     // 進貨日期
   "payDate",          // 付款日期
+  "expenseDate",      // 支出日期
 ]);
 
 export const formatFilters = (filters: Record<string, any>) => {
@@ -150,7 +153,7 @@ export const formatFilters = (filters: Record<string, any>) => {
 
     // 🛡️ 只顯示實際使用者輸入的內容
     // 過濾掉空值、純空白、或無意義的值
-    if (safeValue !== "" && safeValue.trim().length > 0) {
+    if (safeValue !== "") {
       chips.push({
         key,
         display: showValueOnly ? safeValue : (label ? `${label}: ${safeValue}` : safeValue),

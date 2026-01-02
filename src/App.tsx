@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Admin, Resource, ListGuesser } from "react-admin";
+import { Admin, Resource } from "react-admin";
 
 import { createDataProvider } from "@/providers/dataProvider";
 import { NoopNotification } from "@/components/NoopNotification";
@@ -21,16 +21,16 @@ import { SaleList } from "@/pages/sales/SaleList";
 import { SaleCreate } from "@/pages/sales/SaleCreate";
 import { SaleEdit } from "@/pages/sales/SaleEdit";
 
-import { OrderList } from "@/pages/Orders/OrderList";
-import { OrderCreate } from "@/pages/Orders/OrderCreate";
-import { OrderEdit } from "@/pages/Orders/OrderEdit";
+import { OrderList } from "@/pages/orders/OrderList";
+import { OrderCreate } from "@/pages/orders/OrderCreate";
+import { OrderEdit } from "@/pages/orders/OrderEdit";
 
-import { OrderCustomerList } from "@/pages/OrderCustomers/OrderCustomerList";
-import { OrderCustomerCreate } from "@/pages/OrderCustomers/OrderCustomerCreate";
-import { OrderCustomerEdit } from "@/pages/OrderCustomers/OrderCustomerEdit";
+import { OrderCustomerList } from "@/pages/orderCustomers/OrderCustomerList";
+import { OrderCustomerCreate } from "@/pages/orderCustomers/OrderCustomerCreate";
+import { OrderCustomerEdit } from "@/pages/orderCustomers/OrderCustomerEdit";
 
-import { ReceiptList } from "@/pages/Receipts/ReceiptList";
-import { ReceiptCreate } from "@/pages/Receipts/ReceiptCreate";
+import { ReceiptList } from "@/pages/receipts/ReceiptList";
+import { ReceiptCreate } from "@/pages/receipts/ReceiptCreate";
 
 import { ProductCategoryList } from "@/pages/productCategories/ProductCategoryList";
 import { ProductCategoryCreate } from "@/pages/productCategories/ProductCategoryCreate";
@@ -39,6 +39,18 @@ import { ProductCategoryEdit } from "@/pages/productCategories/ProductCategoryEd
 import { ProductList } from "@/pages/products/ProductList";
 import { ProductCreate } from "@/pages/products/ProductCreate";
 import { ProductEdit } from "@/pages/products/ProductEdit";
+
+import { ExpenseCategoryList } from "@/pages/expenseCategories/ExpenseCategoryList";
+import { ExpenseCategoryCreate } from "@/pages/expenseCategories/ExpenseCategoryCreate";
+import { ExpenseCategoryEdit } from "@/pages/expenseCategories/ExpenseCategoryEdit";
+
+import { ExpenseList } from "@/pages/expenses/ExpenseList";
+import { ExpenseCreate } from "@/pages/expenses/ExpenseCreate";
+import { ExpenseEdit } from "@/pages/expenses/ExpenseEdit";
+
+import { EmployeeList } from "@/pages/employees/EmployeeList";
+import { EmployeeCreate } from "@/pages/employees/EmployeeCreate";
+import { EmployeeEdit } from "@/pages/employees/EmployeeEdit";
 
 import { CustomLayout } from "@/layout/CustomLayout";
 
@@ -141,7 +153,24 @@ const App = () => {
         list={ReceiptList}
         create={ReceiptCreate}
       />
-      <Resource name="expenses" list={ListGuesser} />
+      <Resource
+        name="expense_categories"
+        list={ExpenseCategoryList}
+        create={ExpenseCategoryCreate}
+        edit={ExpenseCategoryEdit}
+      />
+      <Resource
+        name="expenses"
+        list={ExpenseList}
+        create={ExpenseCreate}
+        edit={ExpenseEdit}
+      />
+      <Resource
+        name="employees"
+        list={EmployeeList}
+        create={EmployeeCreate}
+        edit={EmployeeEdit}
+      />
     </Admin>
   );
 };
