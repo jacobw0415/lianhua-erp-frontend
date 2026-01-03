@@ -31,6 +31,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
+import { dashboardColors } from "@/theme/LianhuaTheme";
 
 import dayjs from "dayjs";
 import type { ReactElement, ElementType } from "react";
@@ -178,8 +179,8 @@ export const CustomAppBar = (props: AppBarProps) => {
             sx={{
                 backdropFilter: "blur(10px)",
                 backgroundColor: isDark
-                    ? "rgba(42, 61, 42, 0.85)"
-                    : "rgba(76, 175, 80, 0.85)",
+                    ? "rgba(46, 125, 50, 0.85)" // #2E7D32 帶透明度
+                    : "rgba(56, 142, 60, 0.85)", // #388E3C 帶透明度
                 paddingLeft: 2,
                 paddingRight: 1,
                 borderBottomLeftRadius: 12,

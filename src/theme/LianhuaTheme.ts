@@ -22,6 +22,21 @@ const disableIconActive = {
 };
 
 /* =======================================================
+ * Dashboard 顏色配置
+ * ======================================================= */
+
+export const dashboardColors = {
+  light: {
+    welcomeCardBackground: 'linear-gradient(135deg, #2E7D32 0%, #388E3C 100%)',
+    appBarBackground: '#388E3C', // 與歡迎字卡漸變結束顏色統一
+  },
+  dark: {
+    welcomeCardBackground: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)',
+    appBarBackground: '#2E7D32', // 與歡迎字卡漸變結束顏色統一
+  },
+} as const;
+
+/* =======================================================
  * Drawer 滾動條樣式工具函數
  * ======================================================= */
 
@@ -208,7 +223,7 @@ export const LianhuaLightTheme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         colorPrimary: {
-          backgroundColor: "#388E3C",
+          backgroundColor: dashboardColors.light.appBarBackground,
           color: "#fff",
         },
       },
@@ -433,6 +448,18 @@ export const LianhuaDarkTheme = createTheme({
           "& button": {
             ...disableFocusStyles,
           },
+        },
+      },
+    },
+
+    /* --------------------------------------------------
+     * AppBar（與歡迎字卡顏色統一）
+     * -------------------------------------------------- */
+    MuiAppBar: {
+      styleOverrides: {
+        colorPrimary: {
+          backgroundColor: dashboardColors.dark.appBarBackground,
+          color: "#fff",
         },
       },
     },

@@ -51,7 +51,6 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
   const {
     expenseDate,
     categoryName,
-    amount,
     note,
     employeeName,
     status,
