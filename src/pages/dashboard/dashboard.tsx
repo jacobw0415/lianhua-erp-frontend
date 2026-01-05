@@ -1,10 +1,10 @@
 // src/pages/dashboard/Dashboard.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  Typography, 
-  Box, 
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
   CircularProgress,
   Alert,
   Skeleton,
@@ -38,7 +38,6 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
-import { dashboardColors } from '@/theme/LianhuaTheme';
 
 /* =========================================================
  * Helper Functions
@@ -48,19 +47,19 @@ import { dashboardColors } from '@/theme/LianhuaTheme';
 const getGreeting = (): { text: string; icon: React.ReactNode } => {
   const hour = new Date().getHours();
   if (hour < 12) {
-    return { 
-      text: '早安', 
+    return {
+      text: '早安',
       icon: <WbSunnyIcon sx={{ fontSize: 28, verticalAlign: 'middle', ml: 0.5 }} />
     };
   }
   if (hour < 18) {
-    return { 
-      text: '午安', 
+    return {
+      text: '午安',
       icon: <WbSunnyIcon sx={{ fontSize: 28, verticalAlign: 'middle', ml: 0.5, color: '#FFA726' }} />
     };
   }
-  return { 
-    text: '晚安', 
+  return {
+    text: '晚安',
     icon: <NightlightIcon sx={{ fontSize: 28, verticalAlign: 'middle', ml: 0.5 }} />
   };
 };
@@ -72,31 +71,31 @@ const formatDateTime = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  
+
   const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
   const weekday = weekdays[date.getDay()];
-  
+
   // 判斷是否是今天
   const today = new Date();
-  const isToday = 
+  const isToday =
     date.getFullYear() === today.getFullYear() &&
     date.getMonth() === today.getMonth() &&
     date.getDate() === today.getDate();
-  
+
   if (isToday) {
     return `今天 ${hours}:${minutes}`;
   }
-  
+
   return `${year}年${month}月${day}日 星期${weekday} ${hours}:${minutes}`;
 };
 
 // 格式化相對時間（多久前更新）
 const formatRelativeTime = (date: Date | null): string => {
   if (!date) return '尚未更新';
-  
+
   const now = new Date();
   const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // 秒
-  
+
   if (diff < 60) return '剛剛更新';
   if (diff < 3600) return `${Math.floor(diff / 60)} 分鐘前更新`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前更新`;
@@ -122,18 +121,18 @@ interface StatCardProps {
   onClick?: () => void;
 }
 
-const StatCard = React.memo<StatCardProps>(({ 
-  icon, 
-  title, 
-  value, 
-  iconColor, 
-  loading, 
-  onClick 
+const StatCard = React.memo<StatCardProps>(({
+  icon,
+  title,
+  value,
+  iconColor,
+  loading,
+  onClick
 }) => (
-  <Card 
-    sx={{ 
-      borderRadius: 2, 
-      boxShadow: 2, 
+  <Card
+    sx={{
+      borderRadius: 2,
+      boxShadow: 2,
       height: '100%',
       cursor: onClick ? 'pointer' : 'default',
       // 只針對 hover 效果使用過渡，主題切換相關屬性（背景色、文字顏色）不使用過渡
@@ -192,22 +191,22 @@ const Dashboard = () => {
     const updateTime = () => {
       setCurrentTime(new Date());
     };
-    
+
     // 立即更新一次
     updateTime();
-    
+
     // 計算到下一個分鐘的毫秒數
     const now = new Date();
     const msUntilNextMinute = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds());
-    
+
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    
+
     // 設置定時器，在下一個分鐘時開始每分鐘更新
     const timer = setTimeout(() => {
       updateTime();
       intervalId = setInterval(updateTime, 60000);
     }, msUntilNextMinute);
-    
+
     return () => {
       clearTimeout(timer);
       if (intervalId) clearInterval(intervalId);
@@ -250,6 +249,44 @@ const Dashboard = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  // 為頁面級別滾動條應用統一樣式
+  useEffect(() => {
+    const styleId = 'dashboard-scrollbar-style';
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement | null;
+
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+
+    const scrollbarStyles = `
+      body::-webkit-scrollbar {
+        width: 6px;
+      }
+      body::-webkit-scrollbar-track {
+        background: ${isDark ? '#2A2A2A' : '#f1f1f1'};
+        border-radius: 4px;
+      }
+      body::-webkit-scrollbar-thumb {
+        background: ${isDark ? '#555' : '#c1c1c1'};
+        border-radius: 4px;
+      }
+      body::-webkit-scrollbar-thumb:hover {
+        background: ${isDark ? '#777' : '#a1a1a1'};
+      }
+    `;
+
+    styleElement.textContent = scrollbarStyles;
+
+    return () => {
+      // 組件卸載時移除樣式
+      if (styleElement && styleElement.parentNode) {
+        styleElement.parentNode.removeChild(styleElement);
+      }
+    };
+  }, [isDark]);
+
   // 使用 useMemo 優化計算值
   const greetingData = useMemo(() => getGreeting(), []);
   const formattedDateTime = useMemo(() => formatDateTime(currentTime), [currentTime]);
@@ -258,7 +295,7 @@ const Dashboard = () => {
   // 計算提醒列表
   const alerts = useMemo(() => {
     const alertList: Array<{ message: string; link: string; severity: 'info' | 'warning' | 'error' }> = [];
-    
+
     if (stats.pendingOrderCount > 0) {
       alertList.push({
         message: `有 ${stats.pendingOrderCount} 筆待處理訂單`,
@@ -266,7 +303,7 @@ const Dashboard = () => {
         severity: 'warning',
       });
     }
-    
+
     if (stats.accountsPayable > 100000) {
       alertList.push({
         message: `應付款項較高：NT$ ${stats.accountsPayable.toLocaleString()}`,
@@ -274,7 +311,7 @@ const Dashboard = () => {
         severity: 'info',
       });
     }
-    
+
     if (stats.accountsReceivable > 100000) {
       alertList.push({
         message: `應收款項較高：NT$ ${stats.accountsReceivable.toLocaleString()}`,
@@ -282,12 +319,12 @@ const Dashboard = () => {
         severity: 'info',
       });
     }
-    
+
     return alertList;
   }, [stats.pendingOrderCount, stats.accountsPayable, stats.accountsReceivable]);
 
   // 從主題配置獲取歡迎字卡背景色（帶透明度）
-  const cardBackground = isDark 
+  const cardBackground = isDark
     ? 'rgba(27, 94, 32, 0.85)' // #1B5E20 帶透明度
     : 'rgba(46, 125, 50, 0.85)'; // #2E7D32 帶透明度
 
@@ -321,7 +358,7 @@ const Dashboard = () => {
               opacity: 0.2,
             }}
           />
-          
+
           <CardContent sx={{ position: 'relative', zIndex: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
               <Box sx={{ flex: 1 }}>
@@ -346,7 +383,7 @@ const Dashboard = () => {
                   </Typography>
                 )}
               </Box>
-              
+
               {/* 刷新按鈕 */}
               <Tooltip title="刷新數據 (F5)">
                 <IconButton
@@ -368,7 +405,7 @@ const Dashboard = () => {
                     },
                   }}
                 >
-                  <RefreshIcon sx={{ 
+                  <RefreshIcon sx={{
                     animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
                     '@keyframes spin': {
                       '0%': { transform: 'rotate(0deg)' },
@@ -379,138 +416,138 @@ const Dashboard = () => {
               </Tooltip>
             </Box>
 
-          {/* 重要提醒 */}
-          {!loading && alerts.length > 0 && (
-            <Fade in timeout={600}>
-              <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {alerts.map((alert, index) => (
-                    <Chip
-                      key={index}
-                      icon={alert.severity === 'warning' ? <WarningIcon /> : <PendingActionsIcon />}
-                      label={alert.message}
-                      onClick={() => window.location.href = alert.link}
-                      sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        color: '#fff',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.35)',
-                          transform: 'translateY(-1px)',
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        },
-                      }}
-                    />
-                  ))}
+            {/* 重要提醒 */}
+            {!loading && alerts.length > 0 && (
+              <Fade in timeout={600}>
+                <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.2)' }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {alerts.map((alert, index) => (
+                      <Chip
+                        key={index}
+                        icon={alert.severity === 'warning' ? <WarningIcon /> : <PendingActionsIcon />}
+                        label={alert.message}
+                        onClick={() => window.location.href = alert.link}
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          color: '#fff',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-            </Fade>
-          )}
+              </Fade>
+            )}
 
-          {/* 快速操作按鈕 */}
-          <Box sx={{ 
-            mt: 3, 
-            pt: 2, 
-            borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-          }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(2, 1fr)',
-                  sm: 'repeat(4, 1fr)',
-                },
-                gap: 1.5,
-              }}
-            >
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<PointOfSaleIcon />}
-                onClick={() => window.location.href = '#/sales/create'}
+            {/* 快速操作按鈕 */}
+            <Box sx={{
+              mt: 3,
+              pt: 2,
+              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+            }}>
+              <Box
                 sx={{
-                  color: '#fff',
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    borderColor: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'repeat(2, 1fr)',
+                    sm: 'repeat(4, 1fr)',
                   },
+                  gap: 1.5,
                 }}
               >
-                新增銷售
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Inventory2Icon />}
-                onClick={() => window.location.href = '#/purchases/create'}
-                sx={{
-                  color: '#fff',
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    borderColor: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                  },
-                }}
-              >
-                新增進貨
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<MoneyOffIcon />}
-                onClick={() => window.location.href = '#/expenses/create'}
-                sx={{
-                  color: '#fff',
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    borderColor: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                  },
-                }}
-              >
-                新增支出
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<ShoppingBagIcon />}
-                onClick={() => window.location.href = '#/orders/create'}
-                sx={{
-                  color: '#fff',
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    borderColor: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                  },
-                }}
-              >
-                新增訂單
-              </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<PointOfSaleIcon />}
+                  onClick={() => window.location.href = '#/sales/create'}
+                  sx={{
+                    color: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                    },
+                  }}
+                >
+                  新增銷售
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Inventory2Icon />}
+                  onClick={() => window.location.href = '#/purchases/create'}
+                  sx={{
+                    color: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                    },
+                  }}
+                >
+                  新增進貨
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<MoneyOffIcon />}
+                  onClick={() => window.location.href = '#/expenses/create'}
+                  sx={{
+                    color: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                    },
+                  }}
+                >
+                  新增支出
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<ShoppingBagIcon />}
+                  onClick={() => window.location.href = '#/orders/create'}
+                  sx={{
+                    color: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                    },
+                  }}
+                >
+                  新增訂單
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </Fade>
 
       {/* 錯誤提示 */}
       {error && (
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           sx={{ mb: 3 }}
           action={
             <Button color="inherit" size="small" onClick={handleRefresh}>
