@@ -64,6 +64,7 @@ export const ARList = () => {
         resource="ar"
         title="應收帳款總表"
         actions={false}
+        empty={false}
         perPage={10}
         sort={{ field: "customerName", order: "ASC" }}
         pagination={<CustomPaginationBar showPerPage />}

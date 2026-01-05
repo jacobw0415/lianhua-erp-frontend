@@ -85,6 +85,7 @@ export const PaymentList = () => {
     <List
       title="付款紀錄"
       actions={false}
+      empty={false}
       pagination={<CustomPaginationBar showPerPage />}
       perPage={10}
     >

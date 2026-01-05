@@ -8,6 +8,7 @@ import {
 } from "react-admin";
 import type { RaRecord, ListControllerResult } from "react-admin";
 import { Box, Typography } from "@mui/material";
+import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 
 /* =========================================================
  * 型別定義
@@ -33,7 +34,7 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
   columns,
 }) => {
   const enableScroll = rows.length > 2;
-  const maxHeight = enableScroll ? "150px" : "auto";
+  const maxHeight = 150;
 
   /**
    * ⚠️ 關鍵說明
@@ -94,8 +95,7 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
             sx={(theme) => ({
               borderRadius: 2,
               border: `2px solid ${theme.palette.divider}`,
-              maxHeight,
-              overflowY: enableScroll ? "auto" : "visible",
+              ...getDrawerScrollableStyles(theme, maxHeight, enableScroll),
             })}
           >
             <Datagrid

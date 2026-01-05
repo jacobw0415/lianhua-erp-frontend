@@ -64,6 +64,7 @@ export const APList = () => {
         resource="ap"
         title="應付帳款總表"
         actions={false}
+        empty={false}
         perPage={10}
         sort={{ field: "supplierName", order: "ASC" }}
         pagination={<CustomPaginationBar showPerPage />}

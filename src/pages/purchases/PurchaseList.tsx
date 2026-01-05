@@ -149,6 +149,7 @@ export const PurchaseList = () => {
       <List
         title="進貨紀錄"
         actions={false}
+        empty={false}
         perPage={10}
         pagination={<CustomPaginationBar showPerPage />}
       >
