@@ -63,6 +63,30 @@ interface ARRecord {
   balance: number;
 }
 
+// 響應數據類型定義
+interface StandardListResponse<T> {
+  data: T[];
+  total: number;
+}
+
+interface WrappedListResponse<T> {
+  data: {
+    content: T[];
+  };
+}
+
+type ListResponse<T> = StandardListResponse<T> | WrappedListResponse<T>;
+
+interface StandardGetResponse<T> {
+  data: T;
+}
+
+interface ArrayGetResponse<T> {
+  data: T[];
+}
+
+type GetResponse<T> = StandardGetResponse<T> | ArrayGetResponse<T>;
+
 /* =========================================================
  * Helper Functions
  * ========================================================= */
@@ -92,6 +116,22 @@ const getMonthDateRange = () => {
     start: formatLocalDate(firstDay),
     end: formatLocalDate(lastDay),
   };
+};
+
+// 安全地從響應中提取數組數據
+const extractArrayData = <T>(response: ListResponse<T> | GetResponse<T>): T[] => {
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  if (
+    typeof response.data === 'object' &&
+    response.data !== null &&
+    'content' in response.data &&
+    Array.isArray((response.data as { content: T[] }).content)
+  ) {
+    return (response.data as { content: T[] }).content;
+  }
+  return [];
 };
 
 /* =========================================================
@@ -216,25 +256,19 @@ export const useDashboardStats = () => {
       ]);
 
       // 處理數據
-      const todaySalesData = Array.isArray(todaySalesRes.data)
-        ? todaySalesRes.data
-        : (todaySalesRes.data as any)?.content ?? [];
-      const todaySalesTotal = (todaySalesData as SaleRecord[]).reduce(
+      const todaySalesData = extractArrayData<SaleRecord>(todaySalesRes);
+      const todaySalesTotal = todaySalesData.reduce(
         (sum, sale) => sum + (sale.amount || 0),
         0
       );
 
-      const monthSalesData = Array.isArray(monthSalesRes.data)
-        ? monthSalesRes.data
-        : (monthSalesRes.data as any)?.content ?? [];
-      const monthSalesTotal = (monthSalesData as SaleRecord[]).reduce(
+      const monthSalesData = extractArrayData<SaleRecord>(monthSalesRes);
+      const monthSalesTotal = monthSalesData.reduce(
         (sum, sale) => sum + (sale.amount || 0),
         0
       );
 
-      const monthPurchasesData = Array.isArray(monthPurchasesRes.data)
-        ? monthPurchasesRes.data
-        : (monthPurchasesRes.data as any)?.content ?? [];
+      const monthPurchasesData = extractArrayData<PurchaseRecord>(monthPurchasesRes);
 
       // 客户端日期过滤和状态过滤（双重保险，确保只计算本月的有效采购）
       const filteredMonthPurchases = (monthPurchasesData as PurchaseRecord[]).filter((purchase) => {
@@ -270,10 +304,8 @@ export const useDashboardStats = () => {
         });
       }
 
-      const monthExpensesData = Array.isArray(monthExpensesRes.data)
-        ? monthExpensesRes.data
-        : (monthExpensesRes.data as any)?.content ?? [];
-      const monthExpenseTotal = (monthExpensesData as ExpenseRecord[])
+      const monthExpensesData = extractArrayData<ExpenseRecord>(monthExpensesRes);
+      const monthExpenseTotal = monthExpensesData
         .filter((expense) => expense.status !== 'VOIDED')
         .reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
@@ -283,35 +315,25 @@ export const useDashboardStats = () => {
         : [];
       const supplierCount = suppliersData.length;
 
-      const customersData = Array.isArray(customersRes.data)
-        ? customersRes.data
-        : (customersRes.data as any)?.content ?? [];
+      const customersData = extractArrayData(customersRes);
       const customerCount = customersData.length;
 
-      const productsData = Array.isArray(productsRes.data)
-        ? productsRes.data
-        : (productsRes.data as any)?.content ?? [];
+      const productsData = extractArrayData(productsRes);
       const activeProductCount = productsData.length;
 
-      const ordersData = Array.isArray(ordersRes.data)
-        ? ordersRes.data
-        : (ordersRes.data as any)?.content ?? [];
-      const pendingOrderCount = (ordersData as OrderRecord[]).filter(
+      const ordersData = extractArrayData<OrderRecord>(ordersRes);
+      const pendingOrderCount = ordersData.filter(
         (order) => order.orderStatus === 'PENDING' || order.orderStatus === 'CONFIRMED'
       ).length;
 
-      const apData = Array.isArray(apRes.data)
-        ? apRes.data
-        : (apRes.data as any)?.content ?? [];
-      const accountsPayable = (apData as APRecord[]).reduce(
+      const apData = extractArrayData<APRecord>(apRes);
+      const accountsPayable = apData.reduce(
         (sum, ap) => sum + (ap.balance || 0),
         0
       );
 
-      const arData = Array.isArray(arRes.data)
-        ? arRes.data
-        : (arRes.data as any)?.content ?? [];
-      const accountsReceivable = (arData as ARRecord[]).reduce(
+      const arData = extractArrayData<ARRecord>(arRes);
+      const accountsReceivable = arData.reduce(
         (sum, ar) => sum + (ar.balance || 0),
         0
       );
@@ -346,7 +368,6 @@ export const useDashboardStats = () => {
 
   useEffect(() => {
     fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 只在組件掛載時執行一次，避免重複請求造成閃爍
 
   return { stats, loading, error, refresh: fetchStats, lastUpdated };
