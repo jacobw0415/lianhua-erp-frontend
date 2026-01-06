@@ -26,6 +26,7 @@ import { SearchChipsCompact } from "./SearchChipsCompact";
 import { formatFilters } from "@/utils/formatFilters";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
+import { MonthPicker } from "./MonthPicker";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -177,32 +178,28 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   /** 📅 月份選擇（YYYY-MM） */
   const renderMonthPicker = (f: FilterOption) => {
     const key = f.source;
-    const date = localInputValues[key] ? dayjs(localInputValues[key]) : null;
+    const value = localInputValues[key] || null;
 
     return (
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DatePicker
-          views={["year", "month"]}
-          label={f.label}
-          format="YYYY-MM"
-          value={date}
-          onChange={(newValue) => {
-            const formatted = newValue ? newValue.format("YYYY-MM") : "";
-            setLocalInputValues(prev => ({ ...prev, [key]: formatted }));
-          }}
-          slots={{ openPickerIcon: CalendarMonthIcon }}
-          slotProps={{
-            openPickerIcon: {
-              sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
-            },
-            textField: {
-              fullWidth: true,
-              size: "small",
-              sx: { "& .MuiInputBase-root": { height: 40 } },
-            },
-          }}
-        />
-      </LocalizationProvider>
+      <MonthPicker
+        label={f.label}
+        value={value}
+        onChange={(newValue) => {
+          // 保持 null 值的一致性，空字符串也轉換為 null
+          setLocalInputValues(prev => {
+            const next = { ...prev };
+            if (newValue && newValue.trim()) {
+              next[key] = newValue;
+            } else {
+              delete next[key];
+            }
+            return next;
+          });
+        }}
+        fullWidth
+        size="small"
+        format="YYYY-MM"
+      />
     );
   };
 

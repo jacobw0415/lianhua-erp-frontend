@@ -108,44 +108,60 @@ export const applyMuiPickersScrollbarStyles = (theme: Theme): (() => void) => {
   }
 
   const scrollbarStyles = `
-    /* MuiPickers 彈窗滾動條樣式 - 與現金流量表一致 */
+    /* MuiPickers 彈窗滾動條樣式 - 與 dashboard lianhuatheme 一致 */
+    /* 使用更通用的選擇器確保覆蓋所有可能的滾動容器 */
+    .MuiPickersPopper-root *::-webkit-scrollbar,
+    .MuiPickersPopper-root::-webkit-scrollbar {
+      width: ${SCROLLBAR_CONFIG.width} !important;
+    }
+    .MuiPickersPopper-root *::-webkit-scrollbar-track,
+    .MuiPickersPopper-root::-webkit-scrollbar-track {
+      background: ${isDark ? SCROLLBAR_CONFIG.track.dark : SCROLLBAR_CONFIG.track.light} !important;
+      border-radius: ${SCROLLBAR_CONFIG.borderRadius} !important;
+    }
+    .MuiPickersPopper-root *::-webkit-scrollbar-thumb,
+    .MuiPickersPopper-root::-webkit-scrollbar-thumb {
+      background: ${isDark ? SCROLLBAR_CONFIG.thumb.dark : SCROLLBAR_CONFIG.thumb.light} !important;
+      border-radius: ${SCROLLBAR_CONFIG.borderRadius} !important;
+    }
+    .MuiPickersPopper-root *::-webkit-scrollbar-thumb:hover,
+    .MuiPickersPopper-root::-webkit-scrollbar-thumb:hover {
+      background: ${isDark ? SCROLLBAR_CONFIG.thumbHover.dark : SCROLLBAR_CONFIG.thumbHover.light} !important;
+    }
+    /* 針對特定組件的額外選擇器 */
     .MuiPickersPopper-root .MuiPaper-root::-webkit-scrollbar,
     .MuiPickersPopper-root .MuiPickersCalendar-root::-webkit-scrollbar,
     .MuiPickersPopper-root .MuiYearCalendar-root::-webkit-scrollbar,
     .MuiPickersPopper-root .MuiMonthCalendar-root::-webkit-scrollbar,
-    .MuiPickersPopper-root .MuiPickersCalendar-root *::-webkit-scrollbar,
-    .MuiPickersPopper-root .MuiYearCalendar-root *::-webkit-scrollbar,
-    .MuiPickersPopper-root .MuiMonthCalendar-root *::-webkit-scrollbar {
-      width: ${SCROLLBAR_CONFIG.width};
+    .MuiPickersPopper-root .MuiPickersYear-root::-webkit-scrollbar,
+    .MuiPickersPopper-root .MuiPickersMonth-root::-webkit-scrollbar {
+      width: ${SCROLLBAR_CONFIG.width} !important;
     }
     .MuiPickersPopper-root .MuiPaper-root::-webkit-scrollbar-track,
     .MuiPickersPopper-root .MuiPickersCalendar-root::-webkit-scrollbar-track,
     .MuiPickersPopper-root .MuiYearCalendar-root::-webkit-scrollbar-track,
     .MuiPickersPopper-root .MuiMonthCalendar-root::-webkit-scrollbar-track,
-    .MuiPickersPopper-root .MuiPickersCalendar-root *::-webkit-scrollbar-track,
-    .MuiPickersPopper-root .MuiYearCalendar-root *::-webkit-scrollbar-track,
-    .MuiPickersPopper-root .MuiMonthCalendar-root *::-webkit-scrollbar-track {
-      background: ${isDark ? SCROLLBAR_CONFIG.track.dark : SCROLLBAR_CONFIG.track.light};
-      border-radius: ${SCROLLBAR_CONFIG.borderRadius};
+    .MuiPickersPopper-root .MuiPickersYear-root::-webkit-scrollbar-track,
+    .MuiPickersPopper-root .MuiPickersMonth-root::-webkit-scrollbar-track {
+      background: ${isDark ? SCROLLBAR_CONFIG.track.dark : SCROLLBAR_CONFIG.track.light} !important;
+      border-radius: ${SCROLLBAR_CONFIG.borderRadius} !important;
     }
     .MuiPickersPopper-root .MuiPaper-root::-webkit-scrollbar-thumb,
     .MuiPickersPopper-root .MuiPickersCalendar-root::-webkit-scrollbar-thumb,
     .MuiPickersPopper-root .MuiYearCalendar-root::-webkit-scrollbar-thumb,
     .MuiPickersPopper-root .MuiMonthCalendar-root::-webkit-scrollbar-thumb,
-    .MuiPickersPopper-root .MuiPickersCalendar-root *::-webkit-scrollbar-thumb,
-    .MuiPickersPopper-root .MuiYearCalendar-root *::-webkit-scrollbar-thumb,
-    .MuiPickersPopper-root .MuiMonthCalendar-root *::-webkit-scrollbar-thumb {
-      background: ${isDark ? SCROLLBAR_CONFIG.thumb.dark : SCROLLBAR_CONFIG.thumb.light};
-      border-radius: ${SCROLLBAR_CONFIG.borderRadius};
+    .MuiPickersPopper-root .MuiPickersYear-root::-webkit-scrollbar-thumb,
+    .MuiPickersPopper-root .MuiPickersMonth-root::-webkit-scrollbar-thumb {
+      background: ${isDark ? SCROLLBAR_CONFIG.thumb.dark : SCROLLBAR_CONFIG.thumb.light} !important;
+      border-radius: ${SCROLLBAR_CONFIG.borderRadius} !important;
     }
     .MuiPickersPopper-root .MuiPaper-root::-webkit-scrollbar-thumb:hover,
     .MuiPickersPopper-root .MuiPickersCalendar-root::-webkit-scrollbar-thumb:hover,
     .MuiPickersPopper-root .MuiYearCalendar-root::-webkit-scrollbar-thumb:hover,
     .MuiPickersPopper-root .MuiMonthCalendar-root::-webkit-scrollbar-thumb:hover,
-    .MuiPickersPopper-root .MuiPickersCalendar-root *::-webkit-scrollbar-thumb:hover,
-    .MuiPickersPopper-root .MuiYearCalendar-root *::-webkit-scrollbar-thumb:hover,
-    .MuiPickersPopper-root .MuiMonthCalendar-root *::-webkit-scrollbar-thumb:hover {
-      background: ${isDark ? SCROLLBAR_CONFIG.thumbHover.dark : SCROLLBAR_CONFIG.thumbHover.light};
+    .MuiPickersPopper-root .MuiPickersYear-root::-webkit-scrollbar-thumb:hover,
+    .MuiPickersPopper-root .MuiPickersMonth-root::-webkit-scrollbar-thumb:hover {
+      background: ${isDark ? SCROLLBAR_CONFIG.thumbHover.dark : SCROLLBAR_CONFIG.thumbHover.light} !important;
     }
   `;
 

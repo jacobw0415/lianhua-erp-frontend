@@ -144,6 +144,20 @@ export const LianhuaLightTheme = createTheme({
           "& button:hover": {
             backgroundColor: "#81C784 !important",
           },
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#c1c1c1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#a1a1a1",
+          },
         },
       },
     },
@@ -441,6 +455,20 @@ export const LianhuaDarkTheme = createTheme({
         root: {
           "& button": {
             ...disableFocusStyles,
+          },
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#2A2A2A",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#555",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#777",
           },
         },
       },
