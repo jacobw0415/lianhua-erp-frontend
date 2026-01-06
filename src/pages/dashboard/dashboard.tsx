@@ -35,6 +35,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import NightlightIcon from '@mui/icons-material/Nightlight';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
@@ -64,8 +65,20 @@ const getGreeting = (): { text: string; icon: React.ReactNode } => {
   };
 };
 
-// 格式化日期時間
-const formatDateTime = (date: Date): string => {
+// 格式化日期（年月日 星期X）
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const weekday = weekdays[date.getDay()];
+
+  return `${year}年${month}月${day}日 星期${weekday}`;
+};
+
+// 格式化時間（今天 HH:MM 或完整時間）
+const formatTime = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -83,7 +96,7 @@ const formatDateTime = (date: Date): string => {
     date.getDate() === today.getDate();
 
   if (isToday) {
-    return `今天 ${hours}:${minutes}`;
+    return `現在 ${hours}:${minutes}`;
   }
 
   return `${year}年${month}月${day}日 星期${weekday} ${hours}:${minutes}`;
@@ -289,7 +302,8 @@ const Dashboard = () => {
 
   // 使用 useMemo 優化計算值
   const greetingData = useMemo(() => getGreeting(), []);
-  const formattedDateTime = useMemo(() => formatDateTime(currentTime), [currentTime]);
+  const formattedDate = useMemo(() => formatDate(currentTime), [currentTime]);
+  const formattedTime = useMemo(() => formatTime(currentTime), [currentTime]);
   const relativeUpdateTime = useMemo(() => formatRelativeTime(lastUpdated), [lastUpdated]);
 
   // 計算提醒列表
@@ -371,11 +385,19 @@ const Dashboard = () => {
                 <Typography variant="h6" gutterBottom sx={{ opacity: 0.95, mb: 1.5 }}>
                   歡迎使用蓮華 ERP 管理系統
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-                  <AccessTimeIcon sx={{ fontSize: 16, opacity: 0.9 }} />
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    {formattedDateTime}
-                  </Typography>
+                <Box sx={{ mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                    <CalendarTodayIcon sx={{ fontSize: 16, opacity: 0.9 }} />
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      {formattedDate}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <AccessTimeIcon sx={{ fontSize: 16, opacity: 0.9 }} />
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      {formattedTime}
+                    </Typography>
+                  </Box>
                 </Box>
                 {lastUpdated && (
                   <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>
