@@ -74,7 +74,6 @@ export const SaleCreate: React.FC = () => {
               label="付款方式 *"
               choices={[
                 { id: "CASH", name: "現金" },
-                { id: "TRANSFER", name: "轉帳" },
                 { id: "CARD", name: "刷卡" },
               ]}
               fullWidth
