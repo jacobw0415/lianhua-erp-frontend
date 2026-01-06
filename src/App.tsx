@@ -52,6 +52,8 @@ import { EmployeeList } from "@/pages/employees/EmployeeList";
 import { EmployeeCreate } from "@/pages/employees/EmployeeCreate";
 import { EmployeeEdit } from "@/pages/employees/EmployeeEdit";
 
+import { CashFlowReport } from "@/pages/reports/cashflow/CashFlowReport";
+
 import { CustomLayout } from "@/layout/CustomLayout";
 
 import {
@@ -170,6 +172,10 @@ const App = () => {
         list={EmployeeList}
         create={EmployeeCreate}
         edit={EmployeeEdit}
+      />
+      <Resource
+        name="reports/cashflow"
+        list={CashFlowReport}
       />
     </Admin>
   );

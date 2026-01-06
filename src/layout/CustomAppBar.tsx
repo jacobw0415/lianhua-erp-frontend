@@ -31,7 +31,6 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
-import { dashboardColors } from "@/theme/LianhuaTheme";
 
 import dayjs from "dayjs";
 import type { ReactElement, ElementType } from "react";

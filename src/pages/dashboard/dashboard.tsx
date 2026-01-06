@@ -9,9 +9,7 @@ import {
   Alert,
   Skeleton,
   Button,
-  IconButton,
   Chip,
-  Tooltip,
   Snackbar,
   useTheme,
   Fade
@@ -26,7 +24,6 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
@@ -112,7 +109,7 @@ const formatRelativeTime = (date: Date | null): string => {
   if (diff < 60) return '剛剛更新';
   if (diff < 3600) return `${Math.floor(diff / 60)} 分鐘前更新`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前更新`;
-  return formatDateTime(date);
+  return formatTime(date);
 };
 
 // 格式化百分比
@@ -374,68 +371,35 @@ const Dashboard = () => {
           />
 
           <CardContent sx={{ position: 'relative', zIndex: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="h4" sx={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
-                    {greetingData.text}！
-                  </Typography>
-                  {greetingData.icon}
-                </Box>
-                <Typography variant="h6" gutterBottom sx={{ opacity: 0.95, mb: 1.5 }}>
-                  歡迎使用蓮華 ERP 管理系統
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Typography variant="h4" sx={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
+                  {greetingData.text}！
                 </Typography>
-                <Box sx={{ mb: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                    <CalendarTodayIcon sx={{ fontSize: 16, opacity: 0.9 }} />
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      {formattedDate}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <AccessTimeIcon sx={{ fontSize: 16, opacity: 0.9 }} />
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      {formattedTime}
-                    </Typography>
-                  </Box>
-                </Box>
-                {lastUpdated && (
-                  <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>
-                    數據更新時間：{relativeUpdateTime}
-                  </Typography>
-                )}
+                {greetingData.icon}
               </Box>
-
-              {/* 刷新按鈕 */}
-              <Tooltip title="刷新數據 (F5)">
-                <IconButton
-                  onClick={handleRefresh}
-                  disabled={isRefreshing || loading}
-                  disableRipple
-                  disableFocusRipple
-                  sx={{
-                    color: '#fff',
-                    backgroundColor: 'transparent',
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                      transform: 'scale(1.05)',
-                    },
-                    '&:focus': {
-                      outline: 'none',
-                      backgroundColor: 'transparent',
-                    },
-                  }}
-                >
-                  <RefreshIcon sx={{
-                    animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-                    '@keyframes spin': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '100%': { transform: 'rotate(360deg)' },
-                    },
-                  }} />
-                </IconButton>
-              </Tooltip>
+              <Typography variant="h6" gutterBottom sx={{ opacity: 0.95, mb: 1.5 }}>
+                歡迎使用蓮華 ERP 管理系統
+              </Typography>
+              <Box sx={{ mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                  <CalendarTodayIcon sx={{ fontSize: 16, opacity: 0.9 }} />
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    {formattedDate}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <AccessTimeIcon sx={{ fontSize: 16, opacity: 0.9 }} />
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    {formattedTime}
+                  </Typography>
+                </Box>
+              </Box>
+              {lastUpdated && (
+                <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>
+                  數據更新時間：{relativeUpdateTime}
+                </Typography>
+              )}
             </Box>
 
             {/* 重要提醒 */}
