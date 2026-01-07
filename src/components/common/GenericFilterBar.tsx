@@ -15,6 +15,7 @@ import {
   useListFilterContext,
   useCreatePath,
   useResourceContext,
+  useRedirect,
 } from "react-admin";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -71,6 +72,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   const resource = useResourceContext();
   const createPath = useCreatePath();
+  const redirect = useRedirect();
 
   const alert = useGlobalAlert();
 
@@ -392,7 +394,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               variant="contained"
               color="success"
               startIcon={<AddIcon />}
-              href={`#${createPath({ resource, type: "create" })}`}
+              onClick={(e) => {
+                (e.currentTarget as HTMLButtonElement).blur();
+                redirect(createPath({ resource, type: "create" }));
+              }}
               sx={{
                 height: 32,
                 minWidth: 90,
