@@ -18,6 +18,7 @@ import {
 import type { CashFlowReportDto } from "@/hooks/useCashFlowReport";
 import { PlainCurrency } from "@/components/money/PlainCurrency";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
+import { LoadingPlaceholder } from "@/components/common/LoadingPlaceholder";
 
 interface CashFlowTableProps {
   data: CashFlowReportDto[];
@@ -48,12 +49,12 @@ export const CashFlowTable = ({
   const isDark = theme.palette.mode === "dark";
   const [sortField, setSortField] = useState<SortField>("accountingPeriod");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  
+
   // 保存上一次的數據，避免加載時顯示骨架屏造成抖動
   const previousDataRef = useRef<CashFlowReportDto[]>(data);
   const [displayData, setDisplayData] = useState<CashFlowReportDto[]>(data);
   const isFirstLoadRef = useRef(true);
-  
+
   // 當數據更新且不在加載中時，更新顯示數據
   useEffect(() => {
     if (!loading) {
@@ -69,11 +70,11 @@ export const CashFlowTable = ({
       previousDataRef.current = data;
     }
   }, [data, loading]);
-  
+
   // 使用顯示數據而不是原始數據（避免加載時數據突然消失）
   // 如果正在加載且有舊數據，顯示舊數據；否則顯示當前數據
   const effectiveData = loading && previousDataRef.current.length > 0 && !isFirstLoadRef.current
-    ? previousDataRef.current 
+    ? previousDataRef.current
     : displayData;
 
   // 分離合計行和數據行（使用有效數據）
@@ -187,6 +188,9 @@ export const CashFlowTable = ({
           >
             載入數據時發生錯誤：{error.message}
           </Alert>
+        ) : loading && effectiveData.length === 0 && isFirstLoadRef.current ? (
+          // 初次載入且沒有資料時，顯示載入中效果
+          <LoadingPlaceholder />
         ) : effectiveData.length === 0 && !loading ? (
           <Alert severity="info">目前沒有符合條件的數據</Alert>
         ) : (

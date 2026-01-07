@@ -65,6 +65,7 @@ import {
 import { GlobalAlertProvider } from "@/contexts/GlobalAlertContext";
 import { ColorModeProvider } from "@/contexts/ColorModeProvider";
 import { useColorMode } from "@/contexts/useColorMode";
+import { LoadingProgressProvider, useLoadingProgress } from "@/contexts/LoadingProgressContext";
 
 import { LianhuaLightTheme } from "@/theme/LianhuaTheme";
 import { LianhuaDarkTheme } from "@/theme/LianhuaTheme";
@@ -77,7 +78,9 @@ export const AppWithProvider = () => {
     <ErrorHandlerProvider>
       <GlobalAlertProvider>
         <ColorModeProvider>
-          <App />
+          <LoadingProgressProvider>
+            <App />
+          </LoadingProgressProvider>
         </ColorModeProvider>
       </GlobalAlertProvider>
     </ErrorHandlerProvider>
@@ -90,10 +93,15 @@ export const AppWithProvider = () => {
 const App = () => {
   const { handleApiError } = useErrorHandler();
   const { mode } = useColorMode();
+  const { startLoading, stopLoading } = useLoadingProgress();
 
   const dataProvider = React.useMemo(() => {
-    return createDataProvider({ handleApiError });
-  }, [handleApiError]);
+    return createDataProvider({
+      handleApiError,
+      onRequestStart: startLoading,
+      onRequestEnd: stopLoading,
+    });
+  }, [handleApiError, startLoading, stopLoading]);
 
   return (
     <Admin

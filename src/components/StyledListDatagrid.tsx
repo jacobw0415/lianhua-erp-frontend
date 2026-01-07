@@ -1,7 +1,8 @@
-import { Datagrid, type DatagridProps } from "react-admin";
+import { Datagrid, type DatagridProps, useListContext } from "react-admin";
 import { styled } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import { EmptyPlaceholder } from "@/components/common/EmptyPlaceholder";
+import { LoadingPlaceholder } from "@/components/common/LoadingPlaceholder";
 
 interface StyledDatagridProps extends DatagridProps {
   maxHeight?: string;
@@ -143,9 +144,11 @@ const StyledDatagridRoot = styled(Datagrid, {
 
 /**
  * ⭐ 外層框（固定 10 行高度）
+ * 在載入時顯示「載入中...」效果，取代空畫面狀態
  */
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
   const { rowClick = false, maxHeight = "470px", ...rest } = props;
+  const { isLoading, data } = useListContext();
 
   return (
     <Box
@@ -158,15 +161,21 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
         borderRadius: 2,
         display: "flex",
         flexDirection: "column",
+        position: "relative",
       })}
     >
-      <StyledDatagridRoot
-        empty={<EmptyPlaceholder />}
-        bulkActionButtons={false}
-        size="small"
-        rowClick={rowClick}
-        {...rest}
-      />
+      {/* 載入中狀態：顯示動態載入效果 */}
+      {isLoading && (!data || data.length === 0) ? (
+        <LoadingPlaceholder />
+      ) : (
+        <StyledDatagridRoot
+          empty={<EmptyPlaceholder />}
+          bulkActionButtons={false}
+          size="small"
+          rowClick={rowClick}
+          {...rest}
+        />
+      )}
     </Box>
   );
 };

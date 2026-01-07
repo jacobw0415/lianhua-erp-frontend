@@ -19,6 +19,7 @@ import {
 import type { BalanceSheetReportDto } from "@/hooks/useBalanceSheetReport";
 import { PlainCurrency } from "@/components/money/PlainCurrency";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
+import { LoadingPlaceholder } from "@/components/common/LoadingPlaceholder";
 
 interface BalanceSheetTableProps {
   data: BalanceSheetReportDto[];
@@ -232,6 +233,9 @@ export const BalanceSheetTable = ({
           >
             載入數據時發生錯誤：{error.message}
           </Alert>
+        ) : loading && effectiveData.length === 0 && isFirstLoadRef.current ? (
+          // 初次載入且沒有資料時，顯示載入中效果
+          <LoadingPlaceholder />
         ) : effectiveData.length === 0 && !loading ? (
           <Alert severity="info" sx={{ "& .MuiAlert-message": { width: "100%" } }}>
             {period ? (

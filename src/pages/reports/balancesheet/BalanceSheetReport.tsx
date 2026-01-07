@@ -8,7 +8,6 @@ import {
   Fade,
   Snackbar,
   Alert,
-  LinearProgress,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-tw";
@@ -232,31 +231,6 @@ export const BalanceSheetReport = () => {
 
   return (
     <Box sx={{ padding: 3, position: "relative" }}>
-      {/* 頂部進度條（固定在頁面頂部，類似 YouTube，避免頁面抖動） */}
-      {loading && (
-        <LinearProgress
-          variant="indeterminate"
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1300, // 高於 AppBar (1100) 和 Drawer (1200)
-            height: 3,
-            backgroundColor: "transparent",
-            "& .MuiLinearProgress-bar": {
-              backgroundColor: theme.palette.mode === "dark" ? "#66BB6A" : "#4CAF50",
-              transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-            },
-            "& .MuiLinearProgress-root": {
-              backgroundColor: "transparent",
-            },
-            // 確保進度條不會影響頁面佈局
-            pointerEvents: "none",
-          }}
-        />
-      )}
-
       {/* 標題區 */}
       <Fade in timeout={500}>
         <Card

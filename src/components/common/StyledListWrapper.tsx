@@ -82,10 +82,12 @@ export const StyledListWrapper: React.FC<{
       total: hasNoResult
         ? datagridData?.length ?? 0
         : raListCtx.total,
-      isLoading: false,
-      isFetching: false,
-      isPending: false,
-      isPlaceholderData: false,
+      // ⭐ 保留真實的 loading 狀態，避免在載入時顯示空狀態
+      // 只有在「查無結果」時才強制設為 false（因為我們要顯示快取的資料）
+      isLoading: hasNoResult ? false : raListCtx.isLoading,
+      isFetching: hasNoResult ? false : raListCtx.isFetching,
+      isPending: hasNoResult ? false : raListCtx.isPending,
+      isPlaceholderData: hasNoResult ? false : raListCtx.isPlaceholderData,
       error: null,
     };
 

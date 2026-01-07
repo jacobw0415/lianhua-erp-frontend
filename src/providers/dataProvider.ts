@@ -21,12 +21,16 @@ const apiUrl: string =
   import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 /* ========================================================
- * ⭐ 路線 B：注入 handleApiError
+ * ⭐ 路線 B：注入 handleApiError 和 loadingProgress
  * ======================================================== */
 export const createDataProvider = ({
   handleApiError,
+  onRequestStart,
+  onRequestEnd,
 }: {
   handleApiError: (error: ApiError) => void;
+  onRequestStart?: () => void;
+  onRequestEnd?: () => void;
 }): DataProvider => {
   /* ========================================================
    * 原始 httpClient（只處理 header 與 fetch）
@@ -47,15 +51,22 @@ export const createDataProvider = ({
   };
 
   /* ========================================================
-   * httpClientSafe（⭐ 全域錯誤處理）
+   * httpClientSafe（⭐ 全域錯誤處理 + 進度條）
    * ======================================================== */
   const httpClientSafe = async (
     url: string,
     options: fetchUtils.Options = {}
   ) => {
+    // 開始載入
+    onRequestStart?.();
     try {
-      return await httpClient(url, options);
+      const result = await httpClient(url, options);
+      // 結束載入
+      onRequestEnd?.();
+      return result;
     } catch (error: unknown) {
+      // 結束載入（即使出錯也要結束）
+      onRequestEnd?.();
       const apiError = error as ApiError;
       let msg = "";
 
