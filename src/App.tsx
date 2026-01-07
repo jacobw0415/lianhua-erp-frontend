@@ -54,6 +54,7 @@ import { EmployeeEdit } from "@/pages/employees/EmployeeEdit";
 
 import { CashFlowReport } from "@/pages/reports/cashflow/CashFlowReport";
 import { BalanceSheetReport } from "@/pages/reports/balancesheet/BalanceSheetReport";
+import { ComprehensiveIncomeStatementReport } from "@/pages/reports/profitloss/ComprehensiveIncomeStatementReport";
 
 import { CustomLayout } from "@/layout/CustomLayout";
 
@@ -189,6 +190,10 @@ const App = () => {
       <Resource
         name="reports/balancesheet"
         list={BalanceSheetReport}
+      />
+      <Resource
+        name="reports/profitloss"
+        list={ComprehensiveIncomeStatementReport}
       />
     </Admin>
   );

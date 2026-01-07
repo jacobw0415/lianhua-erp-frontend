@@ -347,7 +347,14 @@ export const createDataProvider = ({
         const query = new URLSearchParams();
         Object.entries(options.meta).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            query.append(key, String(value));
+            // 處理陣列參數：將每個元素分別 append（後端可接受多個同名參數或逗號分隔）
+            if (Array.isArray(value)) {
+              // 如果後端支援逗號分隔，使用逗號分隔；否則每個元素分別 append
+              // 這裡使用逗號分隔，因為 hook 中註釋說明後端支援逗號分隔
+              query.append(key, value.join(","));
+            } else {
+              query.append(key, String(value));
+            }
           }
         });
         const queryString = query.toString();
