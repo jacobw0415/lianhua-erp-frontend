@@ -1,32 +1,31 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Box,
-  Card,
-  CardContent,
-  Typography,
-  useTheme,
-  Fade,
   Snackbar,
   Alert,
+  useTheme,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-tw";
-import TableViewIcon from "@mui/icons-material/TableView";
-
 import { useBalanceSheetReport } from "@/hooks/useBalanceSheetReport";
 import type { BalanceSheetQueryParams } from "@/hooks/useBalanceSheetReport";
 import { exportExcel } from "@/utils/exportExcel";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { QueryControls } from "./components/QueryControls";
 import { BalanceSheetTable } from "./components/BalanceSheetTable";
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { ReportLayout } from "@/layout/ReportLayout";
 
 /* =========================================================
- * Component
+ * Component: 資產負債表 (Balance Sheet Report)
  * ========================================================= */
 
 export const BalanceSheetReport = () => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+   const isDark = theme.palette.mode === "dark"; // Layout 內部會處理
+
+  // -------------------------------------------------------
+  // 1. 狀態管理 (保持不變)
+  // -------------------------------------------------------
 
   // 查詢類型狀態
   const [queryType, setQueryType] = useState<"month" | "date">("month");
@@ -36,9 +35,8 @@ export const BalanceSheetReport = () => {
   const [periods, setPeriods] = useState<string[]>([]);
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
-  // 當前實際查詢的參數（用於 API 請求）
+  // 當前實際查詢的參數
   const [activeQueryParams, setActiveQueryParams] = useState<BalanceSheetQueryParams>(() => {
-    // 初始值：使用當月作為默認查詢
     return { period: dayjs().format("YYYY-MM") };
   });
 
@@ -50,33 +48,32 @@ export const BalanceSheetReport = () => {
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportSuccess, setExportSuccess] = useState(false);
 
-  // 首次加載時自動查詢一次（確保使用初始查詢參數）
+  // -------------------------------------------------------
+  // 2. 邏輯處理 (保持不變)
+  // -------------------------------------------------------
+
+  // 首次加載
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      // 初始加載時使用默認參數查詢（activeQueryParams 已有初始值，useBalanceSheetReport 會自動查詢）
     }
   }, []);
 
-  // 獲取數據（使用主動查詢參數）
-  const { data, loading, error, refresh, lastUpdated } =
-    useBalanceSheetReport(activeQueryParams);
+  // 獲取數據
+  const { data, loading, error, refresh } = useBalanceSheetReport(activeQueryParams);
 
-  // 套用 body scrollbar 樣式（與 dashboard 一致）
+  // Scrollbar
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
 
-  // 構建查詢參數（僅用於驗證，不自動觸發查詢）
+  // 構建查詢參數
   const queryParams: BalanceSheetQueryParams | null = useMemo(() => {
-    // 月份模式：優先 periods（多個月份並列），其次單一 period
     if (queryType === "month") {
-      // 先檢查 periods（多月份查詢）
       const normalizedPeriods = [...new Set(periods.map((p) => p?.trim()))].filter(Boolean);
-      const limitedPeriods = normalizedPeriods.slice(0, 12); // 與後端限制一致，避免過多查詢
+      const limitedPeriods = normalizedPeriods.slice(0, 12);
       if (limitedPeriods.length > 0) {
-        // 基本格式驗證
         const periodRegex = /^\d{4}-\d{2}$/;
         const isValid = limitedPeriods.every((p) => {
           if (!periodRegex.test(p)) return false;
@@ -89,7 +86,6 @@ export const BalanceSheetReport = () => {
         return null;
       }
 
-      // 如果 periods 為空，檢查單一 period
       const trimmedPeriod = period?.trim();
       if (trimmedPeriod) {
         const periodRegex = /^\d{4}-\d{2}$/;
@@ -102,7 +98,6 @@ export const BalanceSheetReport = () => {
       }
     }
 
-    // 日期模式：使用 endDate
     if (queryType === "date" && endDate && endDate.isValid()) {
       return {
         endDate: endDate.format("YYYY-MM-DD"),
@@ -112,27 +107,23 @@ export const BalanceSheetReport = () => {
     return null;
   }, [queryType, period, periods, endDate]);
 
-  // 處理查詢按鈕點擊
+  // 處理查詢
   const handleQuery = useCallback(() => {
-    if (!queryParams) {
-      return;
-    }
-
-    // 更新查詢參數，觸發查詢
+    if (!queryParams) return;
     setActiveQueryParams(queryParams);
   }, [queryParams]);
 
-  // 處理快速選擇（立即觸發查詢）
+  // 處理快速選擇
   const handleQuickSelect = useCallback((params: BalanceSheetQueryParams) => {
     setActiveQueryParams(params);
   }, []);
 
-  // 處理刷新（使用當前查詢參數重新查詢）
+  // 處理刷新
   const handleRefresh = useCallback(() => {
     refresh();
   }, [refresh]);
 
-  // Excel 匯出功能（帶進度提示和錯誤處理）
+  // Excel 匯出
   const handleExport = useCallback(async () => {
     if (!data || data.length === 0) {
       setExportError("沒有數據可供匯出");
@@ -144,7 +135,6 @@ export const BalanceSheetReport = () => {
     setExportSuccess(false);
 
     try {
-      // 準備匯出數據（過濾掉合計行，只匯出實際數據）
       const reportData = data.filter(
         (item) => !item.accountingPeriod.includes("合計")
       );
@@ -159,7 +149,6 @@ export const BalanceSheetReport = () => {
         業主權益: row.equity,
       }));
 
-      // 如果有合計行，也加入匯出
       const totalRow = data.find((item) => item.accountingPeriod.includes("合計"));
       if (totalRow) {
         exportData.push({
@@ -173,7 +162,6 @@ export const BalanceSheetReport = () => {
         });
       }
 
-      // 生成檔案名稱（使用實際查詢的參數）
       let filename = "資產負債表";
       if (activeQueryParams.periods && activeQueryParams.periods.length > 0) {
         const sorted = [...activeQueryParams.periods].sort();
@@ -189,7 +177,6 @@ export const BalanceSheetReport = () => {
       }
       filename += `_${dayjs().format("YYYY-MM-DD_HH-mm-ss")}`;
 
-      // 定義欄位
       const columns = [
         { header: "會計期間", key: "會計期間", width: 20 },
         { header: "應收帳款", key: "應收帳款", width: 18 },
@@ -214,7 +201,7 @@ export const BalanceSheetReport = () => {
     }
   }, [data, activeQueryParams]);
 
-  // 獲取當前查詢的顯示文字（用於無數據提示）
+  // 獲取顯示文字
   const getQueryDisplayText = (): string => {
     if (activeQueryParams.periods && activeQueryParams.periods.length > 0) {
       const sorted = [...activeQueryParams.periods].sort();
@@ -228,45 +215,34 @@ export const BalanceSheetReport = () => {
     return "";
   };
 
+  // -------------------------------------------------------
+  // 3. Render (使用 ReportLayout)
+  // -------------------------------------------------------
 
   return (
-    <Box sx={{ padding: 3, position: "relative" }}>
-      {/* 標題區 */}
-      <Fade in timeout={500}>
-        <Card
-          sx={{
-            backdropFilter: "blur(10px)",
-            background: isDark
-              ? "rgba(27, 94, 32, 0.85)"
-              : "rgba(46, 125, 50, 0.85)",
-            color: "#fff",
-            borderRadius: 3,
-            boxShadow: isDark ? 4 : 3,
-            mb: 3,
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <CardContent sx={{ position: "relative", zIndex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <TableViewIcon sx={{ fontSize: 32, mr: 1.5 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                資產負債表
-              </Typography>
-            </Box>
-            <Typography variant="body1" sx={{ opacity: 0.95, mb: 2 }}>
-              查看企業資產、負債與權益的報表資料
-            </Typography>
-            {lastUpdated && (
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                最後更新：{dayjs(lastUpdated).format("YYYY-MM-DD HH:mm:ss")}
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
-      </Fade>
+    <ReportLayout
+      title="資產負債表"
+      subtitle="查看企業資產、負債與權益的報表資料"
+      
+      // ★ Loading 狀態
+      isLoading={loading}
+      
+      // ★ 防抖動關鍵：有舊資料就不顯示骨架屏
+      hasData={!!data && data.length > 0}
+      
+      // ★ 資產負債表使用標準深綠色 (不需特別指定 headerSx，Layout 預設即為綠色)
+      // 如果想要強調一致性，也可以明確指定：
+       headerSx={{
+        backgroundColor: isDark
+          ? "rgba(27, 94, 32, 0.85)" // 深綠色 900
+          : "rgba(46, 125, 50, 0.85)", // 綠色 800
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      
+      {/* --- 內容區域 --- */}
 
-      {/* 查詢控制區 */}
+      {/* 1. 查詢控制區 */}
       <QueryControls
         queryType={queryType}
         onQueryTypeChange={setQueryType}
@@ -286,7 +262,18 @@ export const BalanceSheetReport = () => {
         canQuery={!!queryParams}
       />
 
-      {/* 導出成功提示 */}
+      {/* 2. 數據表格 (加上上邊距) */}
+      <Box sx={{ mt: 3 }}>
+        <BalanceSheetTable
+          data={data}
+          loading={loading}
+          error={error}
+          onRetry={handleRefresh}
+          period={getQueryDisplayText()}
+        />
+      </Box>
+
+      {/* --- 提示訊息 (Snackbars) --- */}
       <Snackbar
         open={exportSuccess}
         autoHideDuration={3000}
@@ -298,30 +285,16 @@ export const BalanceSheetReport = () => {
         </Alert>
       </Snackbar>
 
-      {/* 導出錯誤提示 */}
       <Snackbar
         open={!!exportError}
         autoHideDuration={5000}
         onClose={() => setExportError(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert
-          onClose={() => setExportError(null)}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setExportError(null)} severity="error" sx={{ width: "100%" }}>
           {exportError}
         </Alert>
       </Snackbar>
-
-      {/* 數據表格 */}
-      <BalanceSheetTable
-        data={data}
-        loading={loading}
-        error={error}
-        onRetry={handleRefresh}
-        period={getQueryDisplayText()}
-      />
-    </Box>
+    </ReportLayout>
   );
 };

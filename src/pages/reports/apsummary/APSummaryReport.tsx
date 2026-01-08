@@ -1,57 +1,48 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Box,
-  Card,
-  CardContent,
-  Typography,
-  useTheme,
-  Fade,
   Snackbar,
   Alert,
+  useTheme,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-tw";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
-import AssessmentIcon from "@mui/icons-material/Assessment"; 
-
 import { useAPSummaryReport } from "@/hooks/useAPSummaryReport";
 import type { APSummaryQueryParams } from "@/hooks/useAPSummaryReport";
 import { exportExcel } from "@/utils/exportExcel";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { APSummaryQueryControls } from "./components/QueryControls";
 import { APSummaryReportTable } from "./components/APSummaryReportTable";
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { ReportLayout } from "@/layout/ReportLayout";
 
 dayjs.extend(quarterOfYear);
 
 /* =========================================================
- * Component
+ * Component: 應付帳款總表 (Accounts Payable Summary)
  * ========================================================= */
 
 export const APSummaryReport = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
-  // 查詢參數狀態
-  // AP 報表模式：單月(period) | 多月(periods) | 指定截止日(specificDate)
-  const [queryMode, setQueryMode] = useState<"period" | "periods" | "specificDate">("period");
+  // -------------------------------------------------------
+  // 1. 狀態管理 (保留原本邏輯)
+  // -------------------------------------------------------
   
+  // 查詢模式與參數
+  const [queryMode, setQueryMode] = useState<"period" | "periods" | "specificDate">("period");
   const [period, setPeriod] = useState<string>(dayjs().format("YYYY-MM"));
   const [periods, setPeriods] = useState<string[]>([]);
-  
-  // AP 報表只需要截止日 (As Of Date)，不需要起始日
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
-
-  // 日期驗證錯誤訊息
   const [dateError, setDateError] = useState<string | null>(null);
 
-  // 當前實際查詢的參數（用於 API 請求）
-  const [activeQueryParams, setActiveQueryParams] =
-    useState<APSummaryQueryParams>(() => {
-      // 初始值：使用當月作為默認查詢
+  // 實際用於 API 的參數
+  const [activeQueryParams, setActiveQueryParams] = useState<APSummaryQueryParams>(() => {
       return { period: dayjs().format("YYYY-MM") };
-    });
+  });
 
-  // 是否為首次加載
+  // 首次加載標記
   const isInitialMount = useRef(true);
 
   // 導出狀態
@@ -59,72 +50,59 @@ export const APSummaryReport = () => {
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportSuccess, setExportSuccess] = useState(false);
 
-  // 處理截止日期變更
-  const handleEndDateChange = useCallback(
-    (date: Dayjs | null) => {
-      setEndDate(date);
-      if (date && !date.isValid()) {
-        setDateError("日期格式無效");
-      } else {
-        setDateError(null);
-      }
-    },
-    []
-  );
+  // -------------------------------------------------------
+  // 2. 邏輯處理 (保留原本邏輯)
+  // -------------------------------------------------------
 
-  // 構建查詢參數（僅用於驗證，不自動觸發查詢）
+  // 處理截止日期變更與驗證
+  const handleEndDateChange = useCallback((date: Dayjs | null) => {
+    setEndDate(date);
+    if (date && !date.isValid()) {
+      setDateError("日期格式無效");
+    } else {
+      setDateError(null);
+    }
+  }, []);
+
+  // 構建查詢參數物件 (僅用於 UI 驗證)
   const queryParams: APSummaryQueryParams = useMemo(() => {
     if (queryMode === "periods" && periods.length > 0) {
-      // 多月份比較
       return { periods };
     } else if (queryMode === "period" && period && period.trim()) {
-      // 單一月份 (月底餘額)
       const periodRegex = /^\d{4}-\d{2}$/;
       if (periodRegex.test(period)) {
         return { period };
       }
-    } else if (
-      queryMode === "specificDate" &&
-      endDate &&
-      endDate.isValid()
-    ) {
-      // 指定截止日
+    } else if (queryMode === "specificDate" && endDate && endDate.isValid()) {
       return {
         endDate: endDate.format("YYYY-MM-DD"),
-        // 同時帶入月份，方便後端或前端顯示參考
         period: endDate.format("YYYY-MM") 
       };
     }
     return {};
   }, [queryMode, period, periods, endDate]);
 
-  // 首次加載時自動查詢一次
+  // 首次 Mounting 標記移除
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
     }
   }, []);
 
-  // 獲取數據（使用 hook）
-  const { data, loading, error, refresh, lastUpdated } =
-    useAPSummaryReport(activeQueryParams);
+  // ★ API Hook (建議 Hook 內部要實作 keepPreviousData: true)
+  const { data, loading, error, refresh } = useAPSummaryReport(activeQueryParams);
 
-  // 套用 body scrollbar 樣式
+  // Scrollbar 樣式修正
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
 
-  // 處理查詢按鈕點擊
-  const handleQuery = useCallback(
-    (params?: APSummaryQueryParams) => {
+  // 執行查詢
+  const handleQuery = useCallback((params?: APSummaryQueryParams) => {
       const paramsToUse = params || queryParams;
 
-      // 基礎驗證
-      if (!paramsToUse || Object.keys(paramsToUse).length === 0) {
-        return;
-      }
-
+      if (!paramsToUse || Object.keys(paramsToUse).length === 0) return;
       if (queryMode === "period" && !paramsToUse.period) return;
       if (queryMode === "periods" && (!paramsToUse.periods || paramsToUse.periods.length === 0)) return;
       
@@ -137,18 +115,15 @@ export const APSummaryReport = () => {
         }
       }
 
-      // 更新查詢參數，觸發 Hook 查詢
       setActiveQueryParams(paramsToUse);
-    },
-    [queryMode, queryParams, endDate]
-  );
+  }, [queryMode, queryParams, endDate]);
 
-  // 處理刷新
+  // 執行刷新
   const handleRefresh = useCallback(() => {
     refresh();
   }, [refresh]);
 
-  // Excel 匯出功能
+  // 執行 Excel 匯出
   const handleExport = useCallback(async () => {
     if (!data || data.length === 0) {
       setExportError("沒有數據可供匯出");
@@ -160,15 +135,15 @@ export const APSummaryReport = () => {
     setExportSuccess(false);
 
     try {
-      // 1. 準備匯出數據 (對應 AP 欄位)
+      // 準備匯出數據
       const exportData = data.map((row) => ({
         會計期間: row.accountingPeriod,
         總應付金額: row.totalPayable,
         已付金額: row.totalPaid,
-        未付餘額: row.totalOutstanding, // 負債欄位
+        未付餘額: row.totalOutstanding,
       }));
 
-      // 2. 生成檔案名稱
+      // 生成檔名
       let filename = "應付帳款總表";
       if (activeQueryParams.periods && activeQueryParams.periods.length > 0) {
         filename += `_多月趨勢`;
@@ -179,7 +154,6 @@ export const APSummaryReport = () => {
       }
       filename += `_${dayjs().format("YYYY-MM-DD_HH-mm")}`;
 
-      // 3. 定義欄位寬度
       const columns = [
         { header: "會計期間", key: "會計期間", width: 25 },
         { header: "總應付金額", key: "總應付金額", width: 20 },
@@ -191,56 +165,41 @@ export const APSummaryReport = () => {
       setExportSuccess(true);
     } catch (error) {
       console.error("匯出失敗：", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "匯出 Excel 檔案時發生錯誤";
+      const errorMessage = error instanceof Error ? error.message : "匯出 Excel 檔案時發生錯誤";
       setExportError(errorMessage);
     } finally {
       setExporting(false);
     }
   }, [data, activeQueryParams]);
 
-  return (
-    <Box sx={{ padding: 3, position: "relative" }}>
-      {/* 標題區 */}
-      <Fade in timeout={500}>
-        <Card
-          sx={{
-            backdropFilter: "blur(10px)",
-            // 使用紅色系主題 (Red) 來區分應付帳款 (負債)
-            background: isDark
-              ? "rgba(183, 28, 28, 0.85)" // Dark Red 900
-              : "rgba(198, 40, 40, 0.85)", // Red 800
-            color: "#fff",
-            borderRadius: 3,
-            boxShadow: isDark ? 4 : 3,
-            mb: 3,
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <CardContent sx={{ position: "relative", zIndex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              {/* 使用 AssignmentLateIcon (警示/待辦) 或 MoneyOffIcon */}
-              <AssessmentIcon sx={{ fontSize: 32, mr: 1.5 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                應付帳款總表
-              </Typography>
-            </Box>
-            <Typography variant="body1" sx={{ opacity: 0.95, mb: 2 }}>
-              檢視特定時間點的應付帳款餘額與未付金額
-            </Typography>
-            {lastUpdated && (
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                最後更新：{dayjs(lastUpdated).format("YYYY-MM-DD HH:mm:ss")}
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
-      </Fade>
+  // -------------------------------------------------------
+  // 3. Render 畫面渲染 (使用 ReportLayout)
+  // -------------------------------------------------------
 
-      {/* 查詢控制區 */}
+  return (
+    <ReportLayout
+      title="應付帳款總表"
+      subtitle="檢視特定時間點的應付帳款餘額與未付金額"
+      
+      // ★ Loading 狀態控制
+      isLoading={loading}
+      
+      // ★ 關鍵防抖動：只要畫面上有舊資料，就不顯示全頁骨架屏
+      hasData={!!data && data.length > 0}
+      
+      // ★ 自定義 Header 顏色 (保留您原本的紅色負債警示風格)
+      // 注意：需確保 ReportLayout 支援 headerSx 屬性
+      headerSx={{
+        backgroundColor: isDark 
+          ? "rgba(183, 28, 28, 0.85)" // Dark Red
+          : "rgba(198, 40, 40, 0.85)", // Light Red
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      
+      {/* --- 內容區域 (Children) --- */}
+      
+      {/* 1. 查詢控制區 */}
       <APSummaryQueryControls
         queryMode={queryMode}
         onQueryModeChange={setQueryMode}
@@ -261,45 +220,40 @@ export const APSummaryReport = () => {
         canQuery={queryParams && Object.keys(queryParams).length > 0}
       />
 
-      {/* 導出成功提示 */}
+      {/* 2. 數據表格 */}
+      {/* 加上 mt: 3 保持與查詢區塊的間距 */}
+      <Box sx={{ mt: 3 }}>
+        <APSummaryReportTable
+          data={data}
+          loading={loading} // 這裡傳入 loading，讓表格內部處理透明度變化
+          error={error}
+          onRetry={handleRefresh}
+        />
+      </Box>
+
+      {/* --- 提示訊息 (Snackbars) --- */}
       <Snackbar
         open={exportSuccess}
         autoHideDuration={3000}
         onClose={() => setExportSuccess(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert
-          onClose={() => setExportSuccess(false)}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setExportSuccess(false)} severity="success" sx={{ width: "100%" }}>
           Excel 檔案匯出成功！
         </Alert>
       </Snackbar>
 
-      {/* 導出錯誤提示 */}
       <Snackbar
         open={!!exportError}
         autoHideDuration={5000}
         onClose={() => setExportError(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert
-          onClose={() => setExportError(null)}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setExportError(null)} severity="error" sx={{ width: "100%" }}>
           {exportError}
         </Alert>
       </Snackbar>
 
-      {/* 數據表格 */}
-      <APSummaryReportTable
-        data={data}
-        loading={loading}
-        error={error}
-        onRetry={handleRefresh}
-      />
-    </Box>
+    </ReportLayout>
   );
 };
