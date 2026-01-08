@@ -109,10 +109,10 @@ export const menuGroups: MenuGroup[] = [
     icon: <AssessmentIcon />,
     items: [
       { label: "現金流量表", to: "/reports/cashflow", icon: <TimelineIcon /> },
-      { label: "應收帳款總表", to: "/reports/ar_summary", icon: <InsightsIcon /> },
-      { label: "應付帳款總表", to: "/reports/summary-ap", icon: <AssessmentIcon /> },
       { label: "綜合損益表", to: "/reports/profitloss", icon: <TrendingUpIcon /> },
       { label: "資產負債表", to: "/reports/balancesheet", icon: <TableViewIcon /> },
+      { label: "應收帳款總表", to: "/reports/ar_summary", icon: <InsightsIcon /> },
+      { label: "應付帳款總表", to: "/reports/ap_summary", icon: <AssessmentIcon /> },
     ],
   },
 
