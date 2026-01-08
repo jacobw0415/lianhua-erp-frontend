@@ -55,6 +55,7 @@ import { EmployeeEdit } from "@/pages/employees/EmployeeEdit";
 import { CashFlowReport } from "@/pages/reports/cashflow/CashFlowReport";
 import { BalanceSheetReport } from "@/pages/reports/balancesheet/BalanceSheetReport";
 import { ComprehensiveIncomeStatementReport } from "@/pages/reports/profitloss/ComprehensiveIncomeStatementReport";
+import { ARSummaryReport } from "@/pages/reports/arsummary/ARSummaryReport";
 
 import { CustomLayout } from "@/layout/CustomLayout";
 
@@ -188,6 +189,10 @@ const App = () => {
       <Resource
         name="reports/profitloss"
         list={ComprehensiveIncomeStatementReport}
+      />
+      <Resource
+        name="reports/ar_summary"
+        list={ARSummaryReport}
       />
     </Admin>
   );

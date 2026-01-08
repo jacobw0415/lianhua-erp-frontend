@@ -52,7 +52,6 @@ type SortOrder = "asc" | "desc";
 // 費用明細行組件
 const ExpenseDetailsRow = ({
   expenseDetails,
-  period,
 }: {
   expenseDetails: ExpenseCategoryDetail[];
   period: string;
