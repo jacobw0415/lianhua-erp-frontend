@@ -4,15 +4,20 @@ export const ReportSkeleton = () => {
   const theme = useTheme();
 
   return (
-    <Box sx={{ width: '100%', animate: 'pulse' }}>
+    // ★ 修改重點 1：
+    // mt: 3 (對齊 ReportLayout 的 margin-top)
+    // px: 3 (對齊 ReportLayout 的 padding-x，讓左右留白一致)
+    // pb: 4 (對齊 ReportLayout 的 padding-bottom)
+    <Box sx={{ width: '100%', mt: 3, px: 3, pb: 4 }}>
+      
       {/* 1. 模擬頂部綠色 Banner (Page Header) */}
       <Skeleton
         variant="rectangular"
-        height={140} // 根據您的截圖推測高度，可自行微調
+        height={140}
         sx={{
-          borderRadius: 1,
-          mb: 2,
-          // 在暗色模式下使用深灰，亮色模式下使用淺灰，模擬 Header 的存在感
+          borderRadius: 2, // 改為 2 以符合 Paper 的圓角
+          mb: 3,           // ★ 修改重點 2：從 2 改為 3 (對齊真實 Header 的 mb)
+          // 根據主題切換深淺色背景
           bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
         }}
       />

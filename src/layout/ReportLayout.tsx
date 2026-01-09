@@ -42,7 +42,7 @@ export const ReportLayout = ({
 
   return (
     <Fade in={!showSkeleton} timeout={500}>
-      <Box sx={{ width: '100%', pb: 4 }}>
+        <Box sx={{ width: '100%', mt: 1, pb: 4 }}>
         
         {/* --- 綠色 Banner (Page Header) --- */}
         <Paper
@@ -64,7 +64,7 @@ export const ReportLayout = ({
 
           <Box sx={{ position: 'relative', zIndex: 1 }}>
             {/* 麵包屑導航 (Breadcrumbs) */}
-            <Breadcrumbs 
+            {/* <Breadcrumbs 
               separator={<NavigateNextIcon fontSize="small" sx={{ color: 'rgba(255,255,255,0.7)' }} />} 
               aria-label="breadcrumb"
               sx={{ mb: 1, '& .MuiBreadcrumbs-li': { color: 'rgba(255,255,255,0.7)' } }}
@@ -74,7 +74,7 @@ export const ReportLayout = ({
                 財務報表
               </Box>
               <Typography sx={{ color: '#fff', fontWeight: 500 }}>{title}</Typography>
-            </Breadcrumbs>
+            </Breadcrumbs> */}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Box>

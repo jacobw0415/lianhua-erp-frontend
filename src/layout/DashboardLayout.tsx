@@ -23,7 +23,7 @@ export const DashboardLayout = ({
   return (
     <Fade in={!showSkeleton} timeout={500}>
       {/* ★ 修改重點：將 padding 縮小至 1 (8px) */}
-      <Box sx={{ width: '100%', p: 1, pb: 4 }}>
+      <Box sx={{ width: '100%', mt: 1, pb: 4 }}>
         {children}
       </Box>
     </Fade>
