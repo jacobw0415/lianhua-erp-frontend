@@ -176,7 +176,7 @@ export const ARSummaryReport = () => {
 
   return (
     <ReportLayout
-      title="應收帳款總表"
+      title="應收帳總表"
       subtitle="檢視特定時間點的應收帳款餘額與未收金額"
       
       // ★ Loading 狀態

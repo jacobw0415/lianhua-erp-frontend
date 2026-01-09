@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   TextInput,
   SelectInput,
@@ -27,6 +29,13 @@ interface Product {
  * ⭐ 編輯商品頁面（穩定版）
  * ------------------------------------------------------- */
 export const ProductEdit: React.FC = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { categories, loading } = useActiveProductCategories();
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();

@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   TextInput,
   NumberInput,
@@ -30,6 +32,13 @@ interface Employee {
  * ⭐ 新增員工頁面
  * ------------------------------------------------------- */
 export const EmployeeCreate: React.FC = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 

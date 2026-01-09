@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   List,
   TextField,
@@ -37,6 +39,13 @@ export interface ExpenseListRow {
  * ========================================================= */
 
 export const ExpenseList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseDetail | null>(null);
 

@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   List,
   TextField,
@@ -45,6 +47,13 @@ interface PaymentListRow {
  * ========================================================= */
 
 export const PaymentList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const [update] = useUpdate();

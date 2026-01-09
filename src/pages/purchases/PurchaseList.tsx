@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useState } from "react";
 import {
   List,
@@ -88,6 +91,13 @@ type SelectedPurchase = {
  * ========================================================= */
 
 export const PurchaseList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
   const [openItemDrawer, setOpenItemDrawer] = useState(false);
   const [selectedPurchase, setSelectedPurchase] =

@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   List,
   TextField,
@@ -16,6 +19,13 @@ import { ProductCategoryStatusToggle } from "./ProductCategoryStatusToggle";
  * ========================================================= */
 
 export const ProductCategoryList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   return (
     <List
       title="商品分類管理"

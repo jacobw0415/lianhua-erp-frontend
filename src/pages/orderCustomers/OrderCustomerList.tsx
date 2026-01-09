@@ -3,16 +3,26 @@ import {
   TextField,
   FunctionField,
 } from "react-admin";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
+import { useEffect } from "react";
 
 /**
  * 客戶管理列表
  */
-export const OrderCustomerList = () => (
+export const OrderCustomerList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  return (
   <List
     title="客戶管理"
     actions={false}
@@ -69,4 +79,5 @@ export const OrderCustomerList = () => (
       </StyledListDatagrid>
     </StyledListWrapper>
   </List>
-);
+  );
+};

@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   TextInput,
   SelectInput,
@@ -34,6 +36,13 @@ interface Expense {
  * ⭐ 支出紀錄編輯頁面
  * ------------------------------------------------------- */
 export const ExpenseEdit: React.FC = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   NumberInput,
   ArrayInput,
@@ -9,7 +9,7 @@ import {
 } from "react-admin";
 
 import { useWatch } from "react-hook-form";
-import { Box, Typography, Alert, Chip } from "@mui/material";
+import { Box, Typography, Alert, Chip, useTheme } from "@mui/material";
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { GenericSubTablePanel } from "@/components/common/GenericSubTablePanel";
@@ -17,6 +17,7 @@ import { CustomClearButton } from "@/components/forms/CustomClearButton";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
 
 
 /* -------------------------------------------------------
@@ -43,6 +44,13 @@ interface Purchase {
  * 📄 PurchaseEdit 主頁
  * ================================ */
 export const PurchaseEdit: React.FC = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 

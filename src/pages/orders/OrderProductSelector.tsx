@@ -6,9 +6,12 @@ import {
   Stack,
   Divider,
   Chip,
+  useTheme, // 1. 新增：引入 useTheme
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+// 2. 新增：引入自定義 Scrollbar 樣式
+import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 
 export interface OrderItem {
   productId: number;
@@ -42,6 +45,9 @@ export const OrderProductSelector: React.FC<OrderProductSelectorProps> = ({
   disabled = false,
   visibleRows = DEFAULT_VISIBLE_ROWS,
 }) => {
+  // 3. 新增：取得 theme 實例
+  const theme = useTheme();
+
   const findItem = (productId: number) =>
     value.find((i) => i.productId === productId);
 
@@ -103,8 +109,7 @@ export const OrderProductSelector: React.FC<OrderProductSelectorProps> = ({
         sx={{
           px: 2,
           py: 1,
-          overflowY: "auto",
-          maxHeight: ROW_HEIGHT * visibleRows,
+          ...getDrawerScrollableStyles(theme, ROW_HEIGHT * visibleRows, true),
         }}
       >
         <Stack spacing={1}>
@@ -186,10 +191,15 @@ export const OrderProductSelector: React.FC<OrderProductSelectorProps> = ({
         sx={{
           px: 3,
           py: 3,
-          height: CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS + 16, // 固定高度：兩排 chip 高度 + padding (8px * 2)
-          overflowY: "auto",
+          height: CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS + 16, // 固定高度
           display: "flex",
           alignItems: selectedItems.length === 0 ? "center" : "flex-start",
+          // 5. 修改：同樣套用 helper 樣式
+          ...getDrawerScrollableStyles(
+            theme,
+            CHIP_ROW_HEIGHT * CHIP_VISIBLE_ROWS + 16,
+            true
+          ),
         }}
       >
         {selectedItems.length === 0 ? (

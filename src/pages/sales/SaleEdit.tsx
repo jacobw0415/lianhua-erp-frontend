@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react"; 
 import {
   TextInput,
   SelectInput,
@@ -6,11 +6,12 @@ import {
   useRedirect,
   useRecordContext,
 } from "react-admin";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material"; 
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
 
 /* -------------------------------------------------------
  * 🔐 Sale 型別定義（Edit 成功回傳用）
@@ -29,8 +30,15 @@ interface Sale {
  * ⭐ 編輯銷售紀錄頁面（符合 ERP 設計邏輯）
  * ------------------------------------------------------- */
 export const SaleEdit: React.FC = () => {
+  const theme = useTheme(); // 取得當前主題
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  // 套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
 
   return (
     <GenericEditPage
@@ -189,4 +197,3 @@ const SaleFormFields: React.FC = () => {
     </>
   );
 };
-

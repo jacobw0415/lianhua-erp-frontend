@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   List,
   TextField,
@@ -17,6 +20,13 @@ import { CurrencyField } from "@/components/money/CurrencyField";
  * 狀態顯示組件
  * ========================================================= */
 const StatusField = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const record = useRecordContext<{ status: "ACTIVE" | "INACTIVE" }>();
   if (!record) return null;
 

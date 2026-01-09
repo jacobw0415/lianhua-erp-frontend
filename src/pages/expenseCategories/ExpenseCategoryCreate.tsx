@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   TextInput,
   BooleanInput,
@@ -27,6 +29,13 @@ interface ExpenseCategory {
  * ⭐ 新增費用分類頁面
  * ------------------------------------------------------- */
 export const ExpenseCategoryCreate: React.FC = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 

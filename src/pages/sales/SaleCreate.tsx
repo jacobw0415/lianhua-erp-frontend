@@ -1,16 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react"; 
 import {
   TextInput,
   SelectInput,
   required,
   useRedirect,
 } from "react-admin";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material"; 
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useActiveProducts } from "@/hooks/useActiveProducts";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
 
 /* -------------------------------------------------------
  * 🔐 Sale 型別定義（Create 成功回傳用）
@@ -29,9 +30,16 @@ interface Sale {
  * ⭐ 新增銷售紀錄頁面（UI 規格對齊 ProductCreate）
  * ------------------------------------------------------- */
 export const SaleCreate: React.FC = () => {
+  const theme = useTheme(); // 取得當前主題
   const { products, loading } = useActiveProducts();
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
 
   return (
     <GenericCreatePage
@@ -95,7 +103,8 @@ export const SaleCreate: React.FC = () => {
         </Box>
 
         <Box flex={1}>
-          <LhDateInput source="payDate" label="銷售日期" />
+          {/* 修正：將 source="payDate" 改為 "saleDate" 以符合 Interface */}
+          <LhDateInput source="saleDate" label="銷售日期" />
         </Box>
 
       </Box>

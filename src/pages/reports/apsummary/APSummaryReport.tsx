@@ -178,7 +178,7 @@ export const APSummaryReport = () => {
 
   return (
     <ReportLayout
-      title="應付帳款總表"
+      title="應付帳總表"
       subtitle="檢視特定時間點的應付帳款餘額與未付金額"
       
       // ★ Loading 狀態控制

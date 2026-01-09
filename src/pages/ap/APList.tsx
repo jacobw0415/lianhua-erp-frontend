@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   List,
   TextField,
@@ -44,6 +46,13 @@ interface APAgingSummaryRow {
  * ========================================================= */
 
 export const APList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const [openDrawer, setOpenDrawer] = useState(false);
 
   /** ⭐ 只存 Drawer 真正需要的型別 */

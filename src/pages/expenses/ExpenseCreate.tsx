@@ -4,7 +4,8 @@ import {
   SelectInput,
   required,
 } from "react-admin";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
@@ -39,6 +40,13 @@ interface ExpenseCategory {
  * ⭐ 新增支出紀錄頁面
  * ------------------------------------------------------- */
 export const ExpenseCreate: React.FC = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { showAlert } = useGlobalAlert();
   const { categories, loading: categoriesLoading } = useActiveExpenseCategories();
   const { employees, loading: employeesLoading } = useActiveEmployees();

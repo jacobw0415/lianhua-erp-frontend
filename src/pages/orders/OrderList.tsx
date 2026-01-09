@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { List, TextField, DateField, FunctionField } from "react-admin";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -36,6 +38,13 @@ type SelectedOrder = OrderListRow;
  * Component
  * ================================ */
 export const OrderList = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SelectedOrder | null>(null);
 

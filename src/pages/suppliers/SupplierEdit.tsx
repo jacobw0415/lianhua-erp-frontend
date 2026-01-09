@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react"; // 1. 加入 useEffect
 import {
   TextInput,
   SelectInput,
@@ -6,11 +6,12 @@ import {
   useRedirect,
   required,
 } from "react-admin";
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, useTheme } from "@mui/material"; // 2. 加入 useTheme
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { SupplierStatusField } from "./SupplierStatusField";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; // 3. 引入樣式工具
 
 /* -------------------------------------------------------
  * 🔐 Supplier 型別定義
@@ -29,8 +30,15 @@ interface Supplier {
  * ⭐ 供應商編輯頁面
  * ------------------------------------------------------- */
 export const SupplierEdit: React.FC = () => {
+  const theme = useTheme(); // 取得當前主題
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  // 套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
 
   return (
     <GenericEditPage
@@ -68,7 +76,7 @@ export const SupplierEdit: React.FC = () => {
 };
 
 /* -------------------------------------------------------
- * ⭐ 供應商欄位
+ *  供應商欄位
  * ------------------------------------------------------- */
 const SupplierFormFields: React.FC = () => {
   const record = useRecordContext<Supplier>();

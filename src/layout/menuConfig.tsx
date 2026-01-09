@@ -111,8 +111,8 @@ export const menuGroups: MenuGroup[] = [
       { label: "現金流量表", to: "/reports/cashflow", icon: <TimelineIcon /> },
       { label: "綜合損益表", to: "/reports/profitloss", icon: <TrendingUpIcon /> },
       { label: "資產負債表", to: "/reports/balancesheet", icon: <TableViewIcon /> },
-      { label: "應收帳款總表", to: "/reports/ar_summary", icon: <InsightsIcon /> },
-      { label: "應付帳款總表", to: "/reports/ap_summary", icon: <AssessmentIcon /> },
+      { label: "應收帳款表", to: "/reports/ar_summary", icon: <InsightsIcon /> },
+      { label: "應付帳款表", to: "/reports/ap_summary", icon: <AssessmentIcon /> },
     ],
   },
 

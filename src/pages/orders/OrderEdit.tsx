@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { TextInput, useRecordContext } from "react-admin";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
@@ -197,6 +199,13 @@ const OrderEditForm = () => {
  * Page
  * ======================================================= */
 export const OrderEdit = () => {
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   return (
     <GenericEditPage resource="orders" title="編輯訂單">
       <OrderEditForm />

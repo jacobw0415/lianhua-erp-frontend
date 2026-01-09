@@ -10,7 +10,7 @@ import {
   minValue,
 } from "react-admin";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
@@ -20,6 +20,7 @@ import {
   PurchaseItemSelector,
   type PurchaseItem,
 } from "@/pages/purchases/PurchaseItemSelector";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
 
 /* -------------------------------------------------------
  * 🔐 Purchase 型別定義（Create 成功回傳用）
@@ -41,6 +42,14 @@ interface Purchase {
  * 📄 PurchaseCreate（進貨項目選擇器版）
  * ======================================================= */
 export const PurchaseCreate: React.FC = () => {
+  
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { suppliers, loading: suppliersLoading } = useActiveSuppliers();
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();

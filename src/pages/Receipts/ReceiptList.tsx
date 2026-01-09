@@ -1,3 +1,4 @@
+import { useEffect } from "react"; 
 import {
   List,
   DateField,
@@ -5,13 +6,14 @@ import {
   TextField,
   useRedirect,
 } from "react-admin";
-import { Button } from "@mui/material";
+import { Button, useTheme } from "@mui/material"; 
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { ReceiptStatusField } from "@/components/common/ReceiptStatusField";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
 
 /* ================================
  * 型別定義（對齊 ReceiptListResponseDto）
@@ -35,6 +37,14 @@ export interface ReceiptListRow {
  * Component
  * ================================ */
 export const ReceiptList = () => {
+  const theme = useTheme(); // 取得當前主題
+
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+
   return (
     <List
       title="收款管理"
@@ -174,5 +184,3 @@ const ReceiptOrderNoField = ({ record }: { record: ReceiptListRow }) => {
     </Button>
   );
 };
-
-

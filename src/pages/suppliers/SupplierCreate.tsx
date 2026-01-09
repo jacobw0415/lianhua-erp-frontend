@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react"; // 1. 加入 useEffect
 import {
   TextInput,
   SelectInput,
   useRedirect,
   required,
 } from "react-admin";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material"; // 2. 加入 useTheme
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; // 3. 引入樣式工具
 
 /* -------------------------------------------------------
  * 🔐 Supplier 型別定義
@@ -27,8 +28,15 @@ interface Supplier {
  * ⭐ 新增供應商頁面
  * ------------------------------------------------------- */
 export const SupplierCreate: React.FC = () => {
+  const theme = useTheme(); // 取得當前主題 (深/淺色)
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  // 4. 套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
 
   return (
     <GenericCreatePage

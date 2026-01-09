@@ -7,7 +7,7 @@ import {
   useDataProvider,
 } from "react-admin";
 import { useWatch, useFormContext } from "react-hook-form";
-import { Box, Typography, Paper, Alert } from "@mui/material";
+import { Box, Typography, Paper, Alert, useTheme } from "@mui/material";
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
@@ -15,6 +15,7 @@ import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useActiveOrders } from "@/hooks/useActiveOrders";
 import { useOrderDetail } from "@/hooks/useOrderDetail";
 import { useOrderReceipts } from "@/hooks/useOrderReceipts";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
 
 /* =========================================================
  * 型別定義
@@ -32,6 +33,14 @@ interface Receipt {
  * 表單內容
  * ========================================================= */
 const ReceiptFormContent: React.FC = () => {
+  const theme = useTheme();
+
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+
   const { orders, loading: ordersLoading } = useActiveOrders();
   const { setError, clearErrors } = useFormContext();
   const dataProvider = useDataProvider();

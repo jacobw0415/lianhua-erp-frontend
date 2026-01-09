@@ -1,17 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   TextInput,
   SelectInput,
   required,
   useRedirect,
 } from "react-admin";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
 /* -------------------------------------------------------
- * 🔐 OrderCustomer 型別定義（Create 成功回傳用）
+ *  OrderCustomer 型別定義（Create 成功回傳用）
  * ------------------------------------------------------- */
 interface OrderCustomer {
   id: number;
@@ -24,10 +25,17 @@ interface OrderCustomer {
 }
 
 /* -------------------------------------------------------
- * ⭐ 新增客戶訂單頁面（UI 規格對齊 SaleCreate）
+ *  新增客戶訂單頁面（UI 規格對齊 SaleCreate）
  * ------------------------------------------------------- */
 export const OrderCustomerCreate: React.FC = () => {
 
+  const theme = useTheme();
+  //  套用 Scrollbar 樣式 (Component Mount 時執行)
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+  
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 
