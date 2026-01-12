@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     useTheme,
     useRedirect,
-    SidebarToggleButton, // ✅ 確保引入選單按鈕
+    SidebarToggleButton,
+    useDataProvider,
     type AppBarProps,
 } from "react-admin";
 
@@ -17,6 +18,8 @@ import {
     MenuItem,
     Badge,
     Typography,
+    Autocomplete,
+    CircularProgress,
 } from "@mui/material";
 
 import { useTheme as useMuiTheme } from "@mui/material/styles";
@@ -31,6 +34,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import SearchIcon from "@mui/icons-material/Search";
 
 import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
@@ -41,6 +45,14 @@ import type { ReactElement, ElementType } from "react";
 /* =====================================================
  * 🔐 型別定義
  * ===================================================== */
+interface SearchResult {
+    id: string;
+    type: string;
+    title: string;
+    subTitle?: string;
+    url: string;
+}
+
 interface MenuItemMeta {
     to: string;
     label: string;
@@ -51,63 +63,107 @@ interface MenuGroupMeta {
     items?: MenuItemMeta[];
 }
 
-/* ------------------------------------------------------------
- * 🔰 模擬通知資料
- * ------------------------------------------------------------ */
-const dummyNotifications: { id: number; text: string }[] = [
+const dummyNotifications = [
     { id: 1, text: "今日有 2 筆進貨尚未付款" },
     { id: 2, text: "永進蛋品帳款超過 7 天未清" },
     { id: 3, text: "本月應付金額達 $175,000" },
 ];
 
-/* ------------------------------------------------------------
- * 🔰 CustomAppBar
- * ------------------------------------------------------------ */
 export const CustomAppBar = (props: AppBarProps) => {
     const muiTheme = useMuiTheme();
     const [, setRaTheme] = useTheme();
     const { setMode } = useColorMode();
     const redirect = useRedirect();
+    const dataProvider = useDataProvider();
     const isDark = muiTheme.palette.mode === "dark";
-
     const location = useLocation();
     const pathname = location.pathname;
 
     /* =====================================================
-     * 📌 Step 1 — 從 menuGroups 產生 route meta
+     * 📌 狀態管理：月份與搜尋
      * ===================================================== */
-    const routeMetaMap: Record<
-        string,
-        { title: string; icon: ElementType }
-    > = {};
+    const [accountingPeriod, setAccountingPeriod] = useState<string>(dayjs().format("YYYY-MM"));
+    const [periodMenuAnchor, setPeriodMenuAnchor] = useState<HTMLElement | null>(null);
+    
+    // 🚀 動態生成月份選項 (當前月份的前 6 個月到後 3 個月)
+    const periodOptions = useMemo(() => {
+        const options = [];
+        for (let i = -6; i <= 3; i++) {
+            options.push(dayjs().add(i, 'month').format("YYYY-MM"));
+        }
+        return options;
+    }, []);
 
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState<readonly SearchResult[]>([]);
+    const [inputValue, setInputValue] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    /* =====================================================
+     * 📌 路由解析邏輯
+     * ===================================================== */
+    const routeMetaMap: Record<string, { title: string; icon: ElementType }> = {};
     (menuGroups as MenuGroupMeta[]).forEach((group) => {
         group.items?.forEach((item) => {
             const resolvedIcon: ElementType =
-                typeof item.icon?.type === "string"
-                    ? CalendarMonthIcon
-                    : item.icon?.type ?? CalendarMonthIcon;
-
-            routeMetaMap[item.to] = {
-                title: item.label,
-                icon: resolvedIcon,
-            };
+                typeof item.icon?.type === "string" ? CalendarMonthIcon : item.icon?.type ?? CalendarMonthIcon;
+            routeMetaMap[item.to] = { title: item.label, icon: resolvedIcon };
         });
     });
 
-    /* =====================================================
-     * 📌 Step 2 — 取得目前路由對應資料
-     * ===================================================== */
     const matched = Object.keys(routeMetaMap)
         .filter((p) => pathname.startsWith(p))
         .sort((a, b) => b.length - a.length)[0];
 
     const activeMeta = matched ? routeMetaMap[matched] : null;
     const ActiveIcon = activeMeta?.icon ?? CalendarMonthIcon;
-    const activeTitle = activeMeta?.title ?? "未命名頁面";
+    const activeTitle = activeMeta?.title ?? "Dashboard";
 
     /* =====================================================
-     * 🌙 主題切換
+     * 🔍 全域搜尋實作 (當關鍵字或月份改變時觸發)
+     * ===================================================== */
+    useEffect(() => {
+        if (inputValue.trim() === "") {
+            setOptions([]);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const response = await dataProvider.get("global_search", {
+                    meta: {
+                        keyword: inputValue,
+                        period: accountingPeriod, // ✅ 將目前的會計期間帶入 API
+                        limit: 10
+                    }
+                });
+
+                const rawData = response.data;
+                const list = rawData.items || (Array.isArray(rawData) ? rawData : []);
+
+                const formattedResults = list.map((item: any) => ({
+                    id: String(item.id),
+                    type: item.type,
+                    title: item.title,
+                    subTitle: item.subtitle,
+                    url: item.route,
+                }));
+
+                setOptions(formattedResults);
+            } catch (err) {
+                console.error("搜尋連線失敗:", err);
+                setOptions([]);
+            } finally {
+                setLoading(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [inputValue, accountingPeriod, dataProvider]); // ✅ 當月份改變時也會重新搜尋
+
+    /* =====================================================
+     * 🌙 事件處理
      * ===================================================== */
     const handleToggleTheme = () => {
         const next = isDark ? "light" : "dark";
@@ -115,115 +171,43 @@ export const CustomAppBar = (props: AppBarProps) => {
         setRaTheme(next);
     };
 
-    /* =====================================================
-     * 📅 會計期間切換
-     * ===================================================== */
-    const [periodMenuAnchor, setPeriodMenuAnchor] =
-        useState<HTMLElement | null>(null);
-    const [accountingPeriod, setAccountingPeriod] =
-        useState<string>(dayjs().format("YYYY-MM"));
-
-    const openPeriodMenu = (e: React.MouseEvent<HTMLElement>) =>
-        setPeriodMenuAnchor(e.currentTarget);
-    const closePeriodMenu = () => setPeriodMenuAnchor(null);
-
     const handlePeriodChange = (period: string) => {
         setAccountingPeriod(period);
-        closePeriodMenu();
+        setPeriodMenuAnchor(null);
     };
 
-    const periodList: string[] = [
-        dayjs().subtract(1, "month").format("YYYY-MM"),
-        dayjs().format("YYYY-MM"),
-        dayjs().add(1, "month").format("YYYY-MM"),
-    ];
+    const [notiAnchor, setNotiAnchor] = useState<HTMLElement | null>(null);
+    const [userAnchor, setUserAnchor] = useState<HTMLElement | null>(null);
 
-    /* =====================================================
-     * 🔍 全域搜尋
-     * ===================================================== */
-    const [searchText, setSearchText] = useState<string>("");
-
-    const handleGlobalSearch = (
-        e: React.KeyboardEvent<HTMLInputElement>
-    ) => {
-        if (e.key === "Enter" && searchText.trim()) {
-            redirect(`/suppliers?search=${searchText}`);
-        }
-    };
-
-    /* =====================================================
-     * 🔔 通知中心
-     * ===================================================== */
-    const [notiAnchor, setNotiAnchor] =
-        useState<HTMLElement | null>(null);
-    const openNoti = (e: React.MouseEvent<HTMLElement>) =>
-        setNotiAnchor(e.currentTarget);
-    const closeNoti = () => setNotiAnchor(null);
-
-    /* =====================================================
-     * 👤 使用者選單
-     * ===================================================== */
-    const [userAnchor, setUserAnchor] =
-        useState<HTMLElement | null>(null);
-    const openUserMenu = (e: React.MouseEvent<HTMLElement>) =>
-        setUserAnchor(e.currentTarget);
-    const closeUserMenu = () => setUserAnchor(null);
-
-    /* =====================================================
-     * 🎨 AppBar UI
-     * ===================================================== */
     return (
         <>
             <AppBar
                 position="fixed"
                 color="inherit"
                 elevation={0}
-                // ✅ 關鍵：className 讓 React-Admin 自動處理寬度縮放
                 className={props.className}
                 sx={{
                     top: 0,
-                    // 提高層級確保浮在最上方
                     zIndex: (theme) => theme.zIndex.drawer + 1,
-
                     backdropFilter: "blur(10px)",
-                    backgroundColor: isDark
-                        ? "rgba(46, 125, 50, 0.85)"
-                        : "rgba(56, 142, 60, 0.85)",
-
-                    // ✅ 恢復左右圓角修飾
+                    backgroundColor: isDark ? "rgba(46, 125, 50, 0.85)" : "rgba(56, 142, 60, 0.85)",
                     borderBottomLeftRadius: 12,
                     borderBottomRightRadius: 12,
-
-                    // 清除預設 padding，交給 Toolbar 控制
                     padding: 0,
-
-                    boxShadow: isDark
-                        ? "0 2px 10px rgba(0,0,0,0.4)"
-                        : "0 2px 10px rgba(0,0,0,0.15)",
                 }}
             >
-                {/* 內部 Toolbar：維持標準高度與排版 */}
-                <Toolbar sx={{
-                    paddingRight: 2,
-                    minHeight: "52px !important", // AppBar 高度
-                    height: "52px !important", // AppBar 高度
-                }}>
-
-                    {/* ✅ 保留選單收合按鈕 */}
+                <Toolbar sx={{ paddingRight: 2, height: "52px !important", minHeight: "52px !important" }}>
                     <SidebarToggleButton />
 
-                    {/* ⭐ 動態 Icon + Title */}
                     <Box sx={{ display: "flex", alignItems: "center", mr: 2, ml: 1 }}>
                         <ActiveIcon sx={{ color: "#fff", mr: 1 }} />
                         <Typography
                             sx={{
-                                backgroundColor: isDark
-                                    ? "rgba(255,255,255,0.18)"
-                                    : "rgba(255,255,255,0.25)",
-                                padding: "5px 14px",
+                                backgroundColor: "rgba(255,255,255,0.22)",
+                                padding: "4px 14px",
                                 borderRadius: "8px",
                                 fontWeight: 600,
-                                fontSize: "1.05rem",
+                                fontSize: "0.95rem",
                                 color: "#fff",
                             }}
                         >
@@ -231,94 +215,117 @@ export const CustomAppBar = (props: AppBarProps) => {
                         </Typography>
                     </Box>
 
-                    {/* 📅 會計期間 */}
+                    {/* 📅 會計期間選擇器 */}
                     <Box
-                        onClick={openPeriodMenu}
+                        onClick={(e) => setPeriodMenuAnchor(e.currentTarget)}
                         sx={{
                             display: "flex",
                             alignItems: "center",
-                            backgroundColor: "rgba(255,255,255,0.22)",
-                            padding: "4px 12px",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            cursor: "pointer",
-                            mr: 3,
+                            backgroundColor: "rgba(255,255,255,0.15)",
+                            px: 1.5, py: 0.5, borderRadius: 1.5,
+                            color: "#fff", cursor: "pointer",
+                            transition: "0.2s",
+                            "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" }
                         }}
                     >
-                        <Typography sx={{ mr: 1 }}>
+                        <Typography variant="body2" sx={{ mr: 0.5, fontWeight: 500 }}>
                             📅 {accountingPeriod}
                         </Typography>
-                        <ArrowDropDownIcon />
+                        {/* ✅ 修正處： size="small" 改為 fontSize="small" */}
+                        <ArrowDropDownIcon fontSize="small" />
                     </Box>
 
-                    {/* 下拉選單... (省略部分程式碼以保持簡潔，功能不變) */}
                     <Menu
                         anchorEl={periodMenuAnchor}
                         open={Boolean(periodMenuAnchor)}
-                        onClose={closePeriodMenu}
+                        onClose={() => setPeriodMenuAnchor(null)}
+                        PaperProps={{ sx: { mt: 1, maxHeight: 300 } }}
                     >
-                        {periodList.map((p) => (
-                            <MenuItem key={p} onClick={() => handlePeriodChange(p)}>
-                                {p}
+                        {periodOptions.map((period) => (
+                            <MenuItem 
+                                key={period} 
+                                selected={period === accountingPeriod}
+                                onClick={() => handlePeriodChange(period)}
+                            >
+                                {period}
                             </MenuItem>
                         ))}
                     </Menu>
 
-                    {/* 🔍 搜尋 */}
-                    <TextField
-                        placeholder="搜尋供應商 / 商品 / 單號..."
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                            width: "320px",
-                            backgroundColor: "#fff",
-                            borderRadius: "6px",
-                            mr: 2,
-                            "& .MuiInputBase-root": {
-                                height: "35px",      // 設定為 34px (比 Bar 小)
-                                fontSize: "0.875rem" // 字體稍微縮小一點比較協調
-                            }
-                        }}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        onKeyDown={handleGlobalSearch}
+                    <Autocomplete
+                        open={open}
+                        onOpen={() => setOpen(true)}
+                        onClose={() => setOpen(false)}
+                        inputValue={inputValue}
+                        onInputChange={(_, val) => setInputValue(val)}
+                        options={options}
+                        loading={loading}
+                        filterOptions={(x) => x}
+                        groupBy={(option) => option.type}
+                        getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
+                        onChange={(_, val) => val && redirect(val.url)}
+                        sx={{ ml: 3 }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder="搜尋供應商 / 商品 / 單號..."
+                                sx={{
+                                    width: { xs: 180, md: 350 },
+                                    "& .MuiInputBase-root": {
+                                        height: "34px",
+                                        fontSize: "0.85rem",
+                                        color: "white",
+                                        backgroundColor: "rgba(255,255,255,0.2)",
+                                        borderRadius: "8px",
+                                        padding: "0 12px !important",
+                                        "& fieldset": { border: "none" },
+                                        "&:hover": { backgroundColor: "rgba(255,255,255,0.3)" },
+                                        "&.Mui-focused": { backgroundColor: "rgba(255,255,255,0.35)" }
+                                    },
+                                    "& .MuiInputBase-input::placeholder": { color: "rgba(255,255,255,0.75)", opacity: 1 }
+                                }}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    startAdornment: <SearchIcon sx={{ color: "rgba(255,255,255,0.7)", fontSize: 18, mr: 0.5 }} />,
+                                    endAdornment: (
+                                        <>
+                                            {loading ? <CircularProgress color="inherit" size={14} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                            />
+                        )}
+                        renderOption={(props, option) => (
+                            <Box component="li" {...props} key={option.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderBottom: '1px solid rgba(0,0,0,0.05)', py: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.title}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {option.subTitle} {option.type === "進貨" ? `| ${option.type}` : ""}
+                                </Typography>
+                            </Box>
+                        )}
                     />
 
-                    {/* 右側操作區 */}
-                    <Box sx={{ display: "flex", ml: "auto" }}>
+                    <Box sx={{ display: "flex", ml: "auto", alignItems: "center" }}>
                         <Tooltip title="通知中心">
-                            <IconButton onClick={openNoti}>
+                            <IconButton onClick={(e) => setNotiAnchor(e.currentTarget)}>
                                 <Badge badgeContent={dummyNotifications.length} color="error">
                                     <NotificationsIcon sx={{ color: "#fff" }} />
                                 </Badge>
                             </IconButton>
                         </Tooltip>
-
-                        {/* 通知選單 */}
-                        <Menu
-                            anchorEl={notiAnchor}
-                            open={Boolean(notiAnchor)}
-                            onClose={closeNoti}
-                        >
-                            {dummyNotifications.map((n) => (
-                                <MenuItem key={n.id}>{n.text}</MenuItem>
-                            ))}
+                        <Menu anchorEl={notiAnchor} open={Boolean(notiAnchor)} onClose={() => setNotiAnchor(null)}>
+                            {dummyNotifications.map((n) => <MenuItem key={n.id}>{n.text}</MenuItem>)}
                         </Menu>
 
                         <Tooltip title="使用者選單">
-                            <IconButton onClick={openUserMenu}>
+                            <IconButton onClick={(e) => setUserAnchor(e.currentTarget)}>
                                 <AccountCircleIcon sx={{ color: "#fff" }} />
                             </IconButton>
                         </Tooltip>
-
-                        <Menu
-                            anchorEl={userAnchor}
-                            open={Boolean(userAnchor)}
-                            onClose={closeUserMenu}
-                        >
+                        <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)}>
                             <MenuItem>個人資料</MenuItem>
-                            <MenuItem>偏好設定</MenuItem>
-                            <MenuItem>登出</MenuItem>
+                            <MenuItem onClick={() => window.location.reload()}>登出</MenuItem>
                         </Menu>
 
                         <Tooltip title={isDark ? "切換為亮色" : "切換為暗色"}>
@@ -326,22 +333,11 @@ export const CustomAppBar = (props: AppBarProps) => {
                                 {isDark ? <Brightness7Icon sx={{ color: "#fff" }} /> : <Brightness4Icon sx={{ color: "#fff" }} />}
                             </IconButton>
                         </Tooltip>
-
-                        <Tooltip title="系統設定">
-                            <IconButton>
-                                <SettingsIcon sx={{ color: "#fff" }} />
-                            </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="重新整理">
-                            <IconButton onClick={() => window.location.reload()}>
-                                <RefreshIcon sx={{ color: "#fff" }} />
-                            </IconButton>
-                        </Tooltip>
+                        <IconButton><SettingsIcon sx={{ color: "#fff" }} /></IconButton>
+                        <IconButton onClick={() => window.location.reload()}><RefreshIcon sx={{ color: "#fff" }} /></IconButton>
                     </Box>
                 </Toolbar>
             </AppBar>
-            {/* 標準 Toolbar  可以讓下方內容「上滑」12px，消除多餘間距 */}
             <Box sx={{ height: 5, width: '100%' }} />
         </>
     );
