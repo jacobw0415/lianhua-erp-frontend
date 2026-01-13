@@ -96,7 +96,7 @@ export const StyledListWrapper: React.FC<{
         sx={(theme) => ({
           width: "100%",
           padding: "16px 16px",
-          height: "570px",
+          height: "620px",
           boxSizing: "border-box",
           borderRadius: 2,
           border: `1px solid ${theme.palette.action.disabled}`,

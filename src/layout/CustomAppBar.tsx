@@ -159,7 +159,7 @@ export const CustomAppBar = (props: AppBarProps) => {
     return (
         <AppBar
             {...restProps}
-            position="fixed"
+            position="sticky"
             color="inherit"
             elevation={0}
             sx={{

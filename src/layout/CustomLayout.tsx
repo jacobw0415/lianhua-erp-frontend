@@ -16,6 +16,16 @@ export const CustomLayout = (props: LayoutProps) => {
             appBar={appBar}
             menu={menu}
             sidebar={sidebar}
+            sx={{
+                // 這裡選取 react-admin 內部的內容區塊類別
+                "& .RaLayout-content": {
+                    paddingTop: 0, // 移除頂部間距
+                    marginTop: 0,
+                },
+                "& .RaLayout-appFrame": {
+                    marginTop: 0,  //  appFrame 上間距
+                }
+            }}
         />
     );
 };

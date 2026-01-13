@@ -56,8 +56,8 @@ const StyledDatagridRoot = styled(Datagrid, {
 
   /** ▌統一 Row 高度（關鍵） */
   "& .RaDatagrid-row": {
-    height: "42px",
-    maxHeight: "42px",
+    height: "47px",
+    maxHeight: "47px",
   },
 
   /** ▌Body Cell */
@@ -147,7 +147,7 @@ const StyledDatagridRoot = styled(Datagrid, {
  * 在載入時顯示「載入中...」效果，取代空畫面狀態
  */
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
-  const { rowClick = false, maxHeight = "470px", ...rest } = props;
+  const { rowClick = false, maxHeight = "520px", ...rest } = props;
   const { isLoading, data } = useListContext();
 
   return (

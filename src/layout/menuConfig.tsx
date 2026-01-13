@@ -66,7 +66,7 @@ export const menuGroups: MenuGroup[] = [
     label: "採購管理",
     icon: <ShoppingCartCheckoutTwoToneIcon />,
     items: [
-      { label: "供應商紀錄", to: "/suppliers", icon: <StorefrontIcon /> },
+      { label: "廠商紀錄", to: "/suppliers", icon: <StorefrontIcon /> },
       { label: "進貨紀錄", to: "/purchases", icon: <Inventory2Icon /> },
       { label: "付款紀錄", to: "/payments", icon: <PaymentIcon /> },
       { label: "應付帳款", to: "/ap", icon: <ReceiptLongIcon /> },
@@ -77,7 +77,7 @@ export const menuGroups: MenuGroup[] = [
     label: "銷售管理",
     icon: <PointOfSaleIcon />,
     items: [
-      { label: "現場銷售紀錄", to: "/sales", icon: <StoreMallDirectoryTwoToneIcon /> },
+      { label: "現場銷售", to: "/sales", icon: <StoreMallDirectoryTwoToneIcon /> },
       { label: "客戶管理", to: "/order_customers", icon: <GroupIcon /> },
       { label: "訂單管理", to: "/orders", icon: <ShoppingBagIcon /> },
       { label: "收款紀錄", to: "/receipts", icon: <AttachMoneyIcon /> },
