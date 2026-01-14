@@ -261,6 +261,12 @@ export const createDataProvider = ({
         }).then(({ json }) => ({ data: json?.data ?? json }));
       }
 
+      if (endpoint === "read") {
+        return httpClientSafe(`${apiUrl}/${resource}/${params.id}/read`, {
+          method: "PATCH", 
+        }).then(({ json }) => ({ data: json?.data ?? json }));
+      }
+
       if (endpoint === "void") {
         const voidUrl = `${apiUrl}/${resource}/${params.id}/void`;
         const voidMethod = "POST";

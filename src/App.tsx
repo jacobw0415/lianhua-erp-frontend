@@ -199,6 +199,11 @@ const App = () => {
         name="reports/ap_summary"
         list={APSummaryReport}
       />
+      <Resource
+        name="notifications"
+      />
+      <Resource name="notifications/unread" /> 
+      <Resource name="notifications/unread-count" />
     </Admin>
   );
 };

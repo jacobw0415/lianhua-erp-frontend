@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
     useTheme,
     useRedirect,
@@ -23,6 +23,7 @@ import {
     useMediaQuery,
     ListItemIcon,
     ListItemText,
+    Divider,
 } from "@mui/material";
 
 import { useTheme as useMuiTheme } from "@mui/material/styles";
@@ -48,7 +49,7 @@ import dayjs from "dayjs";
 import type { ElementType } from "react";
 
 /* =====================================================
- * 🔐 型別與常數定義
+ * 🔐 型別定義
  * ===================================================== */
 interface SearchResult {
     id: string;
@@ -58,15 +59,19 @@ interface SearchResult {
     url: string;
 }
 
-const dummyNotifications = [
-    { id: 1, text: "今日有 2 筆進貨尚未付款" },
-    { id: 2, text: "永進蛋品帳款超過 7 天未清" },
-    { id: 3, text: "本月應付金額達 $175,000" },
-];
+interface NotificationItem {
+    userNotificationId: number;
+    title: string;
+    content: string;
+    targetType: string;
+    targetId: number;
+    createdAt: string;
+    read: boolean;
+}
 
 export const CustomAppBar = (props: AppBarProps) => {
     const { alwaysOn, ...restProps } = props;
-    
+
     const muiTheme = useMuiTheme();
     const [, setRaTheme] = useTheme();
     const { setMode } = useColorMode();
@@ -88,6 +93,81 @@ export const CustomAppBar = (props: AppBarProps) => {
     const [userAnchor, setUserAnchor] = useState<HTMLElement | null>(null);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
 
+    // 通知相關狀態
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
+    /* =====================================================
+ * 🔔 通知中心邏輯 - 優化即時性與已讀功能
+ * ===================================================== */
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const TEST_USER_ID = 1;
+            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
+            // 並行獲取清單與計數，提高效率
+            const [listRes, countRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/notifications/unread?userId=${TEST_USER_ID}`),
+                fetch(`${API_BASE_URL}/notifications/unread-count?userId=${TEST_USER_ID}`)
+            ]);
+
+            const listJson = await listRes.json();
+            const countJson = await countRes.json();
+
+            if (listJson?.data) setNotifications(listJson.data);
+
+            const count = countJson.data?.unreadCount ?? countJson.data ?? 0;
+            setUnreadCount(Number(count));
+        } catch (err) {
+            console.error("❌ 自動刷新通知失敗:", err);
+        }
+    }, []);
+
+    // 🚀 改為 5 秒刷新一次，提升即時感
+    useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 5000);
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
+
+    // ✅ 點擊通知處理 - 加入樂觀更新
+    const handleNotificationClick = async (noti: NotificationItem) => {
+        // 1. 樂觀更新：立即反應
+        setNotiAnchor(null);
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        setNotifications(prev => prev.filter(item => item.userNotificationId !== noti.userNotificationId));
+    
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+            
+            // 2. 背景發送已讀請求
+            const response = await fetch(`${API_BASE_URL}/notifications/${noti.userNotificationId}/read`, {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json' // 建議補上
+                },
+                keepalive: true 
+            });
+    
+            if (!response.ok) throw new Error("後端更新失敗");
+    
+            // 3. 標記成功後執行跳轉 (如果 ID 存在)
+            if (noti.targetType === 'purchases' && noti.targetId) {
+                redirect(`/purchases/${noti.targetId}/show`);
+            }
+        } catch (err) {
+            console.error("❌ 已讀請求失敗:", err);
+            // 4. 失敗回滾：若 API 失敗，恢復正確的未讀狀態
+            fetchNotifications();
+        }
+    };
+
+    /* =====================================================
+     * 🔍 搜尋與標題邏輯
+     * ===================================================== */
     const periodOptions = useMemo(() => {
         const options = [];
         for (let i = -6; i <= 3; i++) {
@@ -101,17 +181,17 @@ export const CustomAppBar = (props: AppBarProps) => {
     const [inputValue, setInputValue] = useState("");
     const [loading, setLoading] = useState(false);
 
-    /* =====================================================
-     * 📌 標題解析邏輯
-     * ===================================================== */
-    const routeMetaMap: Record<string, { title: string; icon: ElementType }> = {};
-    (menuGroups as any[]).forEach((group) => {
-        group.items?.forEach((item: any) => {
-            const resolvedIcon: ElementType =
-                typeof item.icon?.type === "string" ? CalendarMonthIcon : item.icon?.type ?? CalendarMonthIcon;
-            routeMetaMap[item.to] = { title: item.label, icon: resolvedIcon };
+    const routeMetaMap = useMemo(() => {
+        const map: Record<string, { title: string; icon: ElementType }> = {};
+        (menuGroups as any[]).forEach((group) => {
+            group.items?.forEach((item: any) => {
+                const resolvedIcon: ElementType =
+                    typeof item.icon?.type === "string" ? CalendarMonthIcon : item.icon?.type ?? CalendarMonthIcon;
+                map[item.to] = { title: item.label, icon: resolvedIcon };
+            });
         });
-    });
+        return map;
+    }, []);
 
     const matched = Object.keys(routeMetaMap)
         .filter((p) => pathname.startsWith(p))
@@ -173,7 +253,6 @@ export const CustomAppBar = (props: AppBarProps) => {
             <Toolbar sx={{ px: { xs: 0.5, sm: 2 }, height: "52px !important", minHeight: "52px !important" }}>
                 <SidebarToggleButton />
 
-                {/* 📌 模組標題區 */}
                 <Box sx={{ display: "flex", alignItems: "center", mr: { xs: 0.5, sm: 2 }, ml: { xs: 0, sm: 1 }, flexShrink: 0 }}>
                     <ActiveIcon sx={{ color: "#fff", mr: { xs: 0.5, sm: 1 }, fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
                     {!isMobile && (
@@ -183,7 +262,6 @@ export const CustomAppBar = (props: AppBarProps) => {
                     )}
                 </Box>
 
-                {/* 📅 會計期間 */}
                 <Box
                     onClick={(e) => setPeriodMenuAnchor(e.currentTarget)}
                     sx={{
@@ -197,7 +275,6 @@ export const CustomAppBar = (props: AppBarProps) => {
                     <ArrowDropDownIcon sx={{ fontSize: '1.1rem' }} />
                 </Box>
 
-                {/* 🔍 全域搜尋 - 已還原您原有的所有樣式與屬性 */}
                 <Autocomplete
                     open={open}
                     onOpen={() => setOpen(true)}
@@ -210,11 +287,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                     groupBy={(option) => option.type}
                     getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
                     onChange={(_, val) => val && redirect(val.url)}
-                    sx={{ 
-                        ml: { xs: 0.5, md: 3 }, 
-                        flexGrow: 1, 
-                        maxWidth: { xs: '160px', sm: '300px', md: '400px' } 
-                    }}
+                    sx={{ ml: { xs: 0.5, md: 3 }, flexGrow: 1, maxWidth: { xs: '160px', sm: '300px', md: '400px' } }}
                     slotProps={{
                         paper: { sx: { "& .MuiAutocomplete-listbox": { padding: 0, ...getScrollbarStyles(muiTheme) } } }
                     }}
@@ -252,13 +325,12 @@ export const CustomAppBar = (props: AppBarProps) => {
                     )}
                 />
 
-                {/* ⚙️ 右側動作區 */}
                 <Box sx={{ display: "flex", ml: "auto", alignItems: "center", flexShrink: 0 }}>
                     {!isTablet ? (
                         <>
                             <Tooltip title="通知中心">
                                 <IconButton onClick={(e) => setNotiAnchor(e.currentTarget)}>
-                                    <Badge badgeContent={dummyNotifications.length} color="error">
+                                    <Badge badgeContent={unreadCount} color="error">
                                         <NotificationsIcon sx={{ color: "#fff" }} />
                                     </Badge>
                                 </IconButton>
@@ -270,13 +342,13 @@ export const CustomAppBar = (props: AppBarProps) => {
                             <IconButton onClick={() => window.location.reload()}><RefreshIcon sx={{ color: "#fff" }} /></IconButton>
                         </>
                     ) : (
-                        /* 📱 縮小時顯示的三個小點 */
                         <IconButton onClick={(e) => setMoreMenuAnchor(e.currentTarget)}>
-                            <MoreVertIcon sx={{ color: "#fff" }} />
+                            <Badge badgeContent={unreadCount} color="error" variant="dot">
+                                <MoreVertIcon sx={{ color: "#fff" }} />
+                            </Badge>
                         </IconButton>
                     )}
 
-                    {/* 👤 個人資料 (永遠在最右邊) */}
                     <Tooltip title="使用者選單">
                         <IconButton onClick={(e) => setUserAnchor(e.currentTarget)} sx={{ ml: { xs: 0, sm: 1 } }}>
                             <AccountCircleIcon sx={{ color: "#fff" }} />
@@ -285,12 +357,76 @@ export const CustomAppBar = (props: AppBarProps) => {
                 </Box>
             </Toolbar>
 
-            {/* --- 選單組件 --- */}
+            {/* --- 通知清單彈窗 --- */}
+            <Menu
+                anchorEl={notiAnchor}
+                open={Boolean(notiAnchor)}
+                onClose={() => setNotiAnchor(null)}
+                PaperProps={{
+                    sx: {
+                        width: 320,
+                        maxHeight: 480,
+                        mt: 1.5,
+                        boxShadow: '0px 4px 20px rgba(0,0,0,0.15)',
+                        ...getScrollbarStyles(muiTheme)
+                    }
+                }}
+            >
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>通知中心</Typography>
+                    {unreadCount > 0 && (
+                        <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 600 }}>
+                            {unreadCount} 則未讀
+                        </Typography>
+                    )}
+                </Box>
+                <Divider />
 
-            {/* 🆕 更多功能選單 (Tablet/Mobile) */}
+                {notifications.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                        <NotificationsIcon sx={{ fontSize: 40, color: 'grey.300', mb: 1 }} />
+                        <Typography variant="body2" color="text.secondary">目前沒有新通知</Typography>
+                    </Box>
+                ) : (
+                    notifications.map((n) => (
+                        <MenuItem
+                            key={n.userNotificationId}
+                            onClick={() => handleNotificationClick(n)}
+                            sx={{
+                                whiteSpace: 'normal',
+                                py: 1.5,
+                                px: 2,
+                                borderBottom: '1px solid #f0f0f0',
+                                '&:hover': { backgroundColor: 'action.hover' }
+                            }}
+                        >
+                            <Box sx={{ width: '100%' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>{n.title}</Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>{n.content}</Typography>
+                                <Typography variant="caption" color="grey.500" sx={{ mt: 1, display: 'block' }}>
+                                    {dayjs(n.createdAt).format("YYYY-MM-DD HH:mm")}
+                                </Typography>
+                            </Box>
+                        </MenuItem>
+                    ))
+                )}
+
+                <Divider />
+                <MenuItem sx={{ justifyContent: 'center', py: 1 }} onClick={() => { setNotiAnchor(null); redirect('/notifications'); }}>
+                    <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>
+                        查看全部通知
+                    </Typography>
+                </MenuItem>
+            </Menu>
+
+            {/* --- 平板/手機模式更多選單 --- */}
             <Menu anchorEl={moreMenuAnchor} open={Boolean(moreMenuAnchor)} onClose={() => setMoreMenuAnchor(null)} PaperProps={{ sx: { width: 180, mt: 1 } }}>
                 <MenuItem onClick={(e) => { setNotiAnchor(e.currentTarget); setMoreMenuAnchor(null); }}>
-                    <ListItemIcon><NotificationsIcon fontSize="small" /></ListItemIcon>
+                    <ListItemIcon>
+                        <Badge badgeContent={unreadCount} color="error">
+                            <NotificationsIcon fontSize="small" />
+                        </Badge>
+                    </ListItemIcon>
                     <ListItemText>通知中心</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={handleToggleTheme}>
@@ -307,19 +443,15 @@ export const CustomAppBar = (props: AppBarProps) => {
                 </MenuItem>
             </Menu>
 
-            {/* 原有其他選單 */}
+            {/* --- 會計期間選單 --- */}
             <Menu anchorEl={periodMenuAnchor} open={Boolean(periodMenuAnchor)} onClose={() => setPeriodMenuAnchor(null)} PaperProps={{ sx: { mt: 1, maxHeight: 300, width: '120px', ...getScrollbarStyles(muiTheme) } }}>
                 {periodOptions.map((p) => <MenuItem key={p} selected={p === accountingPeriod} onClick={() => { setAccountingPeriod(p); setPeriodMenuAnchor(null); }}>{p}</MenuItem>)}
             </Menu>
 
+            {/* --- 使用者選單 --- */}
             <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)}>
                 <MenuItem>個人資料</MenuItem>
                 <MenuItem onClick={() => window.location.reload()}>登出</MenuItem>
-            </Menu>
-
-            <Menu anchorEl={notiAnchor} open={Boolean(notiAnchor)} onClose={() => setNotiAnchor(null)} PaperProps={{ sx: { width: 280, ...getScrollbarStyles(muiTheme) } }}>
-                <Typography sx={{ p: 1.5, fontWeight: 'bold', borderBottom: '1px solid #eee' }}>通知事項</Typography>
-                {dummyNotifications.map((n) => <MenuItem key={n.id} sx={{ whiteSpace: 'normal', py: 1 }}>{n.text}</MenuItem>)}
             </Menu>
         </AppBar>
     );
