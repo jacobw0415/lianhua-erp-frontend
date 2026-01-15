@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     useTheme,
     useRedirect,
@@ -44,6 +44,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
+import { useNotifications, type NotificationItem } from "@/hooks/useNotifications";
 
 import dayjs from "dayjs";
 import type { ElementType } from "react";
@@ -59,18 +60,11 @@ interface SearchResult {
     url: string;
 }
 
-interface NotificationItem {
-    userNotificationId: number;
-    title: string;
-    content: string;
-    targetType: string;
-    targetId: number;
-    createdAt: string;
-    read: boolean;
-}
-
 export const CustomAppBar = (props: AppBarProps) => {
     const { alwaysOn, ...restProps } = props;
+
+    // --- 🔔 通知 Hook ---
+    const { notifications, unreadCount, markAsRead } = useNotifications(5000);
 
     const muiTheme = useMuiTheme();
     const [, setRaTheme] = useTheme();
@@ -93,75 +87,22 @@ export const CustomAppBar = (props: AppBarProps) => {
     const [userAnchor, setUserAnchor] = useState<HTMLElement | null>(null);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
 
-    // 通知相關狀態
-    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-
-    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+    // 搜尋相關狀態
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState<readonly SearchResult[]>([]);
+    const [inputValue, setInputValue] = useState("");
+    const [loading, setLoading] = useState(false);
 
     /* =====================================================
- * 🔔 通知中心邏輯 - 優化即時性與已讀功能
- * ===================================================== */
-    const fetchNotifications = useCallback(async () => {
-        try {
-            const TEST_USER_ID = 1;
-            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-
-            // 並行獲取清單與計數，提高效率
-            const [listRes, countRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/notifications/unread?userId=${TEST_USER_ID}`),
-                fetch(`${API_BASE_URL}/notifications/unread-count?userId=${TEST_USER_ID}`)
-            ]);
-
-            const listJson = await listRes.json();
-            const countJson = await countRes.json();
-
-            if (listJson?.data) setNotifications(listJson.data);
-
-            const count = countJson.data?.unreadCount ?? countJson.data ?? 0;
-            setUnreadCount(Number(count));
-        } catch (err) {
-            console.error("❌ 自動刷新通知失敗:", err);
-        }
-    }, []);
-
-    // 🚀 改為 5 秒刷新一次，提升即時感
-    useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 5000);
-        return () => clearInterval(interval);
-    }, [fetchNotifications]);
-
-    // ✅ 點擊通知處理 - 加入樂觀更新
+     * 🔔 通知點擊處理 (使用封裝好的 Hook 方法)
+     * ===================================================== */
     const handleNotificationClick = async (noti: NotificationItem) => {
-        // 1. 樂觀更新：立即反應
         setNotiAnchor(null);
-        setUnreadCount(prev => Math.max(0, prev - 1));
-        setNotifications(prev => prev.filter(item => item.userNotificationId !== noti.userNotificationId));
-    
-        try {
-            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-            
-            // 2. 背景發送已讀請求
-            const response = await fetch(`${API_BASE_URL}/notifications/${noti.userNotificationId}/read`, {
-                method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json' // 建議補上
-                },
-                keepalive: true 
-            });
-    
-            if (!response.ok) throw new Error("後端更新失敗");
-    
-            // 3. 標記成功後執行跳轉 (如果 ID 存在)
-            if (noti.targetType === 'purchases' && noti.targetId) {
-                redirect(`/purchases/${noti.targetId}/show`);
-            }
-        } catch (err) {
-            console.error("❌ 已讀請求失敗:", err);
-            // 4. 失敗回滾：若 API 失敗，恢復正確的未讀狀態
-            fetchNotifications();
+        // markAsRead 內部已經包含樂觀更新邏輯
+        const success = await markAsRead(noti);
+        
+        if (success && noti.targetType === 'purchases' && noti.targetId) {
+            redirect(`/purchases/${noti.targetId}/show`);
         }
     };
 
@@ -175,11 +116,6 @@ export const CustomAppBar = (props: AppBarProps) => {
         }
         return options;
     }, []);
-
-    const [open, setOpen] = useState(false);
-    const [options, setOptions] = useState<readonly SearchResult[]>([]);
-    const [inputValue, setInputValue] = useState("");
-    const [loading, setLoading] = useState(false);
 
     const routeMetaMap = useMemo(() => {
         const map: Record<string, { title: string; icon: ElementType }> = {};
@@ -201,6 +137,7 @@ export const CustomAppBar = (props: AppBarProps) => {
     const ActiveIcon = activeMeta?.icon ?? CalendarMonthIcon;
     const activeTitle = activeMeta?.title ?? "Dashboard";
 
+    // 全局搜尋 Effect
     useEffect(() => {
         if (inputValue.trim() === "") {
             setOptions([]);

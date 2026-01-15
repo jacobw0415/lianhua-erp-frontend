@@ -9,6 +9,7 @@ import {
   Popover,
   Typography,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 
 import {
@@ -22,6 +23,8 @@ import AddIcon from "@mui/icons-material/Add";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import DownloadIcon from "@mui/icons-material/Download";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import SearchIcon from "@mui/icons-material/Search";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import { SearchChipsCompact } from "./SearchChipsCompact";
 import { formatFilters } from "@/utils/formatFilters";
@@ -63,9 +66,11 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [localInputValues, setLocalInputValues] =
-    useState<Record<string, string>>({});
+  const [localInputValues, setLocalInputValues] = useState<
+    Record<string, string>
+  >({});
   const [isComposing, setIsComposing] = useState(false);
 
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -78,7 +83,6 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   /** 🔍 搜尋 */
   const handleSearch = () => {
-    // 🛡️ 過濾掉空值、undefined、null、純空白字串
     const validFilters: Record<string, string> = {};
     for (const [key, value] of Object.entries(localInputValues)) {
       if (
@@ -99,7 +103,6 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
       return;
     }
 
-    // 只設定有效的篩選值，確保 chips 只顯示使用者實際輸入的內容
     setFilters(validFilters, null, false);
     (document.activeElement as HTMLElement)?.blur();
   };
@@ -132,11 +135,11 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         onCompositionEnd={(e) => {
           setIsComposing(false);
           const val = (e.target as HTMLInputElement).value;
-          setLocalInputValues(prev => ({ ...prev, [key]: val }));
+          setLocalInputValues((prev) => ({ ...prev, [key]: val }));
         }}
         onChange={(e) => {
           const val = e.target.value;
-          setLocalInputValues(prev => ({ ...prev, [key]: val }));
+          setLocalInputValues((prev) => ({ ...prev, [key]: val }));
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !isComposing) {
@@ -165,7 +168,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           "& .MuiSelect-select": { padding: "10px 14px" },
         }}
         onChange={(e) => {
-          setLocalInputValues(prev => ({ ...prev, [key]: e.target.value }));
+          setLocalInputValues((prev) => ({ ...prev, [key]: e.target.value }));
         }}
       >
         {f.choices?.map((c) => (
@@ -187,8 +190,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         label={f.label}
         value={value}
         onChange={(newValue) => {
-          // 保持 null 值的一致性，空字符串也轉換為 null
-          setLocalInputValues(prev => {
+          setLocalInputValues((prev) => {
             const next = { ...prev };
             if (newValue && newValue.trim()) {
               next[key] = newValue;
@@ -218,7 +220,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           value={date}
           onChange={(newValue) => {
             const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
-            setLocalInputValues(prev => ({ ...prev, [key]: formatted }));
+            setLocalInputValues((prev) => ({ ...prev, [key]: formatted }));
           }}
           slots={{ openPickerIcon: CalendarMonthIcon }}
           slotProps={{
@@ -258,7 +260,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             value={startDate}
             onChange={(newValue) => {
               const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
-              setLocalInputValues(prev => ({ ...prev, [startKey]: formatted }));
+              setLocalInputValues((prev) => ({
+                ...prev,
+                [startKey]: formatted,
+              }));
             }}
             slots={{ openPickerIcon: CalendarMonthIcon }}
             slotProps={{
@@ -279,7 +284,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             value={endDate}
             onChange={(newValue) => {
               const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
-              setLocalInputValues(prev => ({ ...prev, [endKey]: formatted }));
+              setLocalInputValues((prev) => ({ ...prev, [endKey]: formatted }));
             }}
             slots={{ openPickerIcon: CalendarMonthIcon }}
             slotProps={{
@@ -301,13 +306,20 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   /** 🔀 渲染對應欄位 */
   const renderFilter = (f: FilterOption) => {
     switch (f.type) {
-      case "text": return renderTextInput(f);
-      case "select": return renderSelectInput(f);
-      case "date": return renderDateInput(f);
-      case "dateRange": return renderDateRange(f);
-      case "month": return renderMonthPicker(f);
-      case "autocomplete": return renderSelectInput(f);
-      default: return null;
+      case "text":
+        return renderTextInput(f);
+      case "select":
+        return renderSelectInput(f);
+      case "date":
+        return renderDateInput(f);
+      case "dateRange":
+        return renderDateRange(f);
+      case "month":
+        return renderMonthPicker(f);
+      case "autocomplete":
+        return renderSelectInput(f);
+      default:
+        return null;
     }
   };
 
@@ -316,14 +328,11 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   const removeFilter = (key: string) => {
     const updated = { ...filterValues };
-
     delete updated[key];
     delete updated[key + "Start"];
     delete updated[key + "End"];
-
     setFilters(updated, null, false);
-
-    setLocalInputValues(prev => {
+    setLocalInputValues((prev) => {
       const next = { ...prev };
       delete next[key];
       delete next[key + "Start"];
@@ -337,98 +346,136 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     <>
       <Box
         sx={{
-          p: "6px 10px",
+          p: { xs: 1.5, md: "6px 10px" },
           mb: 1,
           borderRadius: 2,
           border: `1px solid ${theme.palette.action.disabled}`,
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", md: "center" },
           gap: 1.5,
           minHeight: "60px",
         }}
       >
-        {/* 左側快速搜尋 */}
-        <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
+        {/* 左側快速搜尋區塊 */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          flexWrap="wrap"
+          alignItems={{ xs: "stretch", sm: "center" }}
+          sx={{ flex: 1 }}
+        >
           {quickFilters.map((f, idx) => (
-            <Box key={idx} sx={{ minWidth: 220 }}>
+            <Box
+              key={idx}
+              sx={{
+                minWidth: { xs: "100%", sm: 220 },
+                flex: { xs: 1, sm: "none" },
+              }}
+            >
               {renderFilter(f)}
             </Box>
           ))}
 
-          {advancedFilters.length > 0 && (
-            <IconButton onClick={(e) => {
-              setAnchor(e.currentTarget);
-              (e.currentTarget as HTMLButtonElement).blur();
-            }}>
-              <FilterListIcon />
-            </IconButton>
-          )}
+          {/* 按鈕群組：進階(左)、搜尋(中)、清除(右) */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            {advancedFilters.length > 0 && (
+              <IconButton
+                onClick={(e) => {
+                  setAnchor(e.currentTarget);
+                  (e.currentTarget as HTMLButtonElement).blur();
+                }}
+              >
+                <FilterListIcon fontSize="small" />
+              </IconButton>
+            )}
 
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ height: 32 }}
-            onClick={handleSearch}
-          >
-            搜尋
-          </Button>
-
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            sx={{ height: 32 }}
-            onClick={clearFilters}
-          >
-            清除
-          </Button>
-        </Stack>
-
-        {/* 右側 Chips + 建立 + 匯出 */}
-        <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center">
-          <SearchChipsCompact chips={chips} onRemove={removeFilter} />
-
-          {enableCreate && !disableCreate && (
             <Button
               variant="contained"
-              color="success"
-              startIcon={<AddIcon />}
-              onClick={(e) => {
-                (e.currentTarget as HTMLButtonElement).blur();
-                redirect(createPath({ resource, type: "create" }));
-              }}
-              sx={{
-                height: 32,
-                minWidth: 90,
-                padding: "0 12px",
-                fontSize: "0.85rem",
-              }}
+              size="small"
+              startIcon={isMobile ? <SearchIcon /> : null}
+              sx={{ height: 32, flex: isMobile ? 1 : "none" }}
+              onClick={handleSearch}
             >
-              {createLabel}
+              搜尋
             </Button>
-          )}
 
-          {enableExport && onExport && (
             <Button
               variant="outlined"
-              startIcon={<DownloadIcon />}
-              sx={{ height: 32 }}
-              onClick={onExport}
+              color="error"
+              size="small"
+              startIcon={isMobile ? <DeleteOutlineIcon /> : null}
+              sx={{ height: 32, flex: isMobile ? 1 : "none" }}
+              onClick={clearFilters}
             >
-              匯出資料
+              清除
             </Button>
-          )}
+          </Stack>
         </Stack>
 
-        {/* 進階搜尋 Popover */}
+        {/* 右側 Chips + 功能按鈕區塊 */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          alignItems={{ xs: "stretch", sm: "center" }}
+          justifyContent="flex-end"
+        >
+          {chips.length > 0 && (
+            <Box sx={{ overflowX: "auto", py: { xs: 0.5, md: 0 } }}>
+              <SearchChipsCompact chips={chips} onRemove={removeFilter} />
+            </Box>
+          )}
+
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            {enableCreate && !disableCreate && (
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<AddIcon />}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLButtonElement).blur();
+                  redirect(createPath({ resource, type: "create" }));
+                }}
+                sx={{
+                  height: 32,
+                  minWidth: { xs: "auto", sm: 90 },
+                  flex: { xs: 1, sm: "none" },
+                  whiteSpace: "nowrap",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {createLabel}
+              </Button>
+            )}
+
+            {enableExport && onExport && (
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                sx={{
+                  height: 32,
+                  flex: { xs: 1, sm: "none" },
+                  whiteSpace: "nowrap",
+                }}
+                onClick={onExport}
+              >
+                匯出
+              </Button>
+            )}
+          </Stack>
+        </Stack>
+
         <Popover
           open={Boolean(anchor)}
           anchorEl={anchor}
           onClose={() => setAnchor(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          PaperProps={{
+            sx: { width: { xs: "90%", sm: 350 }, maxWidth: 350 },
+          }}
         >
-          <Box sx={{ width: 350, p: 3 }}>
+          <Box sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               更多篩選條件
             </Typography>
@@ -439,13 +486,14 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               ))}
             </Stack>
 
-            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
               <Button
                 fullWidth
                 variant="contained"
                 onClick={(e) => {
                   (e.currentTarget as HTMLButtonElement).blur();
                   handleSearch();
+                  setAnchor(null);
                 }}
               >
                 套用
@@ -454,7 +502,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 fullWidth
                 variant="outlined"
                 color="error"
-                onClick={clearFilters}
+                onClick={() => {
+                  clearFilters();
+                  setAnchor(null);
+                }}
               >
                 清除
               </Button>
@@ -463,7 +514,6 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         </Popover>
       </Box>
 
-      {/* 全域提示 */}
       <GlobalAlertDialog
         open={alert.open}
         message={alert.message}

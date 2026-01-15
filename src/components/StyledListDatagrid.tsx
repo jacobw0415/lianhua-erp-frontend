@@ -1,6 +1,6 @@
 import { Datagrid, type DatagridProps, useListContext } from "react-admin";
 import { styled } from "@mui/material/styles";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, type Theme } from "@mui/material"; 
 import { EmptyPlaceholder } from "@/components/common/EmptyPlaceholder";
 import { LoadingPlaceholder } from "@/components/common/LoadingPlaceholder";
 
@@ -8,31 +8,24 @@ interface StyledDatagridProps extends DatagridProps {
   maxHeight?: string;
 }
 
-/**
- * - 最終版不爆框 StyledDatagrid（統一高度 + 完整等比）
- * - row 高度一致（所有頁表完全統一）
- * - Chip、Switch、Icon、按鈕 全部垂直置中
- * - 固定欄位寬與操作欄不爆框
- * - 10 行剛好填滿
- */
 const StyledDatagridRoot = styled(Datagrid, {
   shouldForwardProp: (prop) => prop !== "maxHeight",
 })<StyledDatagridProps>(({ theme }) => ({
-  /* 讓 Datagrid 撐滿外層 Box */
   flex: 1,
   height: "100%",
-
   borderRadius: 12,
-  overflowX: "hidden",
-  overflowY: "hidden",
   position: "relative",
   maxWidth: "100%",
 
-  /** ▌表格基礎設定 */
+  /** ▌響應式橫向捲軸處理 */
+  overflowX: "auto", // 手機版必須開啟 auto 以支援滑動
+  overflowY: "auto",
+
   "& .RaDatagrid-table": {
-    tableLayout: "fixed",
+    // 桌機用 fixed (等比)，手機用 auto (內容撐開)
+    tableLayout: theme.breakpoints.down('md') ? "auto" : "fixed", 
     width: "100%",
-    maxWidth: "100%",
+    minWidth: theme.breakpoints.down('md') ? "600px" : "100%", // 手機版強制最小寬度避免擠壓
     borderCollapse: "collapse",
   },
 
@@ -44,127 +37,101 @@ const StyledDatagridRoot = styled(Datagrid, {
     backgroundColor: theme.palette.background.paper,
   },
 
-  /** ▌Header Cell */
   "& .MuiTableCell-head": {
     padding: "4px 8px",
     height: 32,
-    lineHeight: "32px",
     fontSize: "0.8rem",
     fontWeight: 600,
     whiteSpace: "nowrap",
+    // 響應式字體
+    [theme.breakpoints.down('sm')]: {
+      fontSize: "0.75rem",
+      padding: "4px 4px",
+    },
   },
 
-  /** ▌統一 Row 高度（關鍵） */
   "& .RaDatagrid-row": {
-    height: "47px",
-    maxHeight: "47px",
+    height: "45px",
+    // 手機版解除硬性高度限制，避免內容折行爆開
+    [theme.breakpoints.down('sm')]: {
+      height: "auto",
+      maxHeight: "none",
+    },
   },
 
-  /** ▌Body Cell */
   "& .MuiTableCell-body": {
     padding: "0 8px !important",
     height: "42px",
-    lineHeight: "42px",
-    maxHeight: "42px",
     fontSize: "0.8rem",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
     verticalAlign: "middle",
+    [theme.breakpoints.down('sm')]: {
+      padding: "8px 4px !important", // 手機版上下稍微放寬
+    },
   },
 
-  /** ▌統一內容置中 Wrapper（Chip / Switch / Button / Icon） */
-  "& .cell-centered": {
-    height: "100%",
-    width: "100%",
-    padding: 0,
-  },
-
-  /** ▌每個欄位平均寬，但保留操作欄例外 */
-  "& .RaDatagrid-row > td:not(.column-action)": {
-    width: "auto",
-    maxWidth: "1px",
-    verticalAlign: "middle",
-  },
-
-  /** ▌操作欄固定寬度（避免爆框） */
+  /** ▌操作欄響應式 */
   "& .column-action": {
     width: "150px",
     maxWidth: "150px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    flexShrink: 0,
+    [theme.breakpoints.down('sm')]: {
+      width: "100px", // 手機版縮窄操作區
+      position: "sticky", // 選配：讓操作欄固定在右側
+      right: 0,
+      backgroundColor: theme.palette.background.paper,
+      zIndex: 1,
+      boxShadow: "-2px 0 4px rgba(0,0,0,0.05)",
+    },
   },
 
-  /** ▌Scrollbar */
+  /** ▌欄位顯示隱藏控制 (響應式核心) */
+  // 例如：在手機版隱藏「備註」或「地址」以節省空間
+  [theme.breakpoints.down('md')]: {
+    "& .column-note, & .column-address": {
+      display: "none", 
+    },
+  },
+
+  /** ▌Scrollbar 樣式更新 */
   "&::-webkit-scrollbar": {
     width: "6px",
     height: "6px",
   },
   "&::-webkit-scrollbar-thumb": {
-    backgroundColor: "#666",
+    backgroundColor: theme.palette.mode === 'dark' ? "#555" : "#ccc",
     borderRadius: "4px",
   },
-  "&::-webkit-scrollbar-thumb:hover": {
-    backgroundColor: "#888",
-  },
 
-  "& .RaNumberField-root, & .MuiTableCell-root.MuiTableCell-alignRight": {
-    textAlign: "left",
-  },
-
-  /** ▌供應商名稱 / 進貨單號 */
-  "& td.column-supplierName, & th.column-supplierName, & th.column-purchaseNo": {
-    width: "120px",
-  },
-  "& th.column-purchaseNo": {
-    width: "150px",
-  },
-
-  /** ▌備註欄 */
-  "& td.column-note, & th.column-note": {
-    width: "140px",
-  },
-
-  /** ▌移除 IconButton focus */
-  "& .MuiButtonBase-root:focus, & .MuiButtonBase-root:focus-visible": {
-    outline: "none !important",
-    boxShadow: "none !important",
-  },
-
-   /** ▌客戶地址 */
-  "& th.column-address": {
-    width: "250px",
-  },
-  "th.column-orderNo": {
-    width: "150px",
+  /** ▌特定欄位寬度調整 */
+  "& td.column-supplierName, & th.column-supplierName": {
+    width: theme.breakpoints.down('sm') ? "100px" : "120px",
   },
 }));
 
-/**
- * ⭐ 外層框（固定 10 行高度）
- * 在載入時顯示「載入中...」效果，取代空畫面狀態
- */
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
-  const { rowClick = false, maxHeight = "520px", ...rest } = props;
+  const { rowClick = false, maxHeight = "400px", ...rest } = props;
   const { isLoading, data } = useListContext();
+  
+  // 偵測是否為手機，動態調整 maxHeight
+  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
 
   return (
     <Box
       sx={(theme) => ({
         width: "100%",
         flex: 1,
-        height: maxHeight,
+        // 手機版高度稍微縮小，或改為內容自適應
+        height: isMobile ? "400px" : maxHeight, 
         overflow: "hidden",
-        border: `1px solid ${theme.palette.action.disabled}`,
+        border: `1px solid ${theme.palette.divider}`,
         borderRadius: 2,
         display: "flex",
         flexDirection: "column",
         position: "relative",
       })}
     >
-      {/* 載入中狀態：顯示動態載入效果 */}
       {isLoading && (!data || data.length === 0) ? (
         <LoadingPlaceholder />
       ) : (
