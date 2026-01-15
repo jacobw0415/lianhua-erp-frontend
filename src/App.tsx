@@ -72,6 +72,8 @@ import { useColorMode } from "@/contexts/useColorMode";
 import { LianhuaLightTheme } from "@/theme/LianhuaTheme";
 import { LianhuaDarkTheme } from "@/theme/LianhuaTheme";
 
+import { NotificationList } from "@/pages/notifications/NotificationList";
+
 // ============================
 // 🚀 App 外層 Provider
 // ============================
@@ -201,6 +203,7 @@ const App = () => {
       />
       <Resource
         name="notifications"
+        list={NotificationList}
       />
       <Resource name="notifications/unread" /> 
       <Resource name="notifications/unread-count" />

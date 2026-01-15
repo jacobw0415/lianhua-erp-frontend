@@ -116,4 +116,12 @@ export const filterMapping: Record<string, Record<string, string>> = {
         status: "status",
     },
 
+    notifications: {
+        title: "title",
+        content: "content",
+        targetType: "targetType",
+        targetId: "targetId",
+        createdAt: "createdAt",
+        read: "read",
+    },
 };

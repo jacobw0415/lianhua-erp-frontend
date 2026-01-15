@@ -75,4 +75,9 @@ export const apiRules: Record<string, ApiRule> = {
     list: true,
     detail: true,
   },
+  notifications: {
+    search: true,
+    list: true,
+    detail: true,
+  },
 };

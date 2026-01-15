@@ -49,6 +49,7 @@ import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 import ShoppingCartCheckoutTwoToneIcon from '@mui/icons-material/ShoppingCartCheckoutTwoTone';
 import StoreMallDirectoryTwoToneIcon from '@mui/icons-material/StoreMallDirectoryTwoTone';
+import NotificationIcon from '@mui/icons-material/Notifications';
 
 // ---------------------
 // Menu Groups
@@ -122,6 +123,7 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon /> },
       { label: "角色與權限", to: "/roles", icon: <SecurityIcon /> },
+      { label: "通知中心", to: "/notifications", icon: <NotificationIcon /> },
     ],
   },
 ];

@@ -9,25 +9,40 @@ interface StyledDatagridProps extends DatagridProps {
 }
 
 const StyledDatagridRoot = styled(Datagrid, {
-  shouldForwardProp: (prop) => prop !== "maxHeight",
+  shouldForwardProp: (prop) => prop !== "maxHeight" && prop !== "rowClassName",
 })<StyledDatagridProps>(({ theme }) => ({
-  flex: 1,
+  // 核心修改：確保 Datagrid 內部容器能撐開
+  display: "flex",
+  flexDirection: "column",
+  flex: 1, 
   height: "100%",
   borderRadius: 12,
   position: "relative",
   maxWidth: "100%",
 
-  /** ▌響應式橫向捲軸處理 */
-  overflowX: "auto", // 手機版必須開啟 auto 以支援滑動
-  overflowY: "auto",
+  /** ▌內部元素佈局優化 */
+  "& .RaDatagrid-list": {
+    flex: 1, // 讓列表主體撐開
+    display: "flex",
+    flexDirection: "column",
+  },
 
   "& .RaDatagrid-table": {
-    // 桌機用 fixed (等比)，手機用 auto (內容撐開)
+    // 桌機用 fixed，手機用 auto
     tableLayout: theme.breakpoints.down('md') ? "auto" : "fixed", 
     width: "100%",
-    minWidth: theme.breakpoints.down('md') ? "600px" : "100%", // 手機版強制最小寬度避免擠壓
+    minWidth: theme.breakpoints.down('md') ? "600px" : "100%",
     borderCollapse: "collapse",
+    // 確保即使只有一筆資料，表格主體也會佔據空間
+    minHeight: "auto", 
   },
+
+  /** ▌未佔滿時的背景補全 */
+  backgroundColor: theme.palette.background.paper,
+
+  /** ▌響應式橫向捲軸處理 */
+  overflowX: "auto",
+  overflowY: "auto",
 
   /** ▌Sticky 表頭 */
   "& thead": {
@@ -43,7 +58,6 @@ const StyledDatagridRoot = styled(Datagrid, {
     fontSize: "0.8rem",
     fontWeight: 600,
     whiteSpace: "nowrap",
-    // 響應式字體
     [theme.breakpoints.down('sm')]: {
       fontSize: "0.75rem",
       padding: "4px 4px",
@@ -52,7 +66,6 @@ const StyledDatagridRoot = styled(Datagrid, {
 
   "& .RaDatagrid-row": {
     height: "45px",
-    // 手機版解除硬性高度限制，避免內容折行爆開
     [theme.breakpoints.down('sm')]: {
       height: "auto",
       maxHeight: "none",
@@ -68,7 +81,7 @@ const StyledDatagridRoot = styled(Datagrid, {
     textOverflow: "ellipsis",
     verticalAlign: "middle",
     [theme.breakpoints.down('sm')]: {
-      padding: "8px 4px !important", // 手機版上下稍微放寬
+      padding: "8px 4px !important",
     },
   },
 
@@ -77,20 +90,12 @@ const StyledDatagridRoot = styled(Datagrid, {
     width: "150px",
     maxWidth: "150px",
     [theme.breakpoints.down('sm')]: {
-      width: "100px", // 手機版縮窄操作區
-      position: "sticky", // 選配：讓操作欄固定在右側
+      width: "100px",
+      position: "sticky",
       right: 0,
       backgroundColor: theme.palette.background.paper,
       zIndex: 1,
       boxShadow: "-2px 0 4px rgba(0,0,0,0.05)",
-    },
-  },
-
-  /** ▌欄位顯示隱藏控制 (響應式核心) */
-  // 例如：在手機版隱藏「備註」或「地址」以節省空間
-  [theme.breakpoints.down('md')]: {
-    "& .column-note, & .column-address": {
-      display: "none", 
     },
   },
 
@@ -103,33 +108,29 @@ const StyledDatagridRoot = styled(Datagrid, {
     backgroundColor: theme.palette.mode === 'dark' ? "#555" : "#ccc",
     borderRadius: "4px",
   },
-
-  /** ▌特定欄位寬度調整 */
-  "& td.column-supplierName, & th.column-supplierName": {
-    width: theme.breakpoints.down('sm') ? "100px" : "120px",
-  },
 }));
 
 export const StyledListDatagrid = (props: StyledDatagridProps) => {
-  const { rowClick = false, maxHeight = "400px", ...rest } = props;
+  // 將預設高度提升，或使用 minHeight 確保視覺一致
+  const { rowClick = false, maxHeight = "500px", ...rest } = props;
   const { isLoading, data } = useListContext();
   
-  // 偵測是否為手機，動態調整 maxHeight
   const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
 
   return (
     <Box
       sx={(theme) => ({
         width: "100%",
-        flex: 1,
-        // 手機版高度稍微縮小，或改為內容自適應
+        // 核心修改：使用固定高度而非自適應，確保無論資料多寡，外框大小不變
         height: isMobile ? "400px" : maxHeight, 
+        // 也可以考慮使用 minHeight: "500px" 確保下限
+        display: "flex",
+        flexDirection: "column",
         overflow: "hidden",
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: 2,
-        display: "flex",
-        flexDirection: "column",
         position: "relative",
+        backgroundColor: theme.palette.background.paper,
       })}
     >
       {isLoading && (!data || data.length === 0) ? (
