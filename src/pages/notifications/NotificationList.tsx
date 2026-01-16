@@ -51,19 +51,7 @@ export const NotificationList = () => {
           },
         ]}
       >
-        <StyledListDatagrid
-          {...({
-            rowClassName: (record: any) => (record && !record.read ? "unread-row" : "read-row"),
-            sx: {
-              "& .unread-row": {
-                fontWeight: "bold",
-                backgroundColor: theme.palette.mode === 'dark'
-                  ? "rgba(255, 255, 255, 0.05) !important"
-                  : "rgba(0, 0, 0, 0.03) !important",
-              },
-            }
-          } as any)}
-        >
+        <StyledListDatagrid>
           <TextField source="targetType" label="類別" />
           <TextField source="title" label="主旨" />
           <TextField source="content" label="內容摘要" />

@@ -166,9 +166,13 @@ export const createDataProvider = ({
         "receivedDate",
         "expenseDate",
         "userNotificationId", 
-        "read",               
-        "targetType",        
+        "read",
         "title",
+        "targetType",        
+        "targetId",
+        "content",
+        "createdAt",
+        "read",
       ];
 
       if (field && allowedSortFields.includes(field)) {
