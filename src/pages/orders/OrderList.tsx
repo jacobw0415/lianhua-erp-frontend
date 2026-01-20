@@ -159,7 +159,6 @@ export const OrderList = () => {
             <CurrencyField source="totalAmount" label="訂單金額" />
             <DateField source="orderDate" label="訂單日期" />
             <DateField source="deliveryDate" label="交貨日期" />
-            <TextField source="note" label="備註" />
 
             <FunctionField
               label="明細"

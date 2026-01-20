@@ -17,26 +17,31 @@ import { CustomClearButton } from "@/components/forms/CustomClearButton";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { CurrencyField } from "@/components/money/CurrencyField";
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
-
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
 /* -------------------------------------------------------
- * 🔐 Purchase 型別定義（Edit 成功回傳 / Record 用）
+ * 🔐 Purchase 型別定義 (同步 Drawer 的欄位)
  * ------------------------------------------------------- */
 interface Purchase {
   id: number;
   purchaseNo: string;
-  supplierName?: string;     //  只讀顯示用
-  purchaseDate?: string;     //  只讀顯示用
+  supplierName?: string;
+  purchaseDate?: string;
   status?: "PENDING" | "PARTIAL" | "PAID";
   totalAmount?: number;
   paidAmount?: number;
   balance?: number;
+  // --- 同步 Drawer 的作廢欄位 ---
+  recordStatus?: "ACTIVE" | "VOIDED"; 
+  voidedAt?: string;
+  voidReason?: string;
+  // ----------------------------
   payments?: Array<{
     amount?: number;
     payDate?: string;
     method?: string;
     note?: string;
+    status?: string;
   }>;
 }
 
@@ -45,7 +50,6 @@ interface Purchase {
  * ================================ */
 export const PurchaseEdit: React.FC = () => {
   const theme = useTheme();
-  //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
@@ -92,30 +96,31 @@ const PurchaseFormFields: React.FC = () => {
   const record = useRecordContext<Purchase>();
   if (!record) return <Typography>載入中...</Typography>;
 
+  // 修改判斷邏輯：同步 Drawer 使用 recordStatus
+  const isVoided = record.recordStatus === "VOIDED";
+
   const payments = (record.payments || []).map((p, index) => ({
-    id: index + 1,       // 付款編號
+    id: index + 1,
     ...p,
   }));
 
-
   return (
     <Box>
-      {/* 🔹 Header Row：固定左右欄位，不因內容改變 */}
+      {/* 🔹 Header Row */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "430px 1fr",
           alignItems: "center",
+          mb: isVoided ? 2 : 1,
         }}
       >
-        {/* 左側標題（永遠穩定） */}
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           📦 編輯進貨付款資訊
         </Typography>
 
-        {/* 右側 Read-only Summary（固定寬度） */}
         <Box
-          sx={({
+          sx={{
             display: "flex",
             alignItems: "center",
             gap: 1,
@@ -123,20 +128,18 @@ const PurchaseFormFields: React.FC = () => {
             py: 0.25,
             fontSize: "0.8rem",
             overflow: "hidden",
-          })}
+          }}
         >
-          {/* PO No（不截） */}
           <Box component="span" sx={{ fontWeight: 600, flexShrink: 0 }}>
             {record.purchaseNo}
           </Box>
 
-          {/* 供應商（唯一可伸縮） */}
           {record.supplierName && (
             <Box
               component="span"
               sx={{
-                flex: 1,                  // ⭐ 吃剩餘空間
-                minWidth: 0,              // ⭐ ellipsis 必要
+                flex: 1,
+                minWidth: 0,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -147,42 +150,62 @@ const PurchaseFormFields: React.FC = () => {
             </Box>
           )}
 
-          {/* 日期（固定） */}
           {record.purchaseDate && (
             <Box component="span" sx={{ flexShrink: 0 }}>
               ｜{record.purchaseDate}
             </Box>
           )}
 
-          {/* 狀態 Chip（固定，不影響布局） */}
-          {record.status && (
-            <Chip
-              size="small"
-              label={record.status}
-              color={
-                record.status === "PAID"
-                  ? "success"
-                  : record.status === "PARTIAL"
-                    ? "warning"
-                    : "default"
-              }
-
-            />
-          )}
+          {/* 狀態 Chip：若作廢顯示紅色已作廢 */}
+          <Chip
+            size="small"
+            label={isVoided ? "已作廢" : record.status}
+            color={
+              isVoided ? "error" : 
+              record.status === "PAID" ? "success" : 
+              record.status === "PARTIAL" ? "warning" : "default"
+            }
+          />
         </Box>
       </Box>
 
-      {/* 🔹 主要內容區（高度完全不動） */}
+      {/* ⚠️ 作廢資訊顯示區 (欄位已同步為 voidedAt 與 voidReason) */}
+      {isVoided && (
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            borderRadius: "8px",
+            bgcolor: "rgba(33, 22, 10, 0.8)", 
+            border: "1px solid rgba(255, 165, 0, 0.4)",
+          }}
+        >
+          <Typography sx={{ color: "#FFB74D", fontWeight: "bold", mb: 0.5 }}>
+            ⚠️ 此進貨單已作廢，無法編輯
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#E0E0E0", opacity: 0.9, ml: 3.5 }}>
+            作廢時間：{record.voidedAt || "未紀錄"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#E0E0E0", opacity: 0.9, ml: 3.5 }}>
+            作廢原因：{record.voidReason || "無"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#E0E0E0", ml: 3.5, mt: 1 }}>
+            如需更正，請建立新紀錄。
+          </Typography>
+        </Box>
+      )}
+
+      {/* 🔹 主要內容區 */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "400px 1fr",
           gap: 4,
           alignItems: "start",
-          height: "370px",
+          minHeight: "370px",
         }}
       >
-        {/* 左側：歷史付款紀錄 + 狀態 */}
+        {/* 左側：歷史付款紀錄 */}
         <Box sx={{ width: "100%" }}>
           <GenericSubTablePanel
             title="💰 歷史付款紀錄"
@@ -211,37 +234,32 @@ const PurchaseFormFields: React.FC = () => {
                 mb: 1,
                 backgroundColor: "#9d99995b",
                 borderRadius: "5px",
+                px: 1,
               }}
             >
               💡 目前付款進度
             </Typography>
 
-            <Typography>
+            <Typography sx={{ px: 1 }}>
               💰 總金額：<b><CurrencyField source="totalAmount" /></b>
             </Typography>
-            <Typography>
+            <Typography sx={{ px: 1 }}>
               ✅ 已付款：<b><CurrencyField source="paidAmount" /></b>
             </Typography>
-            <Typography>
+            <Typography sx={{ px: 1 }}>
               💸 剩餘額：<b><CurrencyField source="balance" /></b>
             </Typography>
 
             <Alert
-              severity={
-                record.status === "PAID"
-                  ? "success"
-                  : record.status === "PARTIAL"
-                    ? "warning"
-                    : "info"
-              }
+              severity={isVoided ? "error" : record.status === "PAID" ? "success" : "info"}
               sx={{ mt: 0.3 }}
             >
-              狀態：{record.status}
+              狀態：{isVoided ? "已作廢" : record.status}
             </Alert>
           </Box>
         </Box>
 
-        {/* 右側：新增付款紀錄 */}
+        {/* 右側：新增區 (作廢時鎖定) */}
         <Box
           sx={(theme) => ({
             borderRadius: 2,
@@ -250,13 +268,27 @@ const PurchaseFormFields: React.FC = () => {
             border: `2px solid ${theme.palette.divider}`,
             p: 3,
             minHeight: "380px",
+            ...(isVoided && {
+              opacity: 0.5,
+              pointerEvents: "none",
+            }),
           })}
         >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            ➕ 新增付款紀錄
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {isVoided ? "🚫 單據已鎖定" : "➕ 新增付款紀錄"}
+            </Typography>
+          </Box>
 
-          <PaymentArrayInput />
+          {!isVoided ? (
+            <PaymentArrayInput />
+          ) : (
+            <Box sx={{ mt: 10, textAlign: 'center', py: 5 }}>
+              <Typography color="error" sx={{ fontWeight: 'bold' }}>
+                🔒 此單據已作廢，功能已鎖定
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
@@ -279,9 +311,7 @@ const PaymentArrayInput: React.FC = () => {
         getItemLabel={() => ""}
       >
         <NumberInput source="amount" label="金額" />
-
         <LhDateInput source="payDate" label="付款日期" />
-
         <SelectInput
           source="method"
           label="付款方式"
@@ -293,7 +323,6 @@ const PaymentArrayInput: React.FC = () => {
           ]}
           sx={{ mt: 2.5 }}
         />
-
         <CustomClearButton
           onClear={({ setValue }) => {
             setValue("newPayments.0.amount", "");

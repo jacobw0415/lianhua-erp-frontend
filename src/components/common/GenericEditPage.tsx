@@ -22,19 +22,20 @@ import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useApiErrorHandler } from "@/hooks/useApiErrorHandler";
 
 /* =======================================================
- *  Props
+ * 🔐 Props 定義
  * ======================================================= */
 interface GenericEditPageProps {
   resource: string;
   title: string;
   children: React.ReactNode;
   width?: string;
+  toolbar?: React.ReactElement; // 🚀 新增：支援外部傳入自定義 Toolbar
   onSuccess?: (data: unknown) => void;
   onDeleteSuccess?: (record: unknown) => void;
 }
 
 /* -------------------------------------------------------
- *  Custom Toolbar
+ * 🛠️ 預設 Custom Toolbar
  * ------------------------------------------------------- */
 const CustomToolbar = ({
   onBack,
@@ -78,13 +79,14 @@ const CustomToolbar = ({
 );
 
 /* =======================================================
- *  主組件
+ * ⭐ 主組件 GenericEditPage
  * ======================================================= */
 export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   resource,
   title,
   children,
   width = "700px",
+  toolbar, // 🚀 接收 toolbar
   onSuccess,
   onDeleteSuccess,
 }) => {
@@ -98,37 +100,24 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
   /* ---------------------------------------------------
-   *  提交（Update）
+   * 提交邏輯
    * --------------------------------------------------- */
   const handleSubmit = async (values: unknown) => {
     if (typeof values !== "object" || values === null) return;
 
     const { id, newPayments, ...rest } = values as Record<string, unknown>;
-
     const payload: Record<string, unknown> = { ...rest };
 
-    // 移除唯讀欄位
-    delete payload.supplierName;
-    delete payload.item;
-    delete payload.totalAmount;
-    delete payload.paidAmount;
-    delete payload.balance;
-    delete payload.status;
-    // 銷售紀錄唯讀欄位
-    delete payload.productName;
-    delete payload.amount;
+    // 移除唯讀欄位防止報錯
+    const readonlyFields = [
+      'supplierName', 'item', 'totalAmount', 'paidAmount', 
+      'balance', 'status', 'productName', 'amount'
+    ];
+    readonlyFields.forEach(field => delete payload[field]);
 
-    // payments 處理
     if (Array.isArray(newPayments)) {
       payload.payments = newPayments
-        .filter(
-          (p): p is { amount: unknown; payDate: unknown; method: unknown } =>
-            typeof p === "object" &&
-            p !== null &&
-            "amount" in p &&
-            "payDate" in p &&
-            "method" in p
-        )
+        .filter((p): p is any => typeof p === "object" && p !== null)
         .map((p) => ({
           amount: p.amount,
           payDate: p.payDate,
@@ -140,16 +129,8 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
       resource,
       { id, data: payload },
       {
-        onSuccess: async (result: unknown) => {
-          const newId =
-            typeof result === "object" &&
-            result !== null &&
-            "data" in result &&
-            typeof (result as { data?: unknown }).data === "object" &&
-            (result as { data?: { id?: unknown } }).data?.id
-              ? (result as { data: { id: unknown } }).data.id
-              : id;
-
+        onSuccess: async (result: any) => {
+          const newId = result?.data?.id || id;
           const latest = await dataProvider.getOne(resource, { id: newId });
 
           onSuccess?.(latest.data);
@@ -157,7 +138,6 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
             redirect("list", resource);
           }
         },
-
         onError: (error: unknown) => {
           handleApiError(error);
         },
@@ -190,6 +170,7 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
             <EditContent
               resource={resource}
               onSubmit={handleSubmit}
+              toolbar={toolbar} // 🚀 傳遞自定義 Toolbar
               openDeleteConfirm={openDeleteConfirm}
               setOpenDeleteConfirm={setOpenDeleteConfirm}
               onDeleteSuccess={onDeleteSuccess}
@@ -205,12 +186,13 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
 };
 
 /* =======================================================
- *  EditContent
+ * 📝 EditContent (處理分流)
  * ======================================================= */
 interface EditContentProps {
   children: React.ReactNode;
   resource: string;
   onSubmit: (values: unknown) => void;
+  toolbar?: React.ReactElement; // 🚀 新增
   openDeleteConfirm: boolean;
   setOpenDeleteConfirm: React.Dispatch<React.SetStateAction<boolean>>;
   onDeleteSuccess?: (record: unknown) => void;
@@ -221,6 +203,7 @@ const EditContent: React.FC<EditContentProps> = ({
   children,
   resource,
   onSubmit,
+  toolbar, // 🚀 接收
   openDeleteConfirm,
   setOpenDeleteConfirm,
   onDeleteSuccess,
@@ -232,9 +215,6 @@ const EditContent: React.FC<EditContentProps> = ({
 
   if (!record) return null;
 
-  /* ---------------------------------------------------
-   *  刪除
-   * --------------------------------------------------- */
   const handleDelete = async () => {
     try {
       await dataProvider.delete(resource, {
@@ -255,11 +235,14 @@ const EditContent: React.FC<EditContentProps> = ({
     <>
       <SimpleForm
         onSubmit={onSubmit}
+        // 🚀 關鍵：如果外部有傳入 toolbar 則用外部的，否則使用內建 CustomToolbar
         toolbar={
-          <CustomToolbar
-            onBack={() => redirect("list", resource)}
-            onDelete={() => setOpenDeleteConfirm(true)}
-          />
+          toolbar || (
+            <CustomToolbar
+              onBack={() => redirect("list", resource)}
+              onDelete={() => setOpenDeleteConfirm(true)}
+            />
+          )
         }
       >
         {children}
@@ -269,11 +252,10 @@ const EditContent: React.FC<EditContentProps> = ({
         open={openDeleteConfirm}
         title="確認刪除"
         description={`確定要刪除「${
-          (record as { purchaseNo?: string }).purchaseNo ??
-          (record as { orderNo?: string }).orderNo ??
-          (record as { name?: string }).name ??
-          (record as { title?: string }).title ??
-          (record as { code?: string }).code ??
+          (record as any).purchaseNo ??
+          (record as any).orderNo ??
+          (record as any).name ??
+          (record as any).title ??
           "這筆資料"
         }」嗎？`}
         severity="error"

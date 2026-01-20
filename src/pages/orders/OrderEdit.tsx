@@ -1,214 +1,241 @@
-import { useEffect } from "react";
-import { TextInput, useRecordContext } from "react-admin";
-import { Box, Typography, useTheme } from "@mui/material";
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import React, { useEffect } from "react";
+import {
+  TextInput,
+  useRecordContext,
+  useRedirect,
+  Toolbar,
+  SaveButton,
+} from "react-admin";
+import {
+  Box,
+  Typography,
+  Chip,
+  Alert,
+  useTheme,
+  Button,
+  Skeleton,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { CurrencyField } from "@/components/money/CurrencyField";
 
 /* =======================================================
- * 型別
+ * 📄 OrderEdit 主頁
  * ======================================================= */
-type OrderStatus = "PENDING" | "CONFIRMED" | "DELIVERED" | "CANCELLED";
-type PaymentStatus = "UNPAID" | "PARTIAL" | "PAID";
+export const OrderEdit = () => {
+  const theme = useTheme();
+  const { showAlert } = useGlobalAlert();
+  const redirect = useRedirect();
 
-interface Order {
-  id: number;
-  customerId: number;
-  customerName?: string;
-  orderStatus: OrderStatus;
-  orderDate?: string;
-  deliveryDate?: string;
-  note?: string;
-}
-
-/* =======================================================
- * 狀態中文對照
- * ======================================================= */
-const orderStatusMap: Record<OrderStatus, string> = {
-  PENDING: "尚未確認",
-  CONFIRMED: "已確認",
-  DELIVERED: "已交付",
-  CANCELLED: "已取消",
-};
-
-/* =======================================================
- * 權限判斷
- * ======================================================= */
-interface OrderRecord {
-  orderStatus: OrderStatus;
-  paymentStatus: PaymentStatus;
-}
-
-const useOrderEditPermission = () => {
-  const record = useRecordContext<OrderRecord>();
-  if (!record) return { editable: false };
-
-  const { orderStatus, paymentStatus } = record;
-
-  const editable =
-    orderStatus !== "DELIVERED" &&
-    orderStatus !== "CANCELLED" &&
-    paymentStatus !== "PAID";
-
-  return { editable, orderStatus };
-};
-
-/* =======================================================
- * Form
- * ======================================================= */
-const OrderEditForm = () => {
-  const { editable } = useOrderEditPermission();
-  const record = useRecordContext<Order>();
-
-  if (!record) {
-    return <Typography>載入中...</Typography>;
-  }
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
 
   return (
-    <Box sx={{ maxWidth: 860, mx: "auto" }}>
-      <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
-        ✏️ 編輯訂單
-      </Typography>
+    <GenericEditPage
+      resource="orders"
+      title="訂單管理"
+      width="970px"
+      toolbar={<OrderEditToolbar />}
+      onSuccess={(data: any) => {
+        showAlert({
+          title: "更新成功",
+          message: `已成功更新訂單「${data.orderNo}」`,
+          severity: "success",
+          hideCancel: true,
+        });
+        setTimeout(() => redirect("list", "orders"), 500);
+      }}
+    >
+      <OrderFormFields />
+    </GenericEditPage>
+  );
+};
 
-      {/* 客戶 / 狀態（唯讀盒子，對齊 SaleEdit 風格） */}
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        {/* 客戶 */}
-        <Box
-          flex={1}
-          sx={(theme) => ({
-            position: "relative",
-            border: `2px solid ${theme.palette.divider}`,
-            borderRadius: 1,
-            p: 2,
-            pt: 2.5,
-            bgcolor: theme.palette.background.paper,
-          })}
-        >
-          <Typography
-            variant="caption"
-            sx={(theme) => ({
-              position: "absolute",
-              top: -10,
-              left: 8,
-              bgcolor: theme.palette.background.paper,
-              px: 1,
-              fontWeight: 600,
-              color: "text.primary",
-            })}
-          >
-            客戶
-          </Typography>
-          <Typography
-            sx={{
-              mt: 1,
-              fontSize: "1rem",
-              color: "text.primary",
-            }}
-          >
-            {record.customerName || "-"}
-          </Typography>
-        </Box>
+/* =======================================================
+ * 📌 主內容區
+ * ======================================================= */
+const OrderFormFields = () => {
+  const record = useRecordContext();
 
-        {/* 訂單狀態 */}
-        <Box
-          flex={1}
-          sx={(theme) => ({
-            position: "relative",
-            border: `2px solid ${theme.palette.divider}`,
-            borderRadius: 1,
-            p: 2,
-            pt: 2.5,
-            bgcolor: theme.palette.background.paper,
-          })}
-        >
-          <Typography
-            variant="caption"
-            sx={(theme) => ({
-              position: "absolute",
-              top: -10,
-              left: 8,
-              bgcolor: theme.palette.background.paper,
-              px: 1,
-              fontWeight: 600,
-              color: "text.primary",
-            })}
-          >
-            訂單狀態
-          </Typography>
-          <Typography
-            sx={{
-              mt: 1,
-              fontSize: "1rem",
-              color: "text.primary",
-            }}
-          >
-            {orderStatusMap[record.orderStatus] || record.orderStatus}
-          </Typography>
-        </Box>
-      </Box>
+  // 若 record 尚未載入，顯示 Skeleton
+  if (!record) return <OrderSkeleton />;
 
-      {/* 日期 */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 1.5,
-          mb: 1.5,
+  // 直接使用後端同步過來的 recordStatus 欄位
+  const isVoided = record.recordStatus === "VOIDED";
+  // 如果已交付或已作廢，則鎖定編輯
+  const editable = record.orderStatus !== "DELIVERED" && !isVoided;
+
+  return (
+    <Box>
+      {/* 🔹 Header Row：Chips 移至左側，編號資訊移至右側 */}
+      <Box 
+        sx={{ 
+          display: "grid", 
+          gridTemplateColumns: "580px 1fr", // 擴大左側空間以容納 Chips
+          alignItems: "center", 
+          mb: 2 
         }}
       >
-        <LhDateInput
-          source="orderDate"
-          label="訂單日期"
-          fullWidth
-          size="small"
-          disabled={!editable}
-        />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mr: 1 }}>
+            🧾 編輯訂單資訊
+          </Typography>
+          
+          {/* 所有 Chips 移到這裡 */}
+          <Chip
+            size="small"
+            label={record.orderStatus}
+            color={record.orderStatus === "DELIVERED" ? "success" : "primary"}
+          />
+          <Chip size="small" label={record.paymentStatus} variant="outlined" />
+          {isVoided && <Chip size="small" label="已作廢" color="error" />}
+        </Box>
 
-        <LhDateInput
-          source="deliveryDate"
-          label="交貨日期"
-          fullWidth
-          size="small"
-          disabled={!editable}
-        />
+        {/* 右側僅保留編號與客戶名稱 */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1, fontSize: "0.9rem" }}>
+          <Box component="span" sx={{ fontWeight: 700 }}>{record.orderNo}</Box>
+          {record.customerName && (
+            <Box component="span" sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              ｜{record.customerName}
+            </Box>
+          )}
+        </Box>
       </Box>
 
-      {/* 備註 */}
-      <TextInput
-        source="note"
-        label="備註"
-        fullWidth
-        size="small"
-        multiline
-        minRows={2}
-        disabled={!editable}
-      />
+      {/* 🔹 主要內容佈局：左側彈性伸縮，右側固定寬度 (380px) */}
+      <Box 
+        sx={{ 
+          display: "grid", 
+          gridTemplateColumns: "1fr 380px", 
+          gap: 4, 
+          alignItems: "start" 
+        }}
+      >
+        
+        {/* 左側：基本資訊表單 (1fr 彈性寬度) */}
+        <Box 
+          sx={(t) => ({ 
+            border: `2px solid ${t.palette.divider}`, 
+            p: 3, 
+            borderRadius: 2,
+            bgcolor: t.palette.background.paper,
+            ...(!editable && { opacity: 0.6, pointerEvents: "none" })
+          })}
+        >
+          <Typography fontWeight={600} mb={2}>📅 訂單基本資訊</Typography>
+          <LhDateInput source="orderDate" label="訂單日期" fullWidth disabled={!editable} />
+          <Box sx={{ mt: 2 }} />
+          <LhDateInput source="deliveryDate" label="交貨日期" fullWidth disabled={!editable} />
+          <TextInput
+            source="note"
+            label="備註"
+            fullWidth
+            multiline
+            minRows={4}
+            disabled={!editable}
+            sx={{ mt: 2 }}
+          />
+        </Box>
 
-      {/* 提示 */}
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="caption" color="text.secondary">
-          📄 訂單明細不可編輯（請使用作廢 / 重建流程）
-        </Typography>
+        {/* 右側：狀態與作廢資訊 (固定 380px) */}
+        <Box>
+          <Box 
+            sx={(t) => ({ 
+              border: `2px solid ${t.palette.divider}`, 
+              p: 3, 
+              borderRadius: 2,
+              bgcolor: t.palette.background.paper,
+            })}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, backgroundColor: "#9d99995b", borderRadius: "5px", px: 1 }}>
+              💰 訂單財務摘要
+            </Typography>
+            
+            <Typography sx={{ px: 1, mb: 1 }}>
+              總金額：<b><CurrencyField source="totalAmount" /></b>
+            </Typography>
+            
+            <Alert 
+              severity={isVoided ? "error" : (record.paymentStatus === "PAID" ? "success" : "info")}
+              variant="outlined"
+              sx={{ mt: 2 }}
+            >
+              狀態：<strong>{isVoided ? "訂單已作廢" : record.paymentStatus}</strong>
+            </Alert>
+          </Box>
+
+          {/* ⚠️ 作廢資訊顯示區 */}
+          {isVoided && (
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                borderRadius: "8px",
+                bgcolor: "rgba(33, 22, 10, 0.9)", 
+                border: "1px solid rgba(255, 165, 0, 0.5)",
+              }}
+            >
+              <Typography sx={{ color: "#FFB74D", fontWeight: "bold", mb: 1 }}>
+                ⚠️ 此訂單已執行作廢程序
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#E0E0E0", opacity: 0.9, ml: 1 }}>
+                作廢時間：{record.voidedAt || "未紀錄"}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#E0E0E0", opacity: 0.9, ml: 1, mt: 0.5 }}>
+                作廢原因：{record.voidReason || "無"}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#FFB74D", ml: 1, mt: 1, fontSize: '0.75rem' }}>
+                * 系統已鎖定此單據，如需修改請重新建立。
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Box>
     </Box>
   );
 };
 
 /* =======================================================
- * Page
+ * 🛠 輔助元件：Toolbar & Skeleton
  * ======================================================= */
-export const OrderEdit = () => {
-  const theme = useTheme();
-  //  套用 Scrollbar 樣式 (Component Mount 時執行)
-  useEffect(() => {
-    const cleanup = applyBodyScrollbarStyles(theme);
-    return cleanup;
-  }, [theme]);
+const OrderEditToolbar = (props: any) => {
+  const record = useRecordContext();
+  const redirect = useRedirect();
   
+  const isVoided = record?.recordStatus === "VOIDED";
+  const editable = record && record.orderStatus !== "DELIVERED" && !isVoided;
+
   return (
-    <GenericEditPage resource="orders" title="編輯訂單">
-      <OrderEditForm />
-    </GenericEditPage>
+    <Toolbar {...props} sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Button
+        variant="outlined"
+        color="success"
+        startIcon={<ArrowBackIcon />}
+        onClick={() => redirect("list", "orders")}
+      >
+        返回列表
+      </Button>
+
+      {editable && <SaveButton label="儲存變更" color="success" />}
+    </Toolbar>
   );
 };
+
+const OrderSkeleton = () => (
+  <Box>
+    <Skeleton variant="text" width="40%" height={40} sx={{ mb: 3 }} />
+    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 4 }}>
+      <Skeleton variant="rounded" height={400} />
+      <Box>
+        <Skeleton variant="rounded" height={150} />
+        <Skeleton variant="rounded" height={140} sx={{ mt: 2 }} />
+      </Box>
+    </Box>
+  </Box>
+);

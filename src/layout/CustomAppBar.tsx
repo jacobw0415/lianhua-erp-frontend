@@ -44,7 +44,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
-import { useNotifications, type NotificationItem } from "@/hooks/useNotifications";
+import { useNotifications } from "@/hooks/useNotifications";
 
 import dayjs from "dayjs";
 import type { ElementType } from "react";
@@ -94,15 +94,35 @@ export const CustomAppBar = (props: AppBarProps) => {
     const [loading, setLoading] = useState(false);
 
     /* =====================================================
-     * 🔔 通知點擊處理 (使用封裝好的 Hook 方法)
+     * 🔔 通知點擊處理 (相容 DTO 雙欄位)
      * ===================================================== */
-    const handleNotificationClick = async (noti: NotificationItem) => {
+    const handleNotificationClick = async (noti: any) => {
         setNotiAnchor(null);
-        // markAsRead 內部已經包含樂觀更新邏輯
-        const success = await markAsRead(noti);
+
+        // 🚀 修改點：相容後端加了 @JsonProperty("id") 的情況
+        const actualId = noti.id || noti.userNotificationId;
+
+        if (!actualId) {
+            console.warn("⚠️ 該通知缺少識別 ID (id/userNotificationId):", noti);
+            return;
+        }
+
+        const success = await markAsRead({ ...noti, userNotificationId: actualId });
         
-        if (success && noti.targetType === 'purchases' && noti.targetId) {
-            redirect(`/purchases/${noti.targetId}/show`);
+        if (success && noti.targetId) {
+            switch (noti.targetType) {
+                case 'purchases':
+                    redirect(`/purchases/${noti.targetId}/show`);
+                    break;
+                case 'expenses':
+                    redirect(`/expenses/${noti.targetId}/show`);
+                    break;
+                case 'orders':
+                    redirect(`/orders/${noti.targetId}/show`);
+                    break;
+                default:
+                    console.info("💡 該通知類型無跳轉目標:", noti.targetType);
+            }
         }
     };
 
@@ -253,6 +273,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                         />
                     )}
                     renderOption={(props, option) => (
+                        // 🚀 修改點：確保 key 被正確傳遞以消除警告
                         <Box component="li" {...props} key={option.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderBottom: '1px solid rgba(0,0,0,0.05)', py: 1 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.title}</Typography>
                             <Typography variant="caption" color="text.secondary">
@@ -327,7 +348,8 @@ export const CustomAppBar = (props: AppBarProps) => {
                 ) : (
                     notifications.map((n) => (
                         <MenuItem
-                            key={n.userNotificationId}
+                            // 🚀 關鍵修正點：使用 id 或 userNotificationId 確保 Key 唯一
+                            key={n.id || n.userNotificationId}
                             onClick={() => handleNotificationClick(n)}
                             sx={{
                                 whiteSpace: 'normal',
@@ -339,7 +361,10 @@ export const CustomAppBar = (props: AppBarProps) => {
                         >
                             <Box sx={{ width: '100%' }}>
                                 <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>{n.title}</Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>{n.content}</Typography>
+                                {/* 🚀 優化點：支援 \n 換行 */}
+                                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4, whiteSpace: 'pre-line' }}>
+                                    {n.content}
+                                </Typography>
                                 <Typography variant="caption" color="grey.500" sx={{ mt: 1, display: 'block' }}>
                                     {dayjs(n.createdAt).format("YYYY-MM-DD HH:mm")}
                                 </Typography>
