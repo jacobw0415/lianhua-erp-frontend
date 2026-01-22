@@ -41,12 +41,12 @@ export const OrderCustomerEdit: React.FC = () => {
   return (
     <GenericEditPage
       resource="order_customers"
-      title="編輯客戶訂單"
+      title="編輯客戶"
       onSuccess={(data) => {
         const order = data as OrderCustomer;
 
         showAlert({
-          message: `客戶「${order.name}」訂單已成功更新`,
+          message: `客戶「${order.name}」資料已更新成功`,
           severity: "success",
           hideCancel: true,
         });
@@ -55,7 +55,7 @@ export const OrderCustomerEdit: React.FC = () => {
       }}
     >
       <Typography variant="h6" sx={{ mb: 2 }}>
-        🧾 編輯客戶訂單
+        🧾 編輯客戶資料
       </Typography>
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>

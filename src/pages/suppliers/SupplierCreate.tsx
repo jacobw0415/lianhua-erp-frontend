@@ -71,7 +71,12 @@ export const SupplierCreate: React.FC = () => {
             />
           </Box>
           <Box flex={1}>
-            <TextInput source="contact" label="聯絡人" fullWidth />
+            <TextInput 
+            source="contact" 
+            label="聯絡人" 
+            fullWidth
+            validate={[required()]}
+            />
           </Box>
         </Box>
 

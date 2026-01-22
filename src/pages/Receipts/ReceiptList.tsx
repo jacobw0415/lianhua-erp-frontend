@@ -1,4 +1,4 @@
-import { useEffect } from "react"; 
+import { useEffect } from "react";
 import {
   List,
   DateField,
@@ -6,20 +6,21 @@ import {
   TextField,
   useRedirect,
 } from "react-admin";
-import { Button, useTheme } from "@mui/material"; 
+import { Button, useTheme } from "@mui/material";
 
 import { StyledListDatagrid } from "@/components/StyledListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { ReceiptStatusField } from "@/components/common/ReceiptStatusField";
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { ReceiptActionColumns } from "./ReceiptActionColumns";
 
 /* ================================
- * 型別定義（對齊 ReceiptListResponseDto）
+ * 🔐 型別定義 (Exported 以供操作列引用)
  * ================================ */
-type ReceiptMethod = "CASH" | "TRANSFER" | "CARD" | "CHECK";
-type ReceiptStatus = "ACTIVE" | "VOIDED";
+export type ReceiptMethod = "CASH" | "TRANSFER" | "CARD" | "CHECK";
+export type ReceiptStatus = "ACTIVE" | "VOIDED";
 
 export interface ReceiptListRow {
   id: number;
@@ -34,12 +35,11 @@ export interface ReceiptListRow {
 }
 
 /* ================================
- * Component
+ * 🏛️ Component
  * ================================ */
 export const ReceiptList = () => {
-  const theme = useTheme(); // 取得當前主題
+  const theme = useTheme();
 
-  //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
@@ -52,6 +52,7 @@ export const ReceiptList = () => {
       empty={false}
       pagination={<CustomPaginationBar showPerPage />}
       perPage={10}
+      sort={{ field: "receivedDate", order: "DESC" }} // 建議加上預設排序
     >
       <StyledListWrapper
         quickFilters={[
@@ -106,7 +107,6 @@ export const ReceiptList = () => {
         }}
       >
         <StyledListDatagrid>
-
           {/* 訂單編號（可點擊） */}
           <FunctionField
             label="訂單編號"
@@ -115,16 +115,11 @@ export const ReceiptList = () => {
             )}
           />
 
-          {/* 客戶 */}
           <TextField source="customerName" label="客戶" />
-
-          {/* 收款日期 */}
           <DateField source="receivedDate" label="收款日期" />
-
-          {/* 收款金額 */}
           <CurrencyField source="amount" label="收款金額" />
 
-          {/* 收款方式 */}
+          {/* 收款方式映射 */}
           <FunctionField
             label="收款方式"
             render={(record: ReceiptListRow) => {
@@ -138,7 +133,7 @@ export const ReceiptList = () => {
             }}
           />
 
-          {/* 狀態 */}
+          {/* 狀態標籤 */}
           <FunctionField
             label="狀態"
             className="cell-centered"
@@ -147,11 +142,16 @@ export const ReceiptList = () => {
             )}
           />
 
-          {/* 會計期間 */}
           <TextField source="accountingPeriod" label="會計期間" />
-
-          {/* 備註 */}
           <TextField source="note" label="備註" />
+
+          {/* ⭐ 操作欄位（正確套用樣式與組件） */}
+          <FunctionField
+            label="操作"
+            source="action"
+            className="column-action"
+            render={() => <ReceiptActionColumns />}
+          />
         </StyledListDatagrid>
       </StyledListWrapper>
     </List>
@@ -159,7 +159,7 @@ export const ReceiptList = () => {
 };
 
 /* =========================================================
- * 訂單編號欄位（可點擊跳轉）
+ * 🔗 訂單編號欄位組件
  * ========================================================= */
 const ReceiptOrderNoField = ({ record }: { record: ReceiptListRow }) => {
   const redirect = useRedirect();

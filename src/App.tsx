@@ -31,6 +31,7 @@ import { OrderCustomerEdit } from "@/pages/orderCustomers/OrderCustomerEdit";
 
 import { ReceiptList } from "@/pages/receipts/ReceiptList";
 import { ReceiptCreate } from "@/pages/receipts/ReceiptCreate";
+import { ReceiptEdit } from "@/pages/receipts/ReceiptEdit";
 
 import { ProductCategoryList } from "@/pages/productCategories/ProductCategoryList";
 import { ProductCategoryCreate } from "@/pages/productCategories/ProductCategoryCreate";
@@ -162,6 +163,7 @@ const App = () => {
         name="receipts"
         list={ReceiptList}
         create={ReceiptCreate}
+        edit={ReceiptEdit}
       />
       <Resource
         name="expense_categories"
