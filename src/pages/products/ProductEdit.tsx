@@ -7,6 +7,7 @@ import {
   BooleanInput,
   required,
   useRedirect,
+  useRecordContext, // 取得目前編輯的資料
 } from "react-admin";
 import { Box, Typography } from "@mui/material";
 
@@ -15,28 +16,46 @@ import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useActiveProductCategories } from "@/hooks/useActiveProductCategories";
 
 /* -------------------------------------------------------
- * 🔐 Product 型別定義（Edit 成功回傳用）
+ * ⭐ 封裝過的商品分類選擇器（解決 Out-of-range 警告）
  * ------------------------------------------------------- */
-interface Product {
-  id: number;
-  name: string;
-  categoryId: number;
-  unitPrice: number;
-  active: boolean;
-}
+const CategorySelect = () => {
+  const { categories, loading } = useActiveProductCategories();
+  const record = useRecordContext(); // 取得正在編輯的 Product 資料
+  
+  // 核心邏輯：如果正在載入，且 record 裡有 category.id
+  // 我們手動建立一個包含該 ID 的虛擬選項，騙過 MUI 的檢查機制
+  const safeChoices = React.useMemo(() => {
+    if (loading && record?.category?.id) {
+      return [{ id: record.category.id, name: "載入中..." }];
+    }
+    return categories || [];
+  }, [categories, loading, record]);
+
+  return (
+    <SelectInput
+      source="category.id"
+      label="商品分類 *"
+      choices={safeChoices}
+      optionText="name"
+      optionValue="id"
+      isLoading={loading}
+      fullWidth
+      validate={[required()]}
+      sx={{ '& .MuiOutlinedInput-root': { minHeight: '56px' } }}
+    />
+  );
+};
 
 /* -------------------------------------------------------
- * ⭐ 編輯商品頁面（穩定版）
+ * ⭐ 編輯商品頁面
  * ------------------------------------------------------- */
 export const ProductEdit: React.FC = () => {
   const theme = useTheme();
-  //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
   
-  const { categories, loading } = useActiveProductCategories();
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 
@@ -44,15 +63,12 @@ export const ProductEdit: React.FC = () => {
     <GenericEditPage
       resource="products"
       title="編輯商品"
-      onSuccess={(data) => {
-        const product = data as Product;
-
+      onSuccess={(data: any) => {
         showAlert({
-          message: `商品「${product.name}」已成功更新`,
+          message: `商品「${data.name}」已成功更新`,
           severity: "success",
           hideCancel: true,
         });
-
         setTimeout(() => redirect("list", "products"));
       }}
     >
@@ -61,45 +77,24 @@ export const ProductEdit: React.FC = () => {
       </Typography>
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 商品分類 */}
         <Box mb={2}>
-          <SelectInput
-            source="category.id"
-            label="商品分類 *"
-            choices={categories}
-            optionText="name"
-            optionValue="id"
-            isLoading={loading}
-            fullWidth
-            validate={[required()]}
-          />
+          {/* 使用封裝後的選擇器 */}
+          <CategorySelect />
         </Box>
 
-        {/* 商品名稱 */}
         <Box mb={2}>
-          <TextInput
-            source="name"
-            label="商品名稱 *"
-            fullWidth
-            validate={[required()]}
-          />
+          <TextInput source="name" label="商品名稱 *" fullWidth validate={[required()]} />
         </Box>
 
-        {/* 啟用 + 單價（同一列，不變動位置） */}
         <Box display="flex" gap={2} mb={2} alignItems="center">
           <Box flex={1}>
-            <BooleanInput
-              source="active"
-              label="啟用"
-            />
+            <BooleanInput source="active" label="啟用" />
           </Box>
-
           <Box flex={1}>
             <TextInput
               source="unitPrice"
               label="單價 *"
               type="number"
-              inputProps={{ min: 0 }}
               fullWidth
               validate={[required()]}
             />

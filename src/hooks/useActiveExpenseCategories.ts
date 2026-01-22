@@ -31,27 +31,46 @@ export const useActiveExpenseCategories = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. 防止組件卸載後仍更新狀態，避免記憶體洩漏警告
+    let isMounted = true;
+    setLoading(true);
+
     dataProvider
       .get("expense_categories/active")
       .then((res: ActiveExpenseCategoryResponse) => {
-        const categoriesData = res.data ?? [];
-        
-        // 調試：檢查 isSalary 欄位
-        if (import.meta.env.DEV && categoriesData.length > 0) {
-          console.log("📋 費用類別資料：", categoriesData);
-          const salaryCats = categoriesData.filter((cat) => cat.isSalary === true);
+        if (!isMounted) return;
+
+        // 2. 資料正規化 (Normalization)：
+        // 強制確保 ID 為數字，並確保 boolean 欄位正確（處理 MySQL 可能回傳 1/0 的情況）
+        const normalizedData = (res.data ?? []).map((cat) => ({
+          ...cat,
+          id: Number(cat.id),
+          isSalary: Boolean(cat.isSalary),
+          active: Boolean(cat.active),
+        }));
+
+        // 調試：檢查 isSalary 欄位 (僅在開發模式)
+        if (import.meta.env.DEV && normalizedData.length > 0) {
+          console.log("📋 費用類別資料：", normalizedData);
+          const salaryCats = normalizedData.filter((cat) => cat.isSalary === true);
           console.log("💰 薪資類別數量：", salaryCats.length, salaryCats);
         }
-        
-        setCategories(categoriesData);
+
+        setCategories(normalizedData);
       })
       .catch((error: unknown) => {
         console.error("❌ 載入啟用費用分類失敗：", error);
-        setCategories([]); // fallback
+        if (isMounted) setCategories([]); 
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    // 3. 清理函數
+    return () => {
+      isMounted = false;
+    };
   }, [dataProvider]);
 
   return { categories, loading };
 };
-
