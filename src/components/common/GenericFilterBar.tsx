@@ -53,6 +53,7 @@ interface GenericFilterBarProps {
   createLabel?: string;
   onExport?: () => void;
   disableCreate?: boolean;
+  disableButton?: boolean;
 }
 
 export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
@@ -62,6 +63,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   enableExport = false,
   createLabel = "新增資料",
   disableCreate = false,
+  disableButton = false,
   onExport,
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
@@ -380,7 +382,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
           {/* 按鈕群組：進階(左)、搜尋(中)、清除(右) */}
           <Stack direction="row" spacing={1} alignItems="center">
-            {advancedFilters.length > 0 && (
+            {advancedFilters.length > 0 && !disableButton && (
               <IconButton
                 onClick={(e) => {
                   setAnchor(e.currentTarget);
@@ -391,26 +393,30 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               </IconButton>
             )}
 
-            <Button
-              variant="contained"
+            {!disableButton && (  // 搜尋按鈕
+              <Button
+                variant="contained"
               size="small"
               startIcon={isMobile ? <SearchIcon /> : null}
               sx={{ height: 32, flex: isMobile ? 1 : "none" }}
               onClick={handleSearch}
-            >
-              搜尋
-            </Button>
+                >
+                搜尋
+              </Button>
+            )}
 
-            <Button
-              variant="outlined"
+            {!disableButton && (  // 清除按鈕
+              <Button
+                variant="outlined"
               color="error"
               size="small"
               startIcon={isMobile ? <DeleteOutlineIcon /> : null}
               sx={{ height: 32, flex: isMobile ? 1 : "none" }}
               onClick={clearFilters}
-            >
-              清除
-            </Button>
+                >
+                清除
+              </Button>
+            )}
           </Stack>
         </Stack>
 

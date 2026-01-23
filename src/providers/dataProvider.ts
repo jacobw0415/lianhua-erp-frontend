@@ -166,12 +166,7 @@ export const createDataProvider = ({
         "receivedDate",
         "expenseDate",
         "userNotificationId", 
-        "read",
-        "title",
-        "targetType",        
-        "targetId",
-        "content",
-        "createdAt",
+        "notification.createdAt",
         "read",
       ];
 

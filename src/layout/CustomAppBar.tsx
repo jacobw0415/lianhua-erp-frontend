@@ -213,7 +213,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                 <Box sx={{ display: "flex", alignItems: "center", mr: { xs: 0.5, sm: 2 }, ml: { xs: 0, sm: 1 }, flexShrink: 0 }}>
                     <ActiveIcon sx={{ color: "#fff", mr: { xs: 0.5, sm: 1 }, fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
                     {!isMobile && (
-                        <Typography sx={{ backgroundColor: "rgba(255,255,255,0.22)", px: 1.5, py: 0.5, borderRadius: "8px", fontWeight: 600, fontSize: "0.95rem", color: "#fff", whiteSpace: "nowrap" }}>
+                        <Typography sx={{ backgroundColor: "rgba(255,255,255,0.22)", px: 1.5, py: 0.6, borderRadius: 1.5, fontWeight: 600, fontSize: "0.95rem", color: "#fff", whiteSpace: "nowrap" }}>
                             {activeTitle}
                         </Typography>
                     )}
@@ -256,7 +256,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                                 "& .MuiInputBase-root": {
                                     height: "34px", fontSize: "0.85rem", color: "white",
                                     backgroundColor: "rgba(255,255,255,0.22)",
-                                    borderRadius: "8px", padding: "0 8px !important",
+                                    borderRadius: 1.5, padding: "0 8px !important",
                                     "& fieldset": { border: "none" },
                                     "&:hover": { backgroundColor: "rgba(255,255,255,0.3)" },
                                     "&.Mui-focused": { backgroundColor: "rgba(255,255,255,0.35)" }

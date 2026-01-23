@@ -33,12 +33,14 @@ export const StyledListWrapper: React.FC<{
   popoverWidth?: number | string;
   exportConfig?: ExportConfig;
   disableCreate?: boolean;
+  disableButton?: boolean;
 }> = ({
   children,
   quickFilters = [],
   advancedFilters = [],
   exportConfig,
   disableCreate = false,
+  disableButton = false,
 }) => {
   const { datagridData, hasNoResult, resetFilters } = useListEnhancer();
   const raListCtx = useListContext();
@@ -114,6 +116,7 @@ export const StyledListWrapper: React.FC<{
         enableExport={!!exportConfig}
         onExport={exportConfig ? handleExport : undefined}
         disableCreate={disableCreate}
+        disableButton={disableButton}
       />
 
       <ListContextProvider value={enhancedListContext as ListControllerResult<any>}>
