@@ -36,6 +36,10 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
 import { DashboardLayout } from '@/layout/DashboardLayout';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import HistoryIcon from '@mui/icons-material/History';
+import EventNoteIcon from '@mui/icons-material/EventNote';
 
 /* =========================================================
  * Helper Functions
@@ -414,6 +418,17 @@ const Dashboard = () => {
         <StatCard icon={<AccountBalanceWalletIcon sx={{ fontSize: 36 }} />} title="應收帳款 (AR)" value={<>NT$ <PlainCurrency value={stats.accountsReceivable} /></>} iconColor="#0288D1" loading={loading} onClick={() => window.location.href = '#/ar'} />
         <StatCard icon={<MoneyOffIcon sx={{ fontSize: 36 }} />} title="應付帳款 (AP)" value={<>NT$ <PlainCurrency value={stats.accountsPayable} /></>} iconColor="#D32F2F" loading={loading} onClick={() => window.location.href = '#/ap'} />
         <StatCard icon={<AssessmentIcon sx={{ fontSize: 36 }} />} title="淨利率" value={<Box sx={{ color: stats.profitMargin >= 0 ? 'success.main' : 'error.main' }}>{formatPercent(stats.profitMargin)}</Box>} iconColor={stats.profitMargin >= 0 ? '#4CAF50' : '#F44336'} loading={loading} />
+      </Box>
+
+      {/* ✨ 新增：現金流量 ✨ */}
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <PaymentsIcon color="success" /> 現金流量
+      </Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
+        <StatCard icon={<ReceiptIcon sx={{ fontSize: 36 }} />} title="今日訂單收款" value={<>NT$ <PlainCurrency value={stats.todayReceiptsTotal} /></>} iconColor="#2E7D32" loading={loading} onClick={() => window.location.href = '#/receipts'} />
+        <StatCard icon={<AccountBalanceIcon sx={{ fontSize: 36 }} />} title="今日總入金" value={<>NT$ <PlainCurrency value={stats.todayTotalInflow} /></>} iconColor="#00838F" loading={loading} />
+        <StatCard icon={<HistoryIcon sx={{ fontSize: 36 }} />} title="本月累計實收" value={<>NT$ <PlainCurrency value={stats.monthTotalReceived} /></>} iconColor="#1565C0" loading={loading} />
+        <StatCard icon={<EventNoteIcon sx={{ fontSize: 36 }} />} title="即期應收 (7D)" value={<>NT$ <PlainCurrency value={stats.upcomingAR} /></>} iconColor="#C62828" loading={loading} onClick={() => window.location.href = '#/ar'} />
       </Box>
 
       {/* 業務概況 */}
