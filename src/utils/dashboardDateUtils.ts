@@ -35,6 +35,13 @@ export function getRecentDaysRange(days: number): { start: string; end: string }
   return { start, end };
 }
 
+/** 現金流預測預設區間：基準日（今日）～ 往後 N 天，用於 API baseDate + days */
+export function getDefaultCashflowRange(daysAhead: number = 30): { start: string; end: string } {
+  const start = dayjs().format('YYYY-MM-DD');
+  const end = dayjs().add(daysAhead, 'day').format('YYYY-MM-DD');
+  return { start, end };
+}
+
 /** 本季：當季第一天～今日 */
 export function getThisQuarterRange(): { start: string; end: string } {
   const start = dayjs().startOf('quarter').format('YYYY-MM-DD');

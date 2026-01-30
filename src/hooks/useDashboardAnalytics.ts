@@ -4,9 +4,11 @@
  */
 import { useDataProvider } from 'react-admin';
 import { useQuery } from '@tanstack/react-query';
-import { getDefaultPeriod, getDefaultDateRange, clampRangeToMaxDays } from '@/utils/dashboardDateUtils';
+import dayjs from 'dayjs';
+import { getDefaultPeriod, getDefaultDateRange, clampRangeToMaxDays, getDefaultCashflowRange } from '@/utils/dashboardDateUtils';
 
 const ANALYTICS_BASE = 'dashboard/analytics';
+const CASHFLOW_MAX_DAYS = 365;
 
 /** [圖表 1] 損益平衡分析 */
 export interface BreakEvenPoint {
@@ -53,15 +55,13 @@ export interface CustomerRetentionPoint {
   status: string;
 }
 
-export type ForecastDaysOption = 15 | 30 | 60;
-
 export interface DashboardAnalyticsFilters {
   /** 損益平衡：YYYY-MM，預設當月 */
   breakEvenPeriod?: string;
   /** Pareto + 採購集中度：共用區間，預設本月1號～今日 */
   dateRange?: { start: string; end: string };
-  /** 現金流預測：15/30/60 天，預設 30 */
-  forecastDays?: ForecastDaysOption;
+  /** 現金流預測：開始日與結束日（API 使用 baseDate=start, days=區間天數） */
+  cashflowDateRange?: { start: string; end: string };
   /** 客戶回購：篩選「沉睡風險」時為 true（例如 >60 天未下單） */
   retentionDormantOnly?: boolean;
 }
@@ -77,7 +77,17 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
   const startRaw = dateRange?.start ?? defaultRange.start;
   const endRaw = dateRange?.end ?? defaultRange.end;
   const { start: rangeStart, end: rangeEnd } = clampRangeToMaxDays(startRaw, endRaw);
-  const forecastDays = filters.forecastDays ?? 30;
+  const cashflowRangeRaw = filters.cashflowDateRange ?? getDefaultCashflowRange(30);
+  const rawStart = cashflowRangeRaw.start;
+  const rawEnd = cashflowRangeRaw.end;
+  const { start: cashflowStart, end: cashflowEnd } = clampRangeToMaxDays(rawStart, rawEnd);
+  const startD = dayjs(cashflowStart);
+  const endD = dayjs(cashflowEnd);
+  const cashflowBaseDate = startD.isAfter(endD) ? cashflowEnd : cashflowStart;
+  const cashflowDays = Math.min(
+    CASHFLOW_MAX_DAYS,
+    Math.max(1, Math.abs(endD.diff(startD, 'day')) + 1)
+  );
 
   // 1. 損益平衡分析（正規化後端可能回傳的 snake_case，並依日期排序）
   const breakEvenQuery = useQuery({
@@ -116,12 +126,12 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     staleTime: 2 * 60 * 1000,
   });
 
-  // 3. 未來現金流預測
+  // 3. 未來現金流預測（API：baseDate 基準日 + days 天數）
   const cashflowForecastQuery = useQuery({
-    queryKey: [ANALYTICS_BASE, 'cashflow-forecast', forecastDays],
+    queryKey: [ANALYTICS_BASE, 'cashflow-forecast', cashflowBaseDate, cashflowDays],
     queryFn: async () => {
       const res = await dataProvider.get(`${ANALYTICS_BASE}/cashflow-forecast`, {
-        meta: { days: forecastDays },
+        meta: { baseDate: cashflowBaseDate, days: cashflowDays },
       });
       return (Array.isArray(res.data) ? res.data : []) as CashflowForecastPoint[];
     },

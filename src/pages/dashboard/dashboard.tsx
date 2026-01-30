@@ -16,6 +16,8 @@ import {
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 import {
   XAxis,
@@ -55,15 +57,14 @@ import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
 import dayjs from 'dayjs';
+import 'dayjs/locale/zh-tw';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
-import {
-  useDashboardAnalytics,
-  type ForecastDaysOption,
-} from '@/hooks/useDashboardAnalytics';
+import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 import {
   getDefaultPeriod,
   getDefaultDateRange,
   clampRangeToMaxDays,
+  getDefaultCashflowRange,
 } from '@/utils/dashboardDateUtils';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
 import { DashboardLayout } from '@/layout/DashboardLayout';
@@ -149,13 +150,20 @@ const Dashboard = () => {
 
   // 核心圖表分析：篩選狀態（商品 Pareto / 供應商集中度 固定預設區間，無日期選擇器）
   const [breakEvenPeriod, setBreakEvenPeriod] = useState(() => getDefaultPeriod());
-  const [forecastDays, setForecastDays] = useState<ForecastDaysOption>(30);
   const [retentionDormantOnly, setRetentionDormantOnly] = useState(false);
+  const defaultCashflow = useMemo(() => getDefaultCashflowRange(30), []);
+  const [cashflowStart, setCashflowStart] = useState(defaultCashflow.start);
+  const [cashflowEnd, setCashflowEnd] = useState(defaultCashflow.end);
 
   const clampedRange = useMemo(() => {
     const def = getDefaultDateRange();
     return clampRangeToMaxDays(def.start, def.end);
   }, []);
+
+  const clampedCashflowRange = useMemo(
+    () => clampRangeToMaxDays(cashflowStart, cashflowEnd),
+    [cashflowStart, cashflowEnd]
+  );
 
   const {
     breakEven,
@@ -173,7 +181,7 @@ const Dashboard = () => {
   } = useDashboardAnalytics({
     breakEvenPeriod,
     dateRange: clampedRange,
-    forecastDays,
+    cashflowDateRange: clampedCashflowRange,
     retentionDormantOnly,
   });
 
@@ -482,17 +490,42 @@ const Dashboard = () => {
             </Box>
           </Paper>
 
-          {/* [3] 現金流預測（Quick Switch：未來15/30(預設)/60天，固定從今日起算；API days: 30 預設） */}
+          {/* [3] 現金流預測（API：baseDate 基準日 + days 天數；兩組日期選擇器） */}
           <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TimelineIcon fontSize="small" /> 現金流預測
               </Typography>
-              <ToggleButtonGroup size="small" value={forecastDays} exclusive onChange={(_, v) => v != null && setForecastDays(v)} sx={{ height: 28 }}>
-                <ToggleButton value={15}>未來15天</ToggleButton>
-                <ToggleButton value={30}>未來30天</ToggleButton>
-                <ToggleButton value={60}>未來60天</ToggleButton>
-              </ToggleButtonGroup>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="zh-tw">
+                  <DatePicker
+                    label="基準日"
+                    value={cashflowStart ? dayjs(cashflowStart) : null}
+                    onChange={(v) => setCashflowStart(v ? v.format('YYYY-MM-DD') : defaultCashflow.start)}
+                    format="YYYY-MM-DD"
+                    maxDate={cashflowEnd ? dayjs(cashflowEnd) : undefined}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        sx: { width: 160 },
+                      },
+                    }}
+                  />
+                  <DatePicker
+                    label="結束日"
+                    value={cashflowEnd ? dayjs(cashflowEnd) : null}
+                    onChange={(v) => setCashflowEnd(v ? v.format('YYYY-MM-DD') : defaultCashflow.end)}
+                    format="YYYY-MM-DD"
+                    minDate={cashflowStart ? dayjs(cashflowStart) : undefined}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        sx: { width: 160 },
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Box>
             </Box>
             <Box sx={{ height: 260 }}>
               {isCashflowForecastLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : cashflowForecast.length > 0 ? (
