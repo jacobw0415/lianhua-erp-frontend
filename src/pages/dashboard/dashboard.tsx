@@ -1,48 +1,32 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
-  CardContent,
   Typography,
   Box,
-  Button,
   Chip,
   Snackbar,
   useTheme,
   Alert as MuiAlert,
-  Stack,
-  Divider,
   Paper,
   Skeleton,
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
-  Avatar,
-  Select,
-  MenuItem,
-  FormControl,
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
 
-// 📊 導入 Recharts 組件
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Legend,
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
-  Area,
-  ComposedChart,
+  ReferenceLine,
 } from 'recharts';
 
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -60,33 +44,47 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import WarningIcon from '@mui/icons-material/Warning';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import NightlightIcon from '@mui/icons-material/Nightlight';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import HistoryIcon from '@mui/icons-material/History';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
+import dayjs from 'dayjs';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import {
+  useDashboardAnalytics,
+  type ForecastDaysOption,
+} from '@/hooks/useDashboardAnalytics';
+import {
+  getDefaultPeriod,
+  getDefaultDateRange,
+  clampRangeToMaxDays,
+} from '@/utils/dashboardDateUtils';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
 import { DashboardLayout } from '@/layout/DashboardLayout';
 import { ChartEmptyState } from '@/components/dashboard/ChartEmptyState';
 import { ChartContainer } from '@/components/dashboard/ChartContainer';
-import { CHART_COLORS, PIE_COLORS } from '@/constants/chartColors';
+import { WelcomeCard, getGreeting } from '@/components/dashboard/WelcomeCard';
+import { QuickActionsSection } from '@/components/dashboard/QuickActionsSection';
+import { StatSection } from '@/components/dashboard/sections/StatSection';
+import { TrendAndExpenseSection } from '@/components/dashboard/sections/TrendAndExpenseSection';
+import { AdvancedAnalysisSection } from '@/components/dashboard/sections/AdvancedAnalysisSection';
+import { BreakEvenSection } from '@/components/dashboard/sections/BreakEvenSection';
+import { ProfitLossSection } from '@/components/dashboard/sections/ProfitLossSection';
+import { TaskListSection } from '@/components/dashboard/sections/TaskListSection';
+import { CHART_COLORS, STAT_CARD_COLORS } from '@/constants/chartColors';
 import { formatPercent, formatAxisCurrency } from '@/utils/dashboardFormatters';
+import { getChartTooltipContentStyle } from '@/utils/chartTooltipStyle';
+import { DESIGN_PARETO_REF } from '@/constants/designSystem';
 
 /* =========================================================
  * Helper Functions & Constants
  * ========================================================= */
-const getGreeting = (): { text: string; icon: React.ReactNode } => {
-  const hour = new Date().getHours();
-  if (hour < 12) return { text: '早安', icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: '#FFD54F' }} /> };
-  if (hour < 18) return { text: '午安', icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: '#FFA726' }} /> };
-  return { text: '晚安', icon: <NightlightIcon sx={{ fontSize: 24, ml: 1, color: '#90CAF9' }} /> };
-};
-
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -111,57 +109,6 @@ const ORDER_STAGE_LABELS: Record<string, string> = {
   PAID: '已收款',
   CANCELLED: '已取消',
 };
-
-/* =========================================================
- * StatCard Component (React.memo)
- * ========================================================= */
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  title: string;
-  value: React.ReactNode;
-  iconColor: string;
-  loading?: boolean;
-  onClick?: () => void;
-}
-
-const StatCard = React.memo<StatCardProps>(({ icon, title, value, iconColor, loading, onClick }) => (
-  <Card
-    sx={{
-      borderRadius: 2,
-      boxShadow: 2,
-      height: '100%',
-      cursor: onClick ? 'pointer' : 'default',
-      transition: onClick ? 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out' : 'none',
-      '&:hover': onClick ? { boxShadow: 6, transform: 'translateY(-4px)' } : {},
-    }}
-    onClick={onClick}
-  >
-    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box
-          sx={{
-            color: iconColor,
-            bgcolor: `${iconColor}15`,
-            p: 1.5,
-            borderRadius: '50%',
-            mr: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {icon}
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>{title}</Typography>
-          {loading ? <Skeleton variant="text" width="80%" height={40} /> : <Typography variant="h5" sx={{ fontWeight: 700 }}>{value}</Typography>}
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-));
-StatCard.displayName = 'StatCard';
 
 /* =========================================================
  * Dashboard Component
@@ -199,6 +146,53 @@ const Dashboard = () => {
     months: profitLossMonths,
     days: 30,
   });
+
+  // 核心圖表分析：篩選狀態（商品 Pareto / 供應商集中度 固定預設區間，無日期選擇器）
+  const [breakEvenPeriod, setBreakEvenPeriod] = useState(() => getDefaultPeriod());
+  const [forecastDays, setForecastDays] = useState<ForecastDaysOption>(30);
+  const [retentionDormantOnly, setRetentionDormantOnly] = useState(false);
+
+  const clampedRange = useMemo(() => {
+    const def = getDefaultDateRange();
+    return clampRangeToMaxDays(def.start, def.end);
+  }, []);
+
+  const {
+    breakEven,
+    liquidity,
+    cashflowForecast,
+    productPareto,
+    supplierConcentration,
+    customerRetention,
+    isBreakEvenLoading,
+    isLiquidityLoading,
+    isCashflowForecastLoading,
+    isProductParetoLoading,
+    isSupplierConcentrationLoading,
+    isCustomerRetentionLoading,
+  } = useDashboardAnalytics({
+    breakEvenPeriod,
+    dateRange: clampedRange,
+    forecastDays,
+    retentionDormantOnly,
+  });
+
+  const breakEvenMonthOptions = useMemo(() => {
+    const list: { value: string; label: string }[] = [];
+    const now = dayjs();
+    for (let i = 0; i < 12; i++) {
+      const d = now.subtract(i, 'month');
+      list.push({ value: d.format('YYYY-MM'), label: d.format('YYYY年MM月') });
+    }
+    return list;
+  }, []);
+
+  const customerRetentionDisplay = useMemo(() => {
+    if (!customerRetention.length) return [];
+    if (!retentionDormantOnly) return customerRetention;
+    return customerRetention.filter((r) => r.daysSinceLastOrder > 60 || (r.status && String(r.status).includes('沉睡')));
+  }, [customerRetention, retentionDormantOnly]);
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshSuccess, setRefreshSuccess] = useState(false);
@@ -297,8 +291,19 @@ const Dashboard = () => {
   const greetingData = useMemo(() => getGreeting(), []);
   const formattedDateStr = useMemo(() => formatDate(currentTime), [currentTime]);
   const formattedTimeStr = useMemo(() => formatTime(currentTime), [currentTime]);
+  /** 流動性指標：規格「截至今日 YYYY-MM-DD HH:mm」 */
+  const liquiditySnapshotLabel = useMemo(() => dayjs(currentTime).format('YYYY-MM-DD HH:mm'), [currentTime]);
+  /** 損益平衡：是否為當月或未來月（不可選未來月，下個月按鈕需禁用） */
+  const isBreakEvenCurrentOrFutureMonth = useMemo(() => breakEvenPeriod >= dayjs().format('YYYY-MM'), [breakEvenPeriod]);
 
   // 訂單漏斗：加上階段中文標籤與顯示用 dataKey
+  /** Pareto 圖 80% 門檻（累計金額達總額 80% 的參考線） */
+  const pareto80Threshold = useMemo(() => {
+    if (!productPareto?.length) return 0;
+    const total = productPareto.reduce((sum, d) => sum + Number(d.totalAmount ?? 0), 0);
+    return total * 0.8;
+  }, [productPareto]);
+
   const orderFunnelDisplay = useMemo(() => {
     if (!orderFunnel?.length) return [];
     const dataKey = orderFunnelMetric === 'amount' ? 'totalAmount' : 'orderCount';
@@ -321,564 +326,298 @@ const Dashboard = () => {
     return list;
   }, [stats]);
 
-  const quickActions = [
-    { label: '新增銷售', icon: <PointOfSaleIcon />, path: '/sales/create', color: 'primary' },
-    { label: '新增進貨', icon: <Inventory2Icon />, path: '/purchases/create', color: 'secondary' },
-    { label: '新增支出', icon: <MoneyOffIcon />, path: '/expenses/create', color: 'error' },
-    { label: '新增訂單', icon: <ShoppingBagIcon />, path: '/orders/create', color: 'info' },
-  ];
+  const quickActions = useMemo(
+    () => [
+      { label: '新增銷售', icon: <PointOfSaleIcon />, path: '/sales/create', color: 'primary' as const },
+      { label: '新增進貨', icon: <Inventory2Icon />, path: '/purchases/create', color: 'secondary' as const },
+      { label: '新增支出', icon: <MoneyOffIcon />, path: '/expenses/create', color: 'error' as const },
+      { label: '新增訂單', icon: <ShoppingBagIcon />, path: '/orders/create', color: 'info' as const },
+    ],
+    []
+  );
 
-  // 歡迎卡片背景
-  const cardBackground = isDark
-    ? 'rgba(27, 94, 32, 0.85)'
-    : 'rgba(46, 125, 50, 0.85)';
+  const alertsForQuick = useMemo(
+    () => alerts.map((a) => ({ label: a.label, path: a.path, color: a.color })),
+    [alerts]
+  );
 
   return (
-    <DashboardLayout
-      isLoading={loading}
-      hasData={!!stats}
-    >
+    <DashboardLayout isLoading={loading} hasData={!!stats}>
+      <WelcomeCard
+        isDark={isDark}
+        greeting={greetingData}
+        formattedDate={formattedDateStr}
+        formattedTime={formattedTimeStr}
+        lastUpdated={lastUpdated != null ? (typeof lastUpdated === 'string' ? lastUpdated : (lastUpdated as Date).toISOString()) : undefined}
+      />
 
-      {/* 歡迎區 */}
-      <Card
-        sx={{
-          backdropFilter: 'blur(10px)',
-          background: cardBackground,
-          color: '#fff',
-          borderRadius: 3,
-          boxShadow: isDark ? 4 : 3,
-          mb: 3,
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'box-shadow 0.3s ease-in-out',
-        }}
-      >
-        <Box sx={{ position: 'absolute', bottom: -30, left: -30, width: 150, height: 150, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.08)', opacity: 0.2 }} />
-        <CardContent sx={{ position: 'relative', zIndex: 1, p: 3, '&:last-child': { pb: 3 } }}>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Typography variant="h4" sx={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', letterSpacing: 0.5 }}>
-                  {greetingData.text}
-                </Typography>
-                <Box sx={{ ml: 1.5 }}>{greetingData.icon}</Box>
-              </Box>
-              <Typography variant="h6" sx={{ opacity: 0.95, fontWeight: 500 }}>
-                歡迎使用蓮華 ERP 管理系統
+      <QuickActionsSection
+        quickActions={quickActions}
+        alerts={alertsForQuick}
+      />
+
+      <StatSection
+        title="營運概況"
+        titleIcon={<AssessmentIcon color="primary" />}
+        items={[
+          { icon: <MonetizationOnIcon sx={{ fontSize: 36 }} />, title: '今日營收', value: <>NT$ <PlainCurrency value={stats.todaySalesTotal} /></>, iconColor: STAT_CARD_COLORS.revenue, loading, onClick: () => navigate('/sales') },
+          { icon: <ShoppingCartIcon sx={{ fontSize: 36 }} />, title: '本月採購', value: <>NT$ <PlainCurrency value={stats.monthPurchaseTotal} /></>, iconColor: STAT_CARD_COLORS.purchase, loading, onClick: () => navigate('/purchases') },
+          { icon: <ReceiptIcon sx={{ fontSize: 36 }} />, title: '本月費用', value: <>NT$ <PlainCurrency value={stats.monthExpenseTotal} /></>, iconColor: STAT_CARD_COLORS.expense, loading, onClick: () => navigate('/expenses') },
+          { icon: <TrendingUpIcon sx={{ fontSize: 36 }} />, title: '本月淨利', value: <Box sx={{ color: stats.netProfit >= 0 ? 'success.main' : 'error.main' }}>NT$ <PlainCurrency value={stats.netProfit} /></Box>, iconColor: stats.netProfit >= 0 ? STAT_CARD_COLORS.revenue : STAT_CARD_COLORS.ap, loading },
+        ]}
+      />
+
+      <StatSection
+        title="財務指標"
+        titleIcon={<AccountBalanceWalletIcon color="info" />}
+        items={[
+          { icon: <MonetizationOnIcon sx={{ fontSize: 36 }} />, title: '本月銷售總額', value: <>NT$ <PlainCurrency value={stats.monthSalesTotal} /></>, iconColor: STAT_CARD_COLORS.netProfit, loading, onClick: () => navigate('/sales') },
+          { icon: <AccountBalanceWalletIcon sx={{ fontSize: 36 }} />, title: '應收帳款 (AR)', value: <>NT$ <PlainCurrency value={stats.accountsReceivable} /></>, iconColor: STAT_CARD_COLORS.ar, loading, onClick: () => navigate('/ar') },
+          { icon: <MoneyOffIcon sx={{ fontSize: 36 }} />, title: '應付帳款 (AP)', value: <>NT$ <PlainCurrency value={stats.accountsPayable} /></>, iconColor: STAT_CARD_COLORS.ap, loading, onClick: () => navigate('/ap') },
+          { icon: <AssessmentIcon sx={{ fontSize: 36 }} />, title: '淨利率', value: <Box sx={{ color: stats.profitMargin >= 0 ? 'success.main' : 'error.main' }}>{formatPercent(stats.profitMargin)}</Box>, iconColor: stats.profitMargin >= 0 ? STAT_CARD_COLORS.revenue : STAT_CARD_COLORS.ap, loading },
+        ]}
+      />
+
+      <StatSection
+        title="現金流量"
+        titleIcon={<PaymentsIcon color="success" />}
+        items={[
+          { icon: <ReceiptIcon sx={{ fontSize: 36 }} />, title: '今日訂單收款', value: <>NT$ <PlainCurrency value={stats.todayReceiptsTotal} /></>, iconColor: STAT_CARD_COLORS.revenue, loading, onClick: () => navigate('/receipts') },
+          { icon: <AccountBalanceIcon sx={{ fontSize: 36 }} />, title: '今日總入金', value: <>NT$ <PlainCurrency value={stats.todayTotalInflow} /></>, iconColor: STAT_CARD_COLORS.info, loading },
+          { icon: <HistoryIcon sx={{ fontSize: 36 }} />, title: '本月累計實收', value: <>NT$ <PlainCurrency value={stats.monthTotalReceived} /></>, iconColor: STAT_CARD_COLORS.netProfit, loading },
+          { icon: <EventNoteIcon sx={{ fontSize: 36 }} />, title: '即期應收 (7D)', value: <>NT$ <PlainCurrency value={stats.upcomingAR} /></>, iconColor: STAT_CARD_COLORS.ap, loading, onClick: () => navigate('/ar') },
+        ]}
+      />
+
+      <StatSection
+        title="業務概況"
+        titleIcon={<StoreIcon color="secondary" />}
+        items={[
+          { icon: <StoreIcon sx={{ fontSize: 36 }} />, title: '合作供應商', value: stats.supplierCount, iconColor: STAT_CARD_COLORS.secondary, loading, onClick: () => navigate('/suppliers') },
+          { icon: <PeopleIcon sx={{ fontSize: 36 }} />, title: '累計客戶', value: stats.customerCount, iconColor: STAT_CARD_COLORS.secondary, loading, onClick: () => navigate('/order_customers') },
+          { icon: <InventoryIcon sx={{ fontSize: 36 }} />, title: '上架商品', value: stats.activeProductCount, iconColor: STAT_CARD_COLORS.info, loading, onClick: () => navigate('/products') },
+          { icon: <PendingActionsIcon sx={{ fontSize: 36 }} />, title: '未結案訂單', value: stats.pendingOrderCount, iconColor: STAT_CARD_COLORS.warning, loading, onClick: () => navigate('/orders') },
+        ]}
+      />
+
+      <TrendAndExpenseSection
+        isDark={isDark}
+        trendDays={trendDays}
+        setTrendDays={setTrendDays}
+        safeTrendData={safeTrendData}
+        isTrendsLoading={isTrendsLoading}
+        hasMounted={hasMounted}
+        expenses={expenses}
+        isExpensesLoading={isExpensesLoading}
+      />
+
+      <AdvancedAnalysisSection
+        isDark={isDark}
+        hasMounted={hasMounted}
+        accountsAging={accountsAging}
+        isAccountsAgingLoading={isAccountsAgingLoading}
+        orderFunnelDisplay={orderFunnelDisplay}
+        orderFunnelMetric={orderFunnelMetric}
+        setOrderFunnelMetric={setOrderFunnelMetric}
+        isOrderFunnelLoading={isOrderFunnelLoading}
+      />
+
+      {/* 損益平衡分析 | 損益四線走勢 倆倆並排 */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 4 }}>
+        <BreakEvenSection
+          isDark={isDark}
+          breakEvenPeriod={breakEvenPeriod}
+          setBreakEvenPeriod={setBreakEvenPeriod}
+          breakEvenMonthOptions={breakEvenMonthOptions}
+          isBreakEvenCurrentOrFutureMonth={isBreakEvenCurrentOrFutureMonth}
+          breakEven={breakEven}
+          isBreakEvenLoading={isBreakEvenLoading}
+        />
+        <ProfitLossSection
+          isDark={isDark}
+          hasMounted={hasMounted}
+          profitLossMonths={profitLossMonths}
+          setProfitLossMonths={setProfitLossMonths}
+          profitLossTrend={profitLossTrend}
+          isProfitLossTrendLoading={isProfitLossTrendLoading}
+        />
+      </Box>
+
+      {/* 📊 核心圖表分析 */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AssessmentIcon color="primary" /> 核心圖表分析
+        </Typography>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+          {/* [1] 流動性指標（Read-only 快照，無選擇器；規格：截至今日 YYYY-MM-DD HH:mm） */}
+          <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <WaterDropIcon fontSize="small" /> 流動性指標
               </Typography>
-              {lastUpdated && (
-                <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 1 }}>
-                  數據最後更新：{new Date(lastUpdated).toLocaleTimeString()}
-                </Typography>
-              )}
+              <Typography variant="caption" color="text.secondary">截至今日 {liquiditySnapshotLabel}</Typography>
             </Box>
-            <Box sx={{ textAlign: { xs: 'left', md: 'right' }, mt: { xs: 3, md: 0 }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 1.5 }}>
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: 700, fontFamily: 'monospace', letterSpacing: 2, lineHeight: 1 }}>
-                  {formattedTimeStr}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1, mt: 1, opacity: 0.9 }}>
-                  <CalendarTodayIcon sx={{ fontSize: 18 }} />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                    {formattedDateStr}
-                  </Typography>
+            <Box sx={{ height: 260 }}>
+              {isLiquidityLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : liquidity ? (
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, pt: 1 }}>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="caption" color="text.secondary">流動資產</Typography>
+                    <Typography variant="h6">NT$ <PlainCurrency value={liquidity.liquidAssets} /></Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="caption" color="text.secondary">流動負債</Typography>
+                    <Typography variant="h6">NT$ <PlainCurrency value={liquidity.liquidLiabilities} /></Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="caption" color="text.secondary">速動資產</Typography>
+                    <Typography variant="h6">NT$ <PlainCurrency value={liquidity.quickAssets} /></Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="caption" color="text.secondary">流動比率</Typography>
+                    <Typography variant="h6" color="primary">{Number(liquidity.currentRatio).toFixed(2)}</Typography>
+                  </Card>
                 </Box>
-              </Box>
-
+              ) : <ChartEmptyState message="暫無數據" height={260} />}
             </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          </Paper>
 
-      {/* 快捷功能與提醒 */}
-      <Box sx={{ mb: 3 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            borderRadius: 2,
-            bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-            border: '1px solid',
-            borderColor: 'divider',
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            gap: 2
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <PendingActionsIcon fontSize="small" /> 快速操作
-            </Typography>
-            <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
-              {quickActions.map((action) => (
-                <Button
-                  key={action.label}
-                  variant="outlined"
-                  size="small"
-                  color={action.color as any}
-                  startIcon={action.icon}
-                  onClick={() => navigate(action.path)}
-                  sx={{ whiteSpace: 'nowrap', borderRadius: 4 }}
-                >
-                  {action.label}
-                </Button>
-              ))}
-            </Stack>
-          </Box>
-          <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
-          {alerts.length > 0 && (
+          {/* [3] 現金流預測（Quick Switch：未來15/30(預設)/60天，固定從今日起算；API days: 30 預設） */}
+          <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <TimelineIcon fontSize="small" /> 現金流預測
+              </Typography>
+              <ToggleButtonGroup size="small" value={forecastDays} exclusive onChange={(_, v) => v != null && setForecastDays(v)} sx={{ height: 28 }}>
+                <ToggleButton value={15}>未來15天</ToggleButton>
+                <ToggleButton value={30}>未來30天</ToggleButton>
+                <ToggleButton value={60}>未來60天</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+            <Box sx={{ height: 260 }}>
+              {isCashflowForecastLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : cashflowForecast.length > 0 ? (
+                <ChartContainer height={260}>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={cashflowForecast} margin={{ top: 8, right: 16, left: 0, bottom: 24 }} barGap={4}>
+                      <CartesianGrid strokeDasharray="5 5" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => dayjs(v).format('MM/DD')} />
+                      <YAxis tickFormatter={(v) => formatAxisCurrency(v)} tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={getChartTooltipContentStyle(theme)} />
+                      <Legend />
+                      <Bar dataKey="inflow" name="流入" fill={CHART_COLORS.cashflowInflow} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={600} />
+                      <Bar dataKey="outflow" name="流出" fill={CHART_COLORS.expense} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={600} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              ) : <ChartEmptyState message="暫無數據" height={260} />}
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* 商品獲利 Pareto | 供應商集中度 倆倆並排 */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mt: 3, mb: 2 }}>
+          {/* [4] 商品獲利 Pareto（固定本月1號～今日，無日期選擇器；API start, end） */}
+          <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <PieChartIcon fontSize="small" /> 商品獲利 Pareto
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{clampedRange.start} ~ {clampedRange.end}</Typography>
+            </Box>
+            <Box sx={{ height: 260 }}>
+              {isProductParetoLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : productPareto.length > 0 ? (
+                <ChartContainer height={260}>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={productPareto} layout="vertical" margin={{ top: 8, right: 60, left: 8, bottom: 8 }} barCategoryGap="10%">
+                      <CartesianGrid strokeDasharray="5 5" horizontal={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'} />
+                      <XAxis type="number" tickFormatter={(v) => formatAxisCurrency(v)} tick={{ fontSize: 10 }} />
+                      <YAxis dataKey="productName" type="category" width={80} tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={getChartTooltipContentStyle(theme)} formatter={(value: unknown) => [typeof value === 'number' ? `NT$ ${Number(value).toLocaleString()}` : '', '']} />
+                      {pareto80Threshold > 0 && (
+                        <ReferenceLine x={pareto80Threshold} stroke={DESIGN_PARETO_REF} strokeDasharray="5 5" strokeWidth={2} label={{ value: '80%', position: 'insideTopRight', fill: theme.palette.text.secondary, fontSize: 11 }} />
+                      )}
+                      <Bar dataKey="totalAmount" name="金額" fill={CHART_COLORS.netProfit} radius={[0, 6, 6, 0]} maxBarSize={24} isAnimationActive animationDuration={400} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              ) : <ChartEmptyState message="暫無數據" height={260} />}
+            </Box>
+          </Paper>
+
+          {/* [5] 供應商集中度（固定本月1號～今日，無日期選擇器；API start, end） */}
+          <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <BusinessCenterIcon fontSize="small" /> 供應商集中度
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{clampedRange.start} ~ {clampedRange.end}</Typography>
+            </Box>
+            <Box sx={{ height: 260 }}>
+              {isSupplierConcentrationLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : supplierConcentration.length > 0 ? (
+                <ChartContainer height={260}>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={supplierConcentration} layout="vertical" margin={{ top: 8, right: 60, left: 8, bottom: 8 }} barCategoryGap="12%">
+                      <CartesianGrid strokeDasharray="1 4" horizontal={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'} />
+                      <XAxis type="number" tickFormatter={(v) => formatAxisCurrency(v)} tick={{ fontSize: 10 }} />
+                      <YAxis dataKey="supplierName" type="category" width={80} tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={getChartTooltipContentStyle(theme)} formatter={(value: unknown) => [typeof value === 'number' ? `NT$ ${Number(value).toLocaleString()}` : '', '']} />
+                      <Bar dataKey="totalAmount" name="採購金額" fill={CHART_COLORS.secondary} radius={[0, 8, 8, 0]} maxBarSize={26} isAnimationActive animationDuration={400} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              ) : <ChartEmptyState message="暫無數據" height={260} />}
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* 客戶回購分析 | 待辦任務與即期預警 倆倆並排 */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 4, alignItems: 'stretch' }}>
+          <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <PersonSearchIcon fontSize="small" /> 客戶回購分析
+              </Typography>
+              <ToggleButtonGroup size="small" value={retentionDormantOnly ? 'dormant' : 'all'} exclusive onChange={(_, v) => setRetentionDormantOnly(v === 'dormant')} sx={{ height: 28 }}>
+                <ToggleButton value="all">全部</ToggleButton>
+                <ToggleButton value="dormant">沉睡風險 (&gt;60天)</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
             <Box
               sx={{
-                minWidth: { md: 300 },
-                maxWidth: { md: 400 },
-                maxHeight: 100,
+                flexGrow: 1,
+                minHeight: 260,
+                maxHeight: 260,
                 overflowY: 'auto',
                 pr: 1,
-                '&::-webkit-scrollbar': { width: '4px' },
+                '&::-webkit-scrollbar': { width: 4 },
                 '&::-webkit-scrollbar-track': { background: 'transparent' },
                 '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
-                  borderRadius: '4px'
-                }
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                  borderRadius: 4,
+                },
               }}
             >
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                sx={{
-                  position: 'sticky',
-                  top: 0,
-                  bgcolor: isDark ? '#2A2A2A' : '#F5F5F5',
-                  zIndex: 1,
-                  mb: 1,
-                  pb: 0.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <WarningIcon fontSize="small" color="warning" /> 待辦事項
-              </Typography>
-
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {alerts.map((alert, index) => (
-                  <Chip
-                    key={index}
-                    label={alert.label}
-                    color={alert.color}
-                    size="small"
-                    onClick={() => navigate(alert.path)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                ))}
-              </Stack>
+              {isCustomerRetentionLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : customerRetentionDisplay.length > 0 ? (
+                <List dense sx={{ py: 0 }}>
+                  {customerRetentionDisplay.slice(0, 8).map((row, i) => (
+                    <ListItem key={`${row.customerName}-${row.lastOrderDate}-${i}`} divider sx={{ py: 0.5 }}>
+                      <ListItemText
+                        primary={row.customerName}
+                        secondary={`最後訂單 ${row.lastOrderDate} · ${row.daysSinceLastOrder} 天前`}
+                        primaryTypographyProps={{ fontWeight: 600, fontSize: '0.875rem' }}
+                        secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                      />
+                      <Chip size="small" label={row.status} color={row.status.includes('沉睡') ? 'warning' : 'default'} variant="outlined" />
+                    </ListItem>
+                  ))}
+                  {customerRetentionDisplay.length > 8 && <ListItem><ListItemText secondary={`共 ${customerRetentionDisplay.length} 筆，僅顯示前 8 筆`} /></ListItem>}
+                </List>
+              ) : <ChartEmptyState message="暫無數據" height={260} />}
             </Box>
-          )}
-        </Paper>
-      </Box>
-
-      {/* 營運概況 */}
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AssessmentIcon color="primary" /> 營運概況
-      </Typography>
-
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 4
-      }}>
-        <StatCard icon={<MonetizationOnIcon sx={{ fontSize: 36 }} />} title="今日營收" value={<>NT$ <PlainCurrency value={stats.todaySalesTotal} /></>} iconColor={CHART_COLORS.revenue} loading={loading} onClick={() => navigate('/sales')} />
-        <StatCard icon={<ShoppingCartIcon sx={{ fontSize: 36 }} />} title="本月採購" value={<>NT$ <PlainCurrency value={stats.monthPurchaseTotal} /></>} iconColor="#FB8C00" loading={loading} onClick={() => navigate('/purchases')} />
-        <StatCard icon={<ReceiptIcon sx={{ fontSize: 36 }} />} title="本月費用" value={<>NT$ <PlainCurrency value={stats.monthExpenseTotal} /></>} iconColor="#8E24AA" loading={loading} onClick={() => navigate('/expenses')} />
-        <StatCard icon={<TrendingUpIcon sx={{ fontSize: 36 }} />} title="本月淨利" value={<Box sx={{ color: stats.netProfit >= 0 ? 'success.main' : 'error.main' }}>NT$ <PlainCurrency value={stats.netProfit} /></Box>} iconColor={stats.netProfit >= 0 ? CHART_COLORS.revenue : CHART_COLORS.expense} loading={loading} />
-      </Box>
-
-      {/* 財務指標 */}
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AccountBalanceWalletIcon color="info" /> 財務指標
-      </Typography>
-
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 4
-      }}>
-        <StatCard icon={<MonetizationOnIcon sx={{ fontSize: 36 }} />} title="本月銷售總額" value={<>NT$ <PlainCurrency value={stats.monthSalesTotal} /></>} iconColor={CHART_COLORS.netProfit} loading={loading} onClick={() => navigate('/sales')} />
-        <StatCard icon={<AccountBalanceWalletIcon sx={{ fontSize: 36 }} />} title="應收帳款 (AR)" value={<>NT$ <PlainCurrency value={stats.accountsReceivable} /></>} iconColor="#0288D1" loading={loading} onClick={() => navigate('/ar')} />
-        <StatCard icon={<MoneyOffIcon sx={{ fontSize: 36 }} />} title="應付帳款 (AP)" value={<>NT$ <PlainCurrency value={stats.accountsPayable} /></>} iconColor={CHART_COLORS.expense} loading={loading} onClick={() => navigate('/ap')} />
-        <StatCard icon={<AssessmentIcon sx={{ fontSize: 36 }} />} title="淨利率" value={<Box sx={{ color: stats.profitMargin >= 0 ? 'success.main' : 'error.main' }}>{formatPercent(stats.profitMargin)}</Box>} iconColor={stats.profitMargin >= 0 ? CHART_COLORS.revenue : CHART_COLORS.expense} loading={loading} />
-      </Box>
-
-      {/* 現金流量 */}
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <PaymentsIcon color="success" /> 現金流量
-      </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
-        <StatCard icon={<ReceiptIcon sx={{ fontSize: 36 }} />} title="今日訂單收款" value={<>NT$ <PlainCurrency value={stats.todayReceiptsTotal} /></>} iconColor={CHART_COLORS.revenue} loading={loading} onClick={() => navigate('/receipts')} />
-        <StatCard icon={<AccountBalanceIcon sx={{ fontSize: 36 }} />} title="今日總入金" value={<>NT$ <PlainCurrency value={stats.todayTotalInflow} /></>} iconColor="#00838F" loading={loading} />
-        <StatCard icon={<HistoryIcon sx={{ fontSize: 36 }} />} title="本月累計實收" value={<>NT$ <PlainCurrency value={stats.monthTotalReceived} /></>} iconColor="#1565C0" loading={loading} />
-        <StatCard icon={<EventNoteIcon sx={{ fontSize: 36 }} />} title="即期應收 (7D)" value={<>NT$ <PlainCurrency value={stats.upcomingAR} /></>} iconColor="#C62828" loading={loading} onClick={() => navigate('/ar')} />
-      </Box>
-
-      {/* 業務概況 */}
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <StoreIcon color="secondary" /> 業務概況
-      </Typography>
-
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 4
-      }}>
-        <StatCard icon={<StoreIcon sx={{ fontSize: 36 }} />} title="合作供應商" value={stats.supplierCount} iconColor="#1E88E5" loading={loading} onClick={() => navigate('/suppliers')} />
-        <StatCard icon={<PeopleIcon sx={{ fontSize: 36 }} />} title="累計客戶" value={stats.customerCount} iconColor="#5E35B1" loading={loading} onClick={() => navigate('/order_customers')} />
-        <StatCard icon={<InventoryIcon sx={{ fontSize: 36 }} />} title="上架商品" value={stats.activeProductCount} iconColor="#00796B" loading={loading} onClick={() => navigate('/products')} />
-        <StatCard icon={<PendingActionsIcon sx={{ fontSize: 36 }} />} title="未結案訂單" value={stats.pendingOrderCount} iconColor="#F57C00" loading={loading} onClick={() => navigate('/orders')} />
-      </Box>
-
-      {/* 📈 底部圖表分析區域 (營運雙軸趨勢圖 + 支出結構) */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 4 }}>
-
-        {/* 左側：趨勢折線圖 */}
-        <Paper sx={{ p: 3, borderRadius: 2, minHeight: 450, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>營運與收款趨勢</Typography>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select value={trendDays} onChange={(e) => setTrendDays(Number(e.target.value))}>
-                <MenuItem value={7}>近 7 天</MenuItem>
-                <MenuItem value={14}>近 14 天</MenuItem>
-                <MenuItem value={30}>近 30 天</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Box sx={{ flexGrow: 1, minHeight: 350, minWidth: 0, overflow: 'hidden' }}>
-            {hasMounted && !isTrendsLoading && safeTrendData.length > 0 ? (
-              <ChartContainer height={350}>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={safeTrendData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#444' : '#eee'} />
-                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
-                    <YAxis
-                      yAxisId="left"
-                      orientation="left"
-                      stroke={CHART_COLORS.revenue}
-                      tick={{ fontSize: 11 }}
-                      axisLine={false}
-                      domain={['auto', 'auto']}
-                      tickFormatter={(v) => formatAxisCurrency(v)}
-                    />
-                    <YAxis yAxisId="right" orientation="right" stroke={CHART_COLORS.netProfit} tick={{ fontSize: 11 }} axisLine={false} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: isDark ? '#333' : '#fff', borderRadius: 8, border: 'none' }}
-                      formatter={(val: any) => `NT$ ${Number(val).toLocaleString()}`}
-                    />
-                    <Legend verticalAlign="top" align="right" height={36} />
-                    <Line yAxisId="left" type="monotone" dataKey="saleAmount" name="零售營收" stroke={CHART_COLORS.revenue} strokeWidth={3} dot={{ r: 4 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="receiptAmount" name="訂單收款" stroke={CHART_COLORS.netProfit} strokeWidth={3} dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 350 }}>
-                {isTrendsLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : <ChartEmptyState message="當前區間無數據" height={350} />}
-              </Box>
-            )}
-          </Box>
-        </Paper>
-
-        {/* 右側：支出圓餅圖 */}
-        <Paper sx={{ p: 3, borderRadius: 2 }}>
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>本月支出結構</Typography>
-          <Box sx={{ width: '100%', minHeight: 320, minWidth: 0 }}>
-            {hasMounted && !isExpensesLoading && expenses.length > 0 ? (
-              <ChartContainer height={320}>
-                <ResponsiveContainer width="100%" height={320}>
-                  <PieChart>
-                    <Pie data={expenses} dataKey="amount" nameKey="category" cx="50%" cy="50%" innerRadius={60} outerRadius={80}>
-                      {expenses.map((_, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip formatter={(val: any) => `NT$ ${Number(val).toLocaleString()}`} />
-                    <Legend verticalAlign="bottom" />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 320 }}>
-                {isExpensesLoading ? <Skeleton variant="circular" width={200} height={200} /> : <ChartEmptyState message="當前區間無數據" height={320} />}
-              </Box>
-            )}
-          </Box>
-        </Paper>
-      </Box>
-
-      {/* 📊 進階營運分析區塊 */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AssessmentIcon color="primary" /> 進階營運分析
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-          gap: 3,
-          mb: 4,
-        }}
-      >
-        {/* 帳款帳齡風險分析 */}
-        <Paper sx={{ p: 3, borderRadius: 2, minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-            帳款帳齡風險
-          </Typography>
-          <Box sx={{ flexGrow: 1, minHeight: 280, minWidth: 0 }}>
-            {hasMounted && !isAccountsAgingLoading && accountsAging && accountsAging.length > 0 ? (
-              <ChartContainer height={280}>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={accountsAging}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#444' : '#eee'} />
-                    <XAxis
-                      dataKey="bucketLabel"
-                      tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                    />
-                    <YAxis tickFormatter={(v) => formatAxisCurrency(v)} tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: isDark ? '#333' : '#fff', borderRadius: 8, border: 'none' }}
-                      formatter={(value: any, name: any) => [`NT$ ${Number(value).toLocaleString()}`, name]}
-                    />
-                    <Legend />
-                    <Bar dataKey="arAmount" name="應收帳款" stackId="amount" fill={CHART_COLORS.revenue} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="apAmount" name="應付帳款" stackId="amount" fill={CHART_COLORS.expense} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
-                {isAccountsAgingLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : <ChartEmptyState />}
-              </Box>
-            )}
-          </Box>
-        </Paper>
-
-        {/* 訂單履約漏斗（金額/筆數切換 + 階段中文） */}
-        <Paper sx={{ p: 3, borderRadius: 2, minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              訂單履約狀態
-            </Typography>
-            <ToggleButtonGroup
-              size="small"
-              value={orderFunnelMetric}
-              exclusive
-              onChange={(_, v) => v != null && setOrderFunnelMetric(v)}
-              sx={{ height: 32 }}
-            >
-              <ToggleButton value="amount">金額</ToggleButton>
-              <ToggleButton value="count">筆數</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-          <Box sx={{ flexGrow: 1, minHeight: 280, minWidth: 0 }}>
-            {hasMounted && !isOrderFunnelLoading && orderFunnelDisplay.length > 0 ? (
-              <ChartContainer height={280}>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={orderFunnelDisplay} layout="vertical" margin={{ top: 10, right: 20, left: 80, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? '#444' : '#eee'} />
-                    <XAxis
-                      type="number"
-                      tickFormatter={(v) => (orderFunnelMetric === 'amount' ? formatAxisCurrency(v) : String(v))}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis dataKey="stageLabel" type="category" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: isDark ? '#333' : '#fff', borderRadius: 8, border: 'none' }}
-                      formatter={(value: any) => [
-                        orderFunnelMetric === 'amount' ? `NT$ ${Number(value).toLocaleString()}` : String(value),
-                        orderFunnelMetric === 'amount' ? '總金額' : '筆數',
-                      ]}
-                    />
-                    <Legend />
-                    <Bar
-                      dataKey={orderFunnelMetric === 'amount' ? 'totalAmount' : 'orderCount'}
-                      name={orderFunnelMetric === 'amount' ? '訂單金額' : '訂單筆數'}
-                      fill={CHART_COLORS.secondary}
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
-                {isOrderFunnelLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : <ChartEmptyState />}
-              </Box>
-            )}
-          </Box>
-        </Paper>
-      </Box>
-
-      {/* 📉 損益四線走勢 */}
-      <Box sx={{ mb: 4 }}>
-        <Paper sx={{ p: 3, borderRadius: 2, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              損益四線走勢
-            </Typography>
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <Select
-                value={profitLossMonths}
-                onChange={(e) => setProfitLossMonths(Number(e.target.value))}
-              >
-                <MenuItem value={3}>過去 3 個月</MenuItem>
-                <MenuItem value={6}>過去 6 個月</MenuItem>
-                <MenuItem value={12}>過去 12 個月</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <Box sx={{ flexGrow: 1, minHeight: 300, minWidth: 0 }}>
-            {hasMounted && !isProfitLossTrendLoading && profitLossTrend && profitLossTrend.length > 0 ? (
-              <ChartContainer height={300}>
-                <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={profitLossTrend} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#444' : '#eee'} />
-                    <XAxis dataKey="period" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
-                    <YAxis tickFormatter={(v) => formatAxisCurrency(v)} tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: isDark ? '#333' : '#fff', borderRadius: 8, border: 'none' }}
-                      formatter={(value: any, name?: string) => [`NT$ ${Number(value).toLocaleString()}`, name ?? '']}
-                    />
-                    <Legend />
-                    <Area type="monotone" dataKey="revenue" name="營收" stroke={CHART_COLORS.netProfit} fill={`${CHART_COLORS.netProfit}33`} strokeWidth={2} />
-                    <Area type="monotone" dataKey="expense" name="費用" stroke={CHART_COLORS.expense} fill={`${CHART_COLORS.expense}22`} strokeWidth={2} />
-                    <Line type="monotone" dataKey="grossProfit" name="毛利" stroke={CHART_COLORS.revenue} strokeWidth={2} dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="netProfit" name="淨利" stroke={CHART_COLORS.secondary} strokeWidth={2} dot={{ r: 3 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-                {isProfitLossTrendLoading ? <Skeleton variant="rectangular" width="100%" height="100%" /> : <ChartEmptyState />}
-              </Box>
-            )}
-          </Box>
-        </Paper>
-      </Box>
-
-      {/* 📋 底部待辦任務明細 */}
-      <Paper
-        sx={{
-          padding: 3,
-          borderRadius: 2,
-          marginBottom: 4,
-          bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: isDark ? 3 : 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 1.5,
-            gap: 1,
-            flexWrap: 'wrap',
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AssignmentLateIcon color="error" /> 待辦任務與即期預警
-          </Typography>
-          {tasks && tasks.length > 0 && (
-            <Chip
-              label={`共 ${tasks.length} 筆`}
-              size="small"
-              color="error"
-              variant={isDark ? 'filled' : 'outlined'}
-            />
-          )}
+          </Paper>
+          <TaskListSection tasks={tasks} />
         </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
-          點擊任一列可快速前往對應列表進行處理。
-        </Typography>
-        <Divider sx={{ mb: 1.5 }} />
-
-        {tasks && tasks.length > 0 ? (
-          <List
-            dense
-            sx={{
-              maxHeight: 260,
-              overflowY: 'auto',
-              pr: 1,
-              '&::-webkit-scrollbar': { width: 4 },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
-                borderRadius: 4,
-              },
-            }}
-          >
-            {tasks.map((task, index) => (
-              <ListItem
-                key={`${task.type}-${task.referenceNo}-${task.dueDate}-${index}`}
-                divider={index !== tasks.length - 1}
-                onClick={() => navigate(task.type === 'AR_DUE' ? '/ar' : '/orders')}
-                sx={{
-                  cursor: 'pointer',
-                  borderRadius: 1,
-                  '&:hover': {
-                    bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 48 }}>
-                  <Avatar sx={{ bgcolor: task.type === 'AR_DUE' ? 'error.light' : 'warning.light' }}>
-                    {task.type === 'AR_DUE' ? <MoneyOffIcon /> : <ShoppingCartIcon />}
-                  </Avatar>
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography sx={{ fontWeight: 600 }} noWrap>
-                      {task.targetName} ({task.referenceNo})
-                    </Typography>
-                  }
-                  secondary={
-                    <Typography variant="body2" color="text.secondary">
-                      訂單日期：{task.dueDate}
-                    </Typography>
-                  }
-                />
-                <Box sx={{ textAlign: 'right', minWidth: 150 }}>
-                  <Typography variant="subtitle1" color="error.main" sx={{ fontWeight: 700 }}>
-                    NT$ <PlainCurrency value={task.amount} />
-                  </Typography>
-                  <Chip
-                    size="small"
-                    label={task.type === 'AR_DUE' ? '帳款催收' : '訂單處理'}
-                    color={task.type === 'AR_DUE' ? 'error' : 'warning'}
-                    variant="outlined"
-                    sx={{ mt: 0.5 }}
-                  />
-                </Box>
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 0.5 }}>
-              目前無緊急待辦事項
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              帳款到期或訂單異常時，會自動在此顯示提醒。
-            </Typography>
-          </Box>
-        )}
-      </Paper>
+      </Box>
 
       {error && <MuiAlert severity="error" sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 2000 }}>載入數據時發生錯誤：{error.message}</MuiAlert>}
       <Snackbar open={refreshSuccess} autoHideDuration={3000} onClose={() => setRefreshSuccess(false)} message="儀表板數據已更新" anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} />
