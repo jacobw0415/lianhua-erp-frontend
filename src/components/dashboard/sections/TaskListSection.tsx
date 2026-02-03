@@ -11,6 +11,7 @@ import {
   ListItemIcon,
   Avatar,
   useTheme,
+  alpha,
 } from '@mui/material';
 import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
@@ -43,10 +44,10 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
         minHeight: 320,
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        bgcolor: alpha(theme.palette.primary.main, 0.04),
         border: '1px solid',
         borderColor: 'divider',
-        boxShadow: isDark ? 3 : 1,
+        boxShadow: theme.shadows[1],
       }}
     >
       <Box
@@ -60,7 +61,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <AssignmentLateIcon color="error" fontSize="small" /> 待辦任務與即期預警
+          <AssignmentLateIcon color="error" fontSize="small" /> 營運待辦事項與即期風險預警
         </Typography>
         {tasks && tasks.length > 0 && (
           <Chip label={`共 ${tasks.length} 筆`} size="small" color="error" variant={isDark ? 'filled' : 'outlined'} />
@@ -84,7 +85,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
             '&::-webkit-scrollbar': { width: 4 },
             '&::-webkit-scrollbar-track': { background: 'transparent' },
             '&::-webkit-scrollbar-thumb': {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+              backgroundColor: theme.palette.action.selected,
               borderRadius: 4,
             },
           }}
@@ -98,7 +99,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
                 cursor: 'pointer',
                 borderRadius: 1,
                 '&:hover': {
-                  bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  bgcolor: theme.palette.action.hover,
                 },
               }}
             >

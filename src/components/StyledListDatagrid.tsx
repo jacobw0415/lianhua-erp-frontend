@@ -105,7 +105,7 @@ const StyledDatagridRoot = styled(Datagrid, {
     height: "6px",
   },
   "&::-webkit-scrollbar-thumb": {
-    backgroundColor: theme.palette.mode === 'dark' ? "#555" : "#ccc",
+    backgroundColor: theme.palette.divider,
     borderRadius: "4px",
   },
 }));

@@ -227,7 +227,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           slots={{ openPickerIcon: CalendarMonthIcon }}
           slotProps={{
             openPickerIcon: {
-              sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+              sx: { color: theme.palette.text.primary },
             },
             textField: {
               fullWidth: true,
@@ -270,7 +270,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             slots={{ openPickerIcon: CalendarMonthIcon }}
             slotProps={{
               openPickerIcon: {
-                sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+                sx: { color: theme.palette.text.primary },
               },
               textField: {
                 fullWidth: true,
@@ -291,7 +291,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             slots={{ openPickerIcon: CalendarMonthIcon }}
             slotProps={{
               openPickerIcon: {
-                sx: { color: theme.palette.mode === "light" ? "#444" : "#fff" },
+                sx: { color: theme.palette.text.primary },
               },
               textField: {
                 fullWidth: true,

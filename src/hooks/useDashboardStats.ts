@@ -105,6 +105,8 @@ interface AnalyticsOptions {
   period?: string; // YYYY-MM，用於 sales-composition / order-funnel
   months?: number; // 用於 profit-loss-trend
   days?: number;   // 用於 cashflow-forecast
+  /** 營運支出結構與採購結構同步：同一日期區間 (YYYY-MM-DD) */
+  expenseDateRange?: { start: string; end: string };
 }
 
 export const useDashboardStats = (
@@ -121,7 +123,7 @@ export const useDashboardStats = (
 
   const analyticsPeriod = analyticsOptions?.period ?? defaultPeriod;
   const analyticsMonths = analyticsOptions?.months ?? 6;
-
+  const expenseDateRange = analyticsOptions?.expenseDateRange;
 
   // 1. 核心 KPI 統計 (字卡)
   const statsQuery = useQuery({
@@ -264,18 +266,19 @@ export const useDashboardStats = (
     staleTime: 5 * 60 * 1000,
   });
 
-  // 3. 支出結構比例 (圓餅圖) — 回到儀表板即重抓，新增支出後圓餅圖會更新
+  // 3. 支出結構比例 (圓餅圖) — 與採購結構同步：同一日期區間 (start/end)
   const expenseQuery = useQuery({
-    queryKey: ['dashboard', 'expenses'],
+    queryKey: ['dashboard', 'expenses', expenseDateRange?.start ?? '', expenseDateRange?.end ?? ''],
     queryFn: async () => {
-      const response = await dataProvider.get('dashboard/expenses/composition');
+      const response = await dataProvider.get('dashboard/expenses/composition', {
+        meta: expenseDateRange ? { start: expenseDateRange.start, end: expenseDateRange.end } : undefined,
+      });
       const raw = response.data;
       const list = Array.isArray(raw) ? raw : (raw as any)?.data ?? (raw as any)?.content ?? [];
       return list as ExpenseComposition[];
     },
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
   });
 
   // 4. 待辦與預警任務 (資訊牆)

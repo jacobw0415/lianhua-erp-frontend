@@ -48,3 +48,20 @@ export function formatAxisCurrency(value: number): string {
   if (Math.abs(value) >= 1_000) return `NT$${value >= 0 ? '' : '-'}${(Math.abs(value) / 1_000).toFixed(0)}k`;
   return `NT$${value.toLocaleString()}`;
 }
+
+/** 儀表板日期顯示：YYYY年MM月DD日 (星期X) */
+export function formatDashboardDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const weekday = weekdays[date.getDay()];
+  return `${year}年${month}月${day}日 (${weekday})`;
+}
+
+/** 儀表板時間顯示：HH:mm */
+export function formatDashboardTime(date: Date): string {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}

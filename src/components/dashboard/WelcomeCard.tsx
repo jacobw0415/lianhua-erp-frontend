@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import NightlightIcon from '@mui/icons-material/Nightlight';
@@ -10,7 +11,6 @@ interface GreetingInfo {
 }
 
 interface WelcomeCardProps {
-  isDark: boolean;
   greeting: GreetingInfo;
   formattedDate: string;
   formattedTime: string;
@@ -20,33 +20,39 @@ interface WelcomeCardProps {
 const getCardBackground = (isDark: boolean) =>
   isDark ? 'rgba(27, 94, 32, 0.85)' : 'rgba(46, 125, 50, 0.85)';
 
-export const getGreeting = (): GreetingInfo => {
+/** 問候圖示色：依主題回傳（亮/暗皆可讀） */
+export const getGreeting = (palette: { mode: string; warning?: { main?: string }; info?: { main?: string } }): GreetingInfo => {
   const hour = new Date().getHours();
+  const isDark = palette.mode === 'dark';
+  const morning = isDark ? '#FFD54F' : '#F9A825';
+  const afternoon = isDark ? '#FFA726' : '#FB8C00';
+  const evening = isDark ? '#90CAF9' : '#42A5F5';
   if (hour < 12) {
     return {
       text: '早安',
-      icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: '#FFD54F' }} />,
+      icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: morning }} />,
     };
   }
   if (hour < 18) {
     return {
       text: '午安',
-      icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: '#FFA726' }} />,
+      icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: afternoon }} />,
     };
   }
   return {
     text: '晚安',
-    icon: <NightlightIcon sx={{ fontSize: 24, ml: 1, color: '#90CAF9' }} />,
+    icon: <NightlightIcon sx={{ fontSize: 24, ml: 1, color: evening }} />,
   };
 };
 
 export const WelcomeCard: React.FC<WelcomeCardProps> = ({
-  isDark,
   greeting,
   formattedDate,
   formattedTime,
   lastUpdated,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const cardBackground = getCardBackground(isDark);
 
   return (
@@ -71,7 +77,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({
           width: 150,
           height: 150,
           borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.08)',
+          background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)',
           opacity: 0.2,
         }}
       />

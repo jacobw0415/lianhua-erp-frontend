@@ -26,11 +26,13 @@ export interface LiquiditySnapshot {
   currentRatio: number;
 }
 
-/** [圖表 3] 未來現金流預測 */
+/** [圖表 3] 未來現金流預測（net 可後端回傳或前端以 inflow - outflow 計算） */
 export interface CashflowForecastPoint {
   date: string;
   inflow: number;
   outflow: number;
+  /** 淨流入（後端可回傳；若無則前端以 inflow - outflow 計算） */
+  net?: number;
 }
 
 /** [圖表 4] 商品獲利 Pareto */
@@ -55,15 +57,30 @@ export interface CustomerRetentionPoint {
   status: string;
 }
 
+/** [圖表 7] 採購結構分析（依進貨項目，用於 Donut） */
+export interface PurchaseStructurePoint {
+  itemName: string;
+  totalAmount: number;
+}
+
+/** 客戶採購集中度分析 (Customer Concentration) */
+export interface CustomerConcentrationPoint {
+  customerName: string;
+  ratio: number;
+  totalAmount: number;
+}
+
 export interface DashboardAnalyticsFilters {
   /** 損益平衡：YYYY-MM，預設當月 */
   breakEvenPeriod?: string;
-  /** Pareto + 採購集中度：共用區間，預設本月1號～今日 */
+  /** Pareto + 採購集中度 + 採購結構 + 客戶集中度：共用區間，預設本月1號～今日 */
   dateRange?: { start: string; end: string };
   /** 現金流預測：開始日與結束日（API 使用 baseDate=start, days=區間天數） */
   cashflowDateRange?: { start: string; end: string };
   /** 客戶回購：篩選「沉睡風險」時為 true（例如 >60 天未下單） */
   retentionDormantOnly?: boolean;
+  /** 客戶採購集中度分析：專用日期區間 (YYYY-MM-DD)，未設則用 dateRange */
+  customerConcentrationDateRange?: { start: string; end: string };
 }
 
 const defaultPeriod = getDefaultPeriod();
@@ -77,6 +94,10 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
   const startRaw = dateRange?.start ?? defaultRange.start;
   const endRaw = dateRange?.end ?? defaultRange.end;
   const { start: rangeStart, end: rangeEnd } = clampRangeToMaxDays(startRaw, endRaw);
+  const customerConcentrationRangeRaw = filters.customerConcentrationDateRange ?? defaultRange;
+  const ccStartRaw = customerConcentrationRangeRaw?.start ?? defaultRange.start;
+  const ccEndRaw = customerConcentrationRangeRaw?.end ?? defaultRange.end;
+  const { start: customerConcentrationStart, end: customerConcentrationEnd } = clampRangeToMaxDays(ccStartRaw, ccEndRaw);
   const cashflowRangeRaw = filters.cashflowDateRange ?? getDefaultCashflowRange(30);
   const rawStart = cashflowRangeRaw.start;
   const rawEnd = cashflowRangeRaw.end;
@@ -126,14 +147,25 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     staleTime: 2 * 60 * 1000,
   });
 
-  // 3. 未來現金流預測（API：baseDate 基準日 + days 天數）
+  // 3. 未來現金流預測（API：baseDate 基準日 + days 天數；支援後端回傳 net）
   const cashflowForecastQuery = useQuery({
     queryKey: [ANALYTICS_BASE, 'cashflow-forecast', cashflowBaseDate, cashflowDays],
     queryFn: async () => {
       const res = await dataProvider.get(`${ANALYTICS_BASE}/cashflow-forecast`, {
         meta: { baseDate: cashflowBaseDate, days: cashflowDays },
       });
-      return (Array.isArray(res.data) ? res.data : []) as CashflowForecastPoint[];
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw.map((d: Record<string, unknown>) => {
+        const inflow = Number(d.inflow ?? 0);
+        const outflow = Number(d.outflow ?? 0);
+        const net = d.net != null ? Number(d.net) : inflow - outflow;
+        return {
+          date: String(d.date ?? '').split('T')[0],
+          inflow,
+          outflow,
+          net,
+        } as CashflowForecastPoint;
+      });
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -174,13 +206,48 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // 7. 採購結構分析（Donut：start, end，預設本月1號～今日）
+  const purchaseStructureQuery = useQuery({
+    queryKey: [ANALYTICS_BASE, 'purchase-structure', rangeStart, rangeEnd],
+    queryFn: async () => {
+      const res = await dataProvider.get(`${ANALYTICS_BASE}/purchase-structure`, {
+        meta: { start: rangeStart, end: rangeEnd },
+      });
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw.map((item: Record<string, unknown>) => ({
+        itemName: String(item.itemName ?? item.item_name ?? ''),
+        totalAmount: Number(item.totalAmount ?? item.total_amount ?? 0),
+      })) as PurchaseStructurePoint[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 8. 客戶採購集中度分析（專用日期區間或 fallback dateRange）
+  const customerConcentrationQuery = useQuery({
+    queryKey: [ANALYTICS_BASE, 'customer-concentration', customerConcentrationStart, customerConcentrationEnd],
+    queryFn: async () => {
+      const res = await dataProvider.get(`${ANALYTICS_BASE}/customer-concentration`, {
+        meta: { start: customerConcentrationStart, end: customerConcentrationEnd },
+      });
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw.map((item: Record<string, unknown>) => ({
+        customerName: String(item.customerName ?? item.customer_name ?? ''),
+        ratio: Number(item.ratio ?? 0),
+        totalAmount: Number(item.totalAmount ?? item.total_amount ?? 0),
+      })) as CustomerConcentrationPoint[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const loading =
     breakEvenQuery.isLoading ||
     liquidityQuery.isLoading ||
     cashflowForecastQuery.isLoading ||
     productParetoQuery.isLoading ||
     supplierConcentrationQuery.isLoading ||
-    customerRetentionQuery.isLoading;
+    customerRetentionQuery.isLoading ||
+    purchaseStructureQuery.isLoading ||
+    customerConcentrationQuery.isLoading;
 
   const error =
     breakEvenQuery.error ||
@@ -188,7 +255,9 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     cashflowForecastQuery.error ||
     productParetoQuery.error ||
     supplierConcentrationQuery.error ||
-    customerRetentionQuery.error;
+    customerRetentionQuery.error ||
+    purchaseStructureQuery.error ||
+    customerConcentrationQuery.error;
 
   return {
     // 數據
@@ -198,6 +267,8 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     productPareto: productParetoQuery.data ?? [],
     supplierConcentration: supplierConcentrationQuery.data ?? [],
     customerRetention: customerRetentionQuery.data ?? [],
+    purchaseStructure: purchaseStructureQuery.data ?? [],
+    customerConcentration: customerConcentrationQuery.data ?? [],
     // 狀態
     loading,
     error,
@@ -207,6 +278,8 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     isProductParetoLoading: productParetoQuery.isLoading,
     isSupplierConcentrationLoading: supplierConcentrationQuery.isLoading,
     isCustomerRetentionLoading: customerRetentionQuery.isLoading,
+    isPurchaseStructureLoading: purchaseStructureQuery.isLoading,
+    isCustomerConcentrationLoading: customerConcentrationQuery.isLoading,
     // 操作
     refetch: () => {
       breakEvenQuery.refetch();
@@ -215,6 +288,8 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
       productParetoQuery.refetch();
       supplierConcentrationQuery.refetch();
       customerRetentionQuery.refetch();
+      purchaseStructureQuery.refetch();
+      customerConcentrationQuery.refetch();
     },
   };
 }

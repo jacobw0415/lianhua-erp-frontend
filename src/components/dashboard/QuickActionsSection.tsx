@@ -42,7 +42,6 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
   isRefreshing = false,
 }) => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
 
   if (quickActions.length === 0 && alerts.length === 0 && !onRefresh) {
@@ -56,7 +55,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
         sx={{
           p: 2,
           borderRadius: 2,
-          bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+          bgcolor: theme.palette.action.hover,
           border: '1px solid',
           borderColor: 'divider',
           display: 'flex',
@@ -114,7 +113,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                 '&::-webkit-scrollbar': { width: '4px' },
                 '&::-webkit-scrollbar-track': { background: 'transparent' },
                 '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                  backgroundColor: theme.palette.action.selected,
                   borderRadius: '4px',
                 },
               }}
@@ -125,7 +124,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                 sx={{
                   position: 'sticky',
                   top: 0,
-                  bgcolor: isDark ? '#2A2A2A' : '#F5F5F5',
+                  bgcolor: theme.palette.background.paper,
                   zIndex: 1,
                   mb: 1,
                   pb: 0.5,

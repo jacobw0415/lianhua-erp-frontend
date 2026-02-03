@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Box, Typography, Skeleton } from '@mui/material';
+import { Card, CardContent, Box, Typography, Skeleton, alpha } from '@mui/material';
 
 export interface StatCardProps {
   icon: React.ReactNode;
@@ -28,7 +28,7 @@ export const StatCard = React.memo<StatCardProps>(
           <Box
             sx={{
               color: iconColor,
-              bgcolor: `${iconColor}15`,
+              bgcolor: alpha(iconColor, 0.12),
               p: 1.5,
               borderRadius: '50%',
               mr: 2,

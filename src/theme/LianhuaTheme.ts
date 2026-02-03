@@ -574,5 +574,35 @@ export const LianhuaDarkTheme = createTheme({
         },
       },
     },
+
+    /* --------------------------------------------------
+     * Card / Table（暗色下層次與可讀性）
+     * -------------------------------------------------- */
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.24)",
+          border: "1px solid rgba(255,255,255,0.06)",
+        },
+      },
+    },
+
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: "8px 12px",
+          fontSize: "0.875rem",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          overflow: "hidden",
+        },
+        head: {
+          fontWeight: 600,
+          backgroundColor: "rgba(129, 199, 132, 0.12)",
+          color: "#A5D6A7",
+        },
+      },
+    },
   },
 });
