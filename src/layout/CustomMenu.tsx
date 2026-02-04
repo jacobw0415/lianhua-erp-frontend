@@ -3,6 +3,7 @@ import {
     Menu,
     MenuItemLink,
     useSidebarState,
+    usePermissions,
 } from "react-admin";
 
 import {
@@ -18,11 +19,22 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useLocation } from "react-router-dom";
 
-import { menuGroups } from "./menuConfig";
+import { menuGroups, type MenuItem } from "./menuConfig";
+
+/** RBAC：依 getPermissions() 過濾選單項目（如 ROLE_USER 不顯示「使用者管理」） */
+function filterItemsByRole(items: MenuItem[], role: string | undefined): MenuItem[] {
+    if (!role) return items;
+    return items.filter((item) => {
+        if (!item.requiredRole) return true;
+        return item.requiredRole === role;
+    });
+}
 
 export const CustomMenu = () => {
     const [open] = useSidebarState();
     const location = useLocation();
+    const { permissions } = usePermissions();
+    const role = typeof permissions === "string" ? permissions : Array.isArray(permissions) ? permissions[0] : undefined;
 
     /**  控制每組選單的開關 */
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
@@ -178,7 +190,7 @@ export const CustomMenu = () => {
                         timeout={250}
                         unmountOnExit
                     >
-                        {group.items.map((item) => (
+                        {filterItemsByRole(group.items, role).map((item) => (
                             <MenuItemLink
                                 key={item.to}
                                 to={item.to}

@@ -74,6 +74,8 @@ import { LianhuaLightTheme } from "@/theme/LianhuaTheme";
 import { LianhuaDarkTheme } from "@/theme/LianhuaTheme";
 
 import { NotificationList } from "@/pages/notifications/NotificationList";
+import { authProvider } from "@/providers/authProvider";
+import { LoginPage } from "@/pages/Login/LoginPage";
 
 // ============================
 // 🚀 App 外層 Provider
@@ -100,6 +102,7 @@ const App = () => {
   const dataProvider = React.useMemo(() => {
     return createDataProvider({
       handleApiError,
+      authProvider,
     });
   }, [handleApiError]);
 
@@ -108,8 +111,9 @@ const App = () => {
       layout={CustomLayout}
       dashboard={Dashboard}
       dataProvider={dataProvider}
+      authProvider={authProvider}
+      loginPage={LoginPage}
       notification={NoopNotification}
-      /* ⭐ 關鍵：讓 RA 自己切 Theme */
       theme={LianhuaLightTheme}
       darkTheme={LianhuaDarkTheme}
       defaultTheme={mode}

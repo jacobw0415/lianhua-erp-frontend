@@ -1,12 +1,16 @@
 import React from "react";
 
 // ---------------------
-// Type Definitions
+// Type Definitions (RBAC: requiredRole 用於動態隱藏選單)
 // ---------------------
+export type MenuRole = "ROLE_ADMIN" | "ROLE_USER";
+
 export interface MenuItem {
   label: string;
   to: string;
   icon?: React.ReactElement;
+  /** 僅具此角色以上可見；未設則所有人可見 */
+  requiredRole?: MenuRole;
 }
 
 export interface MenuGroup {
@@ -121,8 +125,8 @@ export const menuGroups: MenuGroup[] = [
     label: "系統管理",
     icon: <SecurityIcon />,
     items: [
-      { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon /> },
-      { label: "角色與權限", to: "/roles", icon: <SecurityIcon /> },
+      { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN" },
+      { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN" },
       { label: "通知中心", to: "/notifications", icon: <NotificationIcon /> },
     ],
   },

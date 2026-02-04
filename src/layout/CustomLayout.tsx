@@ -1,9 +1,22 @@
 import * as React from "react";
 import { Layout, type LayoutProps } from "react-admin";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { CustomMenu } from "./CustomMenu";
 import { CustomSidebar } from "./CustomSidebar";
 import { CustomAppBar } from "./CustomAppBar";
+import { IdleTimer } from "@/components/IdleTimer";
+import { setQueryClientRef } from "@/utils/appCache";
+
+/** 登入狀態下註冊 QueryClient，供登出時 clearAppCache() 使用 */
+const QueryClientRefSetter = () => {
+    const queryClient = useQueryClient();
+    React.useEffect(() => {
+        setQueryClientRef(queryClient);
+        return () => setQueryClientRef(null);
+    }, [queryClient]);
+    return null;
+};
 
 export const CustomLayout = (props: LayoutProps) => {
     const appBar = React.useCallback(CustomAppBar, []);
@@ -11,6 +24,8 @@ export const CustomLayout = (props: LayoutProps) => {
     const sidebar = React.useCallback(CustomSidebar, []);
 
     return (
+        <IdleTimer>
+        <QueryClientRefSetter />
         <Layout
             {...props}
             appBar={appBar}
@@ -27,6 +42,7 @@ export const CustomLayout = (props: LayoutProps) => {
                 }
             }}
         />
+        </IdleTimer>
     );
 };
 

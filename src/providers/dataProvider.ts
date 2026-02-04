@@ -1,4 +1,5 @@
 import { fetchUtils, type DataProvider } from "react-admin";
+import type { AuthProvider } from "react-admin";
 
 import { apiRules } from "@/config/apiRules";
 import { filterMapping } from "@/config/filterMapping";
@@ -8,12 +9,12 @@ import { filterMapping } from "@/config/filterMapping";
  * ======================================================== */
 type ApiError =
   | {
-    message?: string;
-    body?: {
       message?: string;
-      error?: string;
-    };
-    status?: number;
+      body?: {
+        message?: string;
+        error?: string;
+      };
+      status?: number;
   }
   | unknown;
 
@@ -21,12 +22,14 @@ const apiUrl: string =
   import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 /* ========================================================
- * ⭐ 注入 handleApiError 進行全域錯誤處理
+ * ⭐ 注入 handleApiError、authProvider（401 時觸發被動登出）
  * ======================================================== */
 export const createDataProvider = ({
   handleApiError,
+  authProvider,
 }: {
   handleApiError: (error: ApiError) => void;
+  authProvider: AuthProvider;
 }): DataProvider => {
   /* ========================================================
    * 原始 httpClient（只處理 header 與 fetch）
@@ -41,6 +44,15 @@ export const createDataProvider = ({
 
     if (hasBody && !isFormData && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
+    }
+
+    // ========================================================
+    // 🔐 所有 API 請求帶入 Authorization: Bearer <TOKEN>（RFC 6750 / Stateless）
+    // ========================================================
+    const token = localStorage.getItem("token");
+    const tokenType = localStorage.getItem("tokenType") || "Bearer";
+    if (token) {
+      headers.set("Authorization", `${tokenType} ${token}`);
     }
 
     return fetchUtils.fetchJson(url, { ...options, headers });
@@ -58,8 +70,20 @@ export const createDataProvider = ({
       return result;
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      let msg = "";
+      const status =
+        apiError && typeof apiError === "object" && "status" in apiError
+          ? Number((apiError as { status?: number }).status)
+          : undefined;
 
+      /* --------------------------------------------
+       * 401 被動登出：觸發 authProvider.checkError，清除會話並重導向 /login
+       * -------------------------------------------- */
+      if (status === 401) {
+        void authProvider.checkError(apiError);
+        throw error;
+      }
+
+      let msg = "";
       if (apiError && typeof apiError === "object") {
         if (
           "body" in apiError &&

@@ -370,15 +370,17 @@ export const useDashboardStats = (
       profitLossTrendQuery.error ||
       orderFunnelQuery.error,
 
-    // 操作
-    refresh: () => {
-      statsQuery.refetch();
-      trendsQuery.refetch();
-      expenseQuery.refetch();
-      tasksQuery.refetch();
-      accountsAgingQuery.refetch();
-      profitLossTrendQuery.refetch();
-      orderFunnelQuery.refetch();
+    // 操作（回傳 Promise 以符合 DashboardContextValue.refresh: () => Promise<void>）
+    refresh: async () => {
+      await Promise.all([
+        statsQuery.refetch(),
+        trendsQuery.refetch(),
+        expenseQuery.refetch(),
+        tasksQuery.refetch(),
+        accountsAgingQuery.refetch(),
+        profitLossTrendQuery.refetch(),
+        orderFunnelQuery.refetch(),
+      ]);
     },
     lastUpdated: statsQuery.dataUpdatedAt ? new Date(statsQuery.dataUpdatedAt) : null,
   };

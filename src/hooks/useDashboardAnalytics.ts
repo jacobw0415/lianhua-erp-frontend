@@ -226,15 +226,23 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
   const customerConcentrationQuery = useQuery({
     queryKey: [ANALYTICS_BASE, 'customer-concentration', customerConcentrationStart, customerConcentrationEnd],
     queryFn: async () => {
-      const res = await dataProvider.get(`${ANALYTICS_BASE}/customer-concentration`, {
-        meta: { start: customerConcentrationStart, end: customerConcentrationEnd },
-      });
-      const raw = Array.isArray(res.data) ? res.data : [];
-      return raw.map((item: Record<string, unknown>) => ({
-        customerName: String(item.customerName ?? item.customer_name ?? ''),
-        ratio: Number(item.ratio ?? 0),
-        totalAmount: Number(item.totalAmount ?? item.total_amount ?? 0),
-      })) as CustomerConcentrationPoint[];
+      try {
+        const res = await dataProvider.get(`${ANALYTICS_BASE}/customer-concentration`, {
+          meta: { start: customerConcentrationStart, end: customerConcentrationEnd },
+        });
+        const raw = Array.isArray(res.data) ? res.data : [];
+        return raw.map((item: Record<string, unknown>) => ({
+          customerName: String(item.customerName ?? item.customer_name ?? ''),
+          ratio: Number(item.ratio ?? 0),
+          totalAmount: Number(item.totalAmount ?? item.total_amount ?? 0),
+        })) as CustomerConcentrationPoint[];
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn('⚠️ customer-concentration API 失敗，改以空資料呈現：', error);
+        }
+        return [] as CustomerConcentrationPoint[];
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -281,15 +289,17 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
     isPurchaseStructureLoading: purchaseStructureQuery.isLoading,
     isCustomerConcentrationLoading: customerConcentrationQuery.isLoading,
     // 操作
-    refetch: () => {
-      breakEvenQuery.refetch();
-      liquidityQuery.refetch();
-      cashflowForecastQuery.refetch();
-      productParetoQuery.refetch();
-      supplierConcentrationQuery.refetch();
-      customerRetentionQuery.refetch();
-      purchaseStructureQuery.refetch();
-      customerConcentrationQuery.refetch();
+    refetch: async () => {
+      await Promise.all([
+        breakEvenQuery.refetch(),
+        liquidityQuery.refetch(),
+        cashflowForecastQuery.refetch(),
+        productParetoQuery.refetch(),
+        supplierConcentrationQuery.refetch(),
+        customerRetentionQuery.refetch(),
+        purchaseStructureQuery.refetch(),
+        customerConcentrationQuery.refetch(),
+      ]);
     },
   };
 }

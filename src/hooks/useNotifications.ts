@@ -4,6 +4,20 @@ import { useState, useEffect, useCallback } from 'react';
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 const TEST_USER_ID = 1;
 
+// 與 dataProvider 一致：自動附加 Authorization Bearer Token
+const buildAuthHeaders = () => {
+    const headers = new Headers();
+    headers.set("Accept", "application/json");
+
+    const token = localStorage.getItem("token");
+    const tokenType = localStorage.getItem("tokenType") || "Bearer";
+    if (token) {
+        headers.set("Authorization", `${tokenType} ${token}`);
+    }
+
+    return headers;
+};
+
 export interface NotificationItem {
     id: number;
     userNotificationId: number; 
@@ -20,14 +34,38 @@ export const useNotifications = (refreshInterval = 5000) => {
     const [unreadCount, setUnreadCount] = useState(0);
 
     const fetchNotifications = useCallback(async () => {
+        // 登出後 token 已清除，Layout 卸載前 interval 仍會觸發；無 token 時不發請求，避免 403
+        if (!localStorage.getItem("token")) return;
+
         try {
             const [listRes, countRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/notifications/unread?userId=${TEST_USER_ID}`),
-                fetch(`${API_BASE_URL}/notifications/unread-count?userId=${TEST_USER_ID}`)
+                fetch(
+                    `${API_BASE_URL}/notifications/unread?userId=${TEST_USER_ID}`,
+                    { headers: buildAuthHeaders() }
+                ),
+                fetch(
+                    `${API_BASE_URL}/notifications/unread-count?userId=${TEST_USER_ID}`,
+                    { headers: buildAuthHeaders() }
+                )
             ]);
 
-            const listJson = await listRes.json();
-            const countJson = await countRes.json();
+            // 403/401 等可能回傳空或 HTML，直接 .json() 會 SyntaxError；先檢查 ok 再解析
+            const safeJson = async (res: Response): Promise<Record<string, unknown>> => {
+                if (!res.ok) {
+                    await res.text().catch(() => "");
+                    return {};
+                }
+                const text = await res.text();
+                if (!text.trim()) return {};
+                try {
+                    return JSON.parse(text) as Record<string, unknown>;
+                } catch {
+                    return {};
+                }
+            };
+
+            const listJson = await safeJson(listRes);
+            const countJson = await safeJson(countRes);
 
             // 🚀 修正 1：確保 listJson.data 存在且為陣列，避免 map/filter 報錯
             if (listJson?.data && Array.isArray(listJson.data)) {
@@ -36,7 +74,11 @@ export const useNotifications = (refreshInterval = 5000) => {
                 setNotifications([]);
             }
 
-            const count = countJson.data?.unreadCount ?? countJson.data ?? 0;
+            const count = countJson.data && typeof countJson.data === "object" && "unreadCount" in countJson.data
+                ? Number((countJson.data as { unreadCount?: number }).unreadCount)
+                : typeof countJson.data === "number"
+                    ? countJson.data
+                    : 0;
             setUnreadCount(Number(count));
         } catch (err) {
             console.error("❌ 獲取通知失敗:", err);
@@ -59,11 +101,18 @@ export const useNotifications = (refreshInterval = 5000) => {
         );
 
         try {
-            const response = await fetch(`${API_BASE_URL}/notifications/${noti.userNotificationId}/read`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                keepalive: true 
-            });
+            const response = await fetch(
+                `${API_BASE_URL}/notifications/${noti.userNotificationId}/read`,
+                {
+                    method: 'PATCH',
+                    headers: (() => {
+                        const headers = buildAuthHeaders();
+                        headers.set('Content-Type', 'application/json');
+                        return headers;
+                    })(),
+                    keepalive: true,
+                }
+            );
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -79,6 +128,7 @@ export const useNotifications = (refreshInterval = 5000) => {
     }, [fetchNotifications]);
 
     useEffect(() => {
+        if (!localStorage.getItem("token")) return;
         fetchNotifications();
         const interval = setInterval(fetchNotifications, refreshInterval);
         return () => clearInterval(interval);

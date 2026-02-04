@@ -4,6 +4,8 @@ import {
     useRedirect,
     SidebarToggleButton,
     useDataProvider,
+    useLogout,
+    useGetIdentity,
     type AppBarProps,
 } from "react-admin";
 
@@ -41,6 +43,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
@@ -72,6 +75,8 @@ export const CustomAppBar = (props: AppBarProps) => {
     const { setMode } = useColorMode();
     const redirect = useRedirect();
     const dataProvider = useDataProvider();
+    const logout = useLogout();
+    const { data: identity } = useGetIdentity();
     const isDark = muiTheme.palette.mode === "dark";
     const location = useLocation();
     const pathname = location.pathname;
@@ -188,6 +193,14 @@ export const CustomAppBar = (props: AppBarProps) => {
         setMode(next);
         setRaTheme(next);
         setMoreMenuAnchor(null);
+    };
+
+    const handleLogout = () => {
+        setUserAnchor(null);
+        // 透過 react-admin 的 logout 流程：
+        // 1. 呼叫 authProvider.logout 清除 Token
+        // 2. 自動導回登入頁
+        logout();
     };
 
     return (
@@ -450,10 +463,38 @@ export const CustomAppBar = (props: AppBarProps) => {
                     {periodOptions.map((p) => <MenuItem key={p} selected={p === accountingPeriod} onClick={() => { setAccountingPeriod(p); setPeriodMenuAnchor(null); }}>{p}</MenuItem>)}
                 </Menu>
 
-                <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)} PaperProps={{ sx: { mt: 1, borderRadius: 3, minWidth: 150 } }}>
-                    <MenuItem sx={{ py: 1.5 }}>個人資料</MenuItem>
-                    <Divider />
-                    <MenuItem onClick={() => window.location.reload()} sx={{ py: 1.5, color: 'error.main' }}>登出系統</MenuItem>
+                <Menu
+                    anchorEl={userAnchor}
+                    open={Boolean(userAnchor)}
+                    onClose={() => setUserAnchor(null)}
+                    PaperProps={{ sx: { mt: 1, borderRadius: 3, minWidth: 180 } }}
+                >
+                    {identity && (
+                        <MenuItem sx={{ py: 1.5, cursor: "default" }} disabled>
+                            <Box sx={{ display: "flex", flexDirection: "column" }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {identity.fullName || identity.id}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    已登入
+                                </Typography>
+                            </Box>
+                        </MenuItem>
+                    )}
+                    {identity && <Divider />}
+                    <MenuItem
+                        onClick={handleLogout}
+                        sx={{
+                            py: 1.5,
+                            color: "error.main",
+                            "&:hover": { backgroundColor: "action.hover" },
+                        }}
+                    >
+                        <ListItemIcon sx={{ color: "error.main", minWidth: 36 }}>
+                            <LogoutIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary="登出系統" />
+                    </MenuItem>
                 </Menu>
             </Toolbar>
         </AppBar>
