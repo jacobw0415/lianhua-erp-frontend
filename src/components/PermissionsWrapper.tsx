@@ -19,10 +19,16 @@ export const PermissionsWrapper: React.FC<PermissionsWrapperProps> = ({
   children,
 }) => {
   const { permissions, isLoading } = usePermissions();
-  const role = typeof permissions === "string" ? permissions : Array.isArray(permissions) ? permissions[0] : undefined;
+  const roles = Array.isArray(permissions)
+    ? (permissions as string[])
+    : typeof permissions === "string"
+      ? [permissions]
+      : [];
 
   if (isLoading) return null;
-  const allowed = role && allowedRoles.includes(role as RoleName);
+  const allowed =
+    roles.length > 0 &&
+    roles.some((role) => allowedRoles.includes(role as RoleName));
   if (!allowed) return null;
 
   return <>{children}</>;

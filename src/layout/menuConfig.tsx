@@ -49,6 +49,8 @@ import TableViewIcon from '@mui/icons-material/TableView';
 
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import SecurityIcon from '@mui/icons-material/Security';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import PasswordIcon from '@mui/icons-material/Password';
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 import ShoppingCartCheckoutTwoToneIcon from '@mui/icons-material/ShoppingCartCheckoutTwoTone';
@@ -127,6 +129,8 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN" },
       { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN" },
+      { label: "個人資料", to: "/profile", icon: <AccountCircleIcon /> },
+      { label: "修改密碼", to: "/change-password", icon: <PasswordIcon /> },
       { label: "通知中心", to: "/notifications", icon: <NotificationIcon /> },
     ],
   },

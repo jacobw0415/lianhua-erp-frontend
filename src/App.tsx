@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Admin, Resource } from "react-admin";
+import { Admin, CustomRoutes, Resource } from "react-admin";
+import { Route } from "react-router-dom";
 
 import { createDataProvider } from "@/providers/dataProvider";
 import { NoopNotification } from "@/components/NoopNotification";
@@ -76,6 +77,15 @@ import { LianhuaDarkTheme } from "@/theme/LianhuaTheme";
 import { NotificationList } from "@/pages/notifications/NotificationList";
 import { authProvider } from "@/providers/authProvider";
 import { LoginPage } from "@/pages/Login/LoginPage";
+import { ForbiddenPage } from "@/pages/ForbiddenPage";
+import { UserList } from "@/pages/users/UserList";
+import { UserCreate } from "@/pages/users/UserCreate";
+import { UserEdit } from "@/pages/users/UserEdit";
+import { RoleList } from "@/pages/roles/RoleList";
+import { RoleCreate } from "@/pages/roles/RoleCreate";
+import { RoleEdit } from "@/pages/roles/RoleEdit";
+import ProfilePage from "@/pages/account/ProfilePage";
+import ChangePasswordPage from "@/pages/account/ChangePasswordPage";
 
 // ============================
 // 🚀 App 外層 Provider
@@ -118,6 +128,11 @@ const App = () => {
       darkTheme={LianhuaDarkTheme}
       defaultTheme={mode}
     >
+      <CustomRoutes>
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
+      </CustomRoutes>
       <Resource
         name="suppliers"
         list={SupplierList}
@@ -186,6 +201,18 @@ const App = () => {
         list={EmployeeList}
         create={EmployeeCreate}
         edit={EmployeeEdit}
+      />
+      <Resource
+        name="users"
+        list={UserList}
+        create={UserCreate}
+        edit={UserEdit}
+      />
+      <Resource
+        name="roles"
+        list={RoleList}
+        create={RoleCreate}
+        edit={RoleEdit}
       />
       <Resource
         name="reports/cashflow"

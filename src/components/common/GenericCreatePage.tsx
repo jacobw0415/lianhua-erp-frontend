@@ -21,6 +21,8 @@ interface GenericCreatePageProps {
   onSuccess?: (data: unknown) => void;
   onError?: (error: unknown) => void;
   width?: string;
+  /** 可選：在送出前轉換 payload（例如移除 confirmPassword） */
+  transform?: (data: any) => any;
 }
 
 const CustomToolbar = ({ onBack }: { onBack: () => void }) => (
@@ -52,6 +54,7 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
   onSuccess,
   onError,
   width = "700px",
+  transform,
 }) => {
   const redirect = useRedirect();
 
@@ -83,6 +86,7 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
           <Create
             title={title}
             actions={false}
+            transform={transform}
             mutationOptions={{
               onSuccess: async (data: unknown) => {
                 onSuccess?.(data);
@@ -98,6 +102,7 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
             }}
           >
             <SimpleForm
+              // 讓 SimpleForm 也能看到轉換後的錯誤等資訊
               toolbar={
                 <CustomToolbar
                   onBack={() => redirect("list", resource)}

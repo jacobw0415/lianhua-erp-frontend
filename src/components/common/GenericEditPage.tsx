@@ -108,9 +108,24 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
     const { id, newPayments, ...rest } = values as Record<string, unknown>;
     const payload: Record<string, unknown> = { ...rest };
 
+    // 使用者管理：若有填 newPassword，映射為 password，並移除確認欄位
+    if (resource === "users") {
+      const newPassword = (values as { newPassword?: unknown }).newPassword;
+      const confirmNewPassword = (values as { confirmNewPassword?: unknown }).confirmNewPassword;
+      if (typeof newPassword === "string" && newPassword.trim()) {
+        if (newPassword !== confirmNewPassword) {
+          // 簡單防呆：密碼不一致直接丟錯，由上層 Alert 處理
+          throw new Error("新密碼與確認密碼不一致。");
+        }
+        payload.password = newPassword;
+      }
+      delete (payload as any).newPassword;
+      delete (payload as any).confirmNewPassword;
+    }
+
     // 移除唯讀欄位防止報錯
     const readonlyFields = [
-      'supplierName', 'item', 'totalAmount', 'paidAmount', 
+      'supplierName', 'item', 'totalAmount', 'paidAmount',
       'balance', 'status', 'productName', 'amount'
     ];
     readonlyFields.forEach(field => delete payload[field]);
@@ -251,13 +266,12 @@ const EditContent: React.FC<EditContentProps> = ({
       <GlobalAlertDialog
         open={openDeleteConfirm}
         title="確認刪除"
-        description={`確定要刪除「${
-          (record as any).purchaseNo ??
+        description={`確定要刪除「${(record as any).purchaseNo ??
           (record as any).orderNo ??
           (record as any).name ??
           (record as any).title ??
           "這筆資料"
-        }」嗎？`}
+          }」嗎？`}
         severity="error"
         confirmLabel="刪除"
         cancelLabel="取消"

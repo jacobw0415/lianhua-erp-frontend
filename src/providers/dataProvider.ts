@@ -9,12 +9,12 @@ import { filterMapping } from "@/config/filterMapping";
  * ======================================================== */
 type ApiError =
   | {
+    message?: string;
+    body?: {
       message?: string;
-      body?: {
-        message?: string;
-        error?: string;
-      };
-      status?: number;
+      error?: string;
+    };
+    status?: number;
   }
   | unknown;
 
@@ -79,6 +79,14 @@ export const createDataProvider = ({
        * 401 被動登出：觸發 authProvider.checkError，清除會話並重導向 /login
        * -------------------------------------------- */
       if (status === 401) {
+        void authProvider.checkError(apiError);
+        throw error;
+      }
+
+      /* --------------------------------------------
+       * 403 權限不足：觸發 authProvider.checkError，導向無權限頁
+       * -------------------------------------------- */
+      if (status === 403) {
         void authProvider.checkError(apiError);
         throw error;
       }
@@ -189,7 +197,7 @@ export const createDataProvider = ({
         "orderNo",
         "receivedDate",
         "expenseDate",
-        "userNotificationId", 
+        "userNotificationId",
         "notification.createdAt",
         "read",
       ];
@@ -290,7 +298,7 @@ export const createDataProvider = ({
 
       if (endpoint === "read") {
         return httpClientSafe(`${apiUrl}/${resource}/${params.id}/read`, {
-          method: "PATCH", 
+          method: "PATCH",
         }).then(({ json }) => ({ data: json?.data ?? json }));
       }
 
