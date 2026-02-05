@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Admin, CustomRoutes, Resource } from "react-admin";
-import { Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { createDataProvider } from "@/providers/dataProvider";
 import { NoopNotification } from "@/components/NoopNotification";
@@ -77,6 +77,8 @@ import { LianhuaDarkTheme } from "@/theme/LianhuaTheme";
 import { NotificationList } from "@/pages/notifications/NotificationList";
 import { authProvider } from "@/providers/authProvider";
 import { LoginPage } from "@/pages/Login/LoginPage";
+import { ForgotPassPage } from "@/pages/Login/ForgotPassPage";
+import { ResetPassPage } from "@/pages/Login/ResetPassPage";
 import { ForbiddenPage } from "@/pages/ForbiddenPage";
 import { UserList } from "@/pages/users/UserList";
 import { UserCreate } from "@/pages/users/UserCreate";
@@ -91,6 +93,47 @@ import ChangePasswordPage from "@/pages/account/ChangePasswordPage";
 // 🚀 App 外層 Provider
 // ============================
 export const AppWithProvider = () => {
+  // 若當前 URL 上帶有 ?token= 或 ?resetToken=，代表從「重設密碼」信件點進來；
+  // 這時直接渲染 ResetPassPage，避免被 React-Admin 的登入流程攔截。
+  let shouldShowResetPass = false;
+  if (typeof window !== "undefined") {
+    const { search, hash } = window.location;
+    // 優先從 query string 取參數，若沒有再從 hash 中解析（避免不同部署模式差異）
+    const queryPart =
+      search && search.length > 1
+        ? search.substring(1)
+        : hash.includes("?")
+          ? hash.substring(hash.indexOf("?") + 1)
+          : "";
+    if (queryPart) {
+      const params = new URLSearchParams(queryPart);
+      const token = params.get("token") || params.get("resetToken");
+      if (token) {
+        shouldShowResetPass = true;
+      }
+    }
+  }
+
+  if (shouldShowResetPass) {
+    return (
+      <ErrorHandlerProvider>
+        <GlobalAlertProvider>
+          <ColorModeProvider>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <Routes>
+                <Route path="/reset-password" element={<ResetPassPage />} />
+                <Route path="/forgot-password" element={<ForgotPassPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                {/* 若路徑不符，預設仍顯示重設密碼頁，避免使用者卡住 */}
+                <Route path="*" element={<ResetPassPage />} />
+              </Routes>
+            </BrowserRouter>
+          </ColorModeProvider>
+        </GlobalAlertProvider>
+      </ErrorHandlerProvider>
+    );
+  }
+
   return (
     <ErrorHandlerProvider>
       <GlobalAlertProvider>
@@ -128,6 +171,13 @@ const App = () => {
       darkTheme={LianhuaDarkTheme}
       defaultTheme={mode}
     >
+      {/* 無佈局頁面：登入相關（不顯示側邊選單與 AppBar） */}
+      <CustomRoutes noLayout>
+        <Route path="/forgot-password" element={<ForgotPassPage />} />
+        <Route path="/reset-password" element={<ResetPassPage />} />
+      </CustomRoutes>
+
+      {/* 一般佈局頁面 */}
       <CustomRoutes>
         <Route path="/forbidden" element={<ForbiddenPage />} />
         <Route path="/profile" element={<ProfilePage />} />

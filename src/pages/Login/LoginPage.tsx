@@ -1,5 +1,6 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogin, useTheme } from "react-admin";
 import {
   Box,
@@ -29,6 +30,8 @@ export const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const login = useLogin();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [theme] = useTheme();
   const isDark = theme === "dark";
 
@@ -55,35 +58,51 @@ export const LoginPage = () => {
       });
   };
 
+  // 若從後端寄出的重設密碼連結誤指向 /login?token=xxx 或 /login?resetToken=xxx
+  // 則在此自動轉向到真正的 /reset-password 頁面，確保使用者可以直接修改密碼。
+  useEffect(() => {
+    const search = location.search;
+    if (!search) return;
+
+    const params = new URLSearchParams(search);
+    const token = params.get("token") || params.get("resetToken");
+    if (token) {
+      navigate(`/reset-password?token=${encodeURIComponent(token)}`, {
+        replace: true,
+      });
+    }
+  }, [location.search, navigate]);
+
   const cardBg = isDark
     ? alpha("#1e1e1e", 0.95)
     : alpha("#ffffff", 0.98);
   const accentColor = isDark ? "#4CAF50" : "#388E3C";
 
+  const pageBoxSx = {
+    minHeight: "100vh",
+    height: "100vh",
+    overflow: "hidden" as const,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: isDark
+      ? "linear-gradient(135deg, #0d1f0e 0%, #1b2e1c 50%, #0d1f0e 100%)"
+      : "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)",
+    p: 2,
+  };
+
+  const cardSx = {
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: 4,
+    overflow: "hidden",
+    backgroundColor: cardBg,
+    border: isDark ? "1px solid rgba(255,255,255,0.08)" : "none",
+  };
+
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: isDark
-          ? "linear-gradient(135deg, #0d1f0e 0%, #1b2e1c 50%, #0d1f0e 100%)"
-          : "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)",
-        p: 2,
-      }}
-    >
-      <Card
-        elevation={isDark ? 8 : 4}
-        sx={{
-          width: "100%",
-          maxWidth: 420,
-          borderRadius: 4,
-          overflow: "hidden",
-          backgroundColor: cardBg,
-          border: isDark ? "1px solid rgba(255,255,255,0.08)" : "none",
-        }}
-      >
+    <Box sx={pageBoxSx}>
+      <Card elevation={isDark ? 8 : 4} sx={cardSx}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ textAlign: "center", mb: 3 }}>
             <Box
@@ -120,76 +139,88 @@ export const LoginPage = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            <TextField
-              fullWidth
-              label="帳號"
-              placeholder="請輸入帳號"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              autoFocus
-              disabled={isSubmitting}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonOutlinedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="密碼"
-              placeholder="請輸入密碼"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              disabled={isSubmitting}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlinedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}
-                      onClick={() => setShowPassword((v) => !v)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showPassword ? (
-                        <VisibilityOffOutlinedIcon fontSize="small" />
-                      ) : (
-                        <VisibilityOutlinedIcon fontSize="small" />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 3 }}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={isSubmitting}
-              sx={{
-                py: 1.5,
-                fontWeight: 700,
-                borderRadius: 2,
-                backgroundColor: accentColor,
-                "&:hover": {
-                  backgroundColor: isDark ? "#66BB6A" : "#2E7D32",
-                },
+          <TextField
+            fullWidth
+            label="帳號"
+            placeholder="請輸入帳號"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="username"
+            autoFocus
+            disabled={isSubmitting}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PersonOutlinedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="密碼"
+            placeholder="請輸入密碼"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={isSubmitting}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlinedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}
+                    onClick={() => setShowPassword((v) => !v)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showPassword ? (
+                      <VisibilityOffOutlinedIcon fontSize="small" />
+                    ) : (
+                      <VisibilityOutlinedIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 3 }}
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            size="large"
+            disabled={isSubmitting}
+            sx={{
+              py: 1.5,
+              fontWeight: 700,
+              borderRadius: 2,
+              backgroundColor: accentColor,
+              "&:hover": {
+                backgroundColor: isDark ? "#66BB6A" : "#2E7D32",
+              },
+            }}
+          >
+            {isSubmitting ? "登入中…" : "登入"}
+          </Button>
+          <Box sx={{ mt: 2, textAlign: "center" }}>
+            <Link
+              to="/forgot-password"
+              style={{
+                color: accentColor,
+                fontSize: "0.875rem",
+                textDecoration: "none",
               }}
             >
-              {isSubmitting ? "登入中…" : "登入"}
-            </Button>
+              忘記密碼？
+            </Link>
+          </Box>
           </Box>
         </CardContent>
       </Card>
