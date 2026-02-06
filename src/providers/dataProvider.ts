@@ -1,6 +1,7 @@
 import { fetchUtils, type DataProvider } from "react-admin";
 import type { AuthProvider } from "react-admin";
 
+import { getApiUrl } from "@/config/apiUrl";
 import { apiRules } from "@/config/apiRules";
 import { filterMapping } from "@/config/filterMapping";
 
@@ -18,8 +19,7 @@ type ApiError =
   }
   | unknown;
 
-const apiUrl: string =
-  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const apiUrl = getApiUrl();
 
 /* ========================================================
  * ⭐ 注入 handleApiError、authProvider（401 時觸發被動登出）

@@ -16,8 +16,9 @@ import {
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-const apiUrl: string =
-  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+import { getApiUrl } from "@/config/apiUrl";
+
+const apiUrl = getApiUrl();
 
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
 

@@ -1,9 +1,7 @@
 import type { AuthProvider } from "react-admin";
 
+import { getApiUrl } from "@/config/apiUrl";
 import { clearAppCache } from "@/utils/appCache";
-
-const apiUrl: string =
-  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 /** 應用基底路徑（Vite 的 import.meta.env.BASE_URL，部署子路徑時為 /erp 等） */
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
@@ -11,16 +9,7 @@ const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_U
 /* ========================================================
  * 常數與儲存鍵
  * ======================================================== */
-const AUTH_STORAGE_KEYS = [
-  "token",
-  "tokenType",
-  "username",
-  "role",
-  "userId",
-  "fullName",
-  "roles",
-  "roleNames",
-] as const;
+const AUTH_STORAGE_KEYS = ["token", "tokenType", "username", "role"] as const;
 
 /** 集中清除前端登入狀態，供 logout 與 checkError(401) 共用 */
 function clearAuthStorage(): void {
@@ -69,15 +58,6 @@ function redirectToLogin(): void {
   if (base) window.location.href = `${base}${path}`;
 }
 
-/** 導向無權限頁（403 時使用）；支援子路徑部署 */
-function redirectToForbidden(): void {
-  if (typeof window === "undefined") return;
-  const base = window.location.origin;
-  const basePath = BASE_PATH.replace(/\/$/, "") || "";
-  const path = `${basePath}/forbidden`;
-  if (base) window.location.href = `${base}${path}`;
-}
-
 /* ========================================================
  * 型別定義
  * ======================================================== */
@@ -117,6 +97,9 @@ interface LoginResponseContainer {
   roles?: unknown[];
   authorities?: unknown[];
   roleNames?: unknown[];
+  user?: LoginResponseContainer;
+  result?: LoginResponseContainer;
+  data?: LoginResponseContainer;
 }
 
 function getString(value: unknown | undefined): string | undefined {
@@ -126,7 +109,13 @@ function getString(value: unknown | undefined): string | undefined {
 }
 
 function getTokenFromContainer(c: LoginResponseContainer): string | undefined {
-  return getString(c.token) ?? getString(c.accessToken) ?? getString(c.access_token);
+  const direct =
+    getString(c.token) ?? getString(c.accessToken) ?? getString(c.access_token);
+  if (direct) return direct;
+  const nested = c.user ?? c.result ?? c.data;
+  if (nested && typeof nested === "object")
+    return getTokenFromContainer(nested as LoginResponseContainer);
+  return undefined;
 }
 
 function getTypeFromContainer(c: LoginResponseContainer): string {
@@ -155,30 +144,10 @@ function getRoleFromContainer(c: LoginResponseContainer): string | undefined {
     return getString(c.roles[0]);
   if (Array.isArray(c.authorities) && c.authorities[0] != null)
     return getString(c.authorities[0]);
+  const nested = c.user ?? c.result ?? c.data;
+  if (nested && typeof nested === "object")
+    return getRoleFromContainer(nested as LoginResponseContainer);
   return undefined;
-}
-
-function getUserIdFromContainer(c: LoginResponseContainer): string | undefined {
-  return getString(c.id);
-}
-
-function getFullNameFromContainer(
-  c: LoginResponseContainer,
-  fallbackUsername: string
-): string {
-  return getString(c.fullName) ?? fallbackUsername;
-}
-
-function getRolesFromContainer(c: LoginResponseContainer): string[] | undefined {
-  const source =
-    (Array.isArray(c.roles) && c.roles) ||
-    (Array.isArray(c.roleNames) && c.roleNames) ||
-    undefined;
-  if (!source) return undefined;
-  const roles = source
-    .map((r) => getString(r))
-    .filter((r): r is string => !!r);
-  return roles.length > 0 ? roles : undefined;
 }
 
 /* ========================================================
@@ -186,6 +155,7 @@ function getRolesFromContainer(c: LoginResponseContainer): string[] | undefined 
  * ======================================================== */
 export const authProvider: AuthProvider = {
   login: async ({ username, password }: LoginParams) => {
+    const apiUrl = getApiUrl();
     const request = new Request(`${apiUrl}/auth/login`, {
       method: "POST",
       body: JSON.stringify({ username, password }),
@@ -221,51 +191,54 @@ export const authProvider: AuthProvider = {
       console.log("🔐 Login response raw:", json);
     }
 
-    let container: LoginResponseContainer | null = null;
-    if (json && typeof json === "object") {
-      if ("success" in json && "data" in json && json.data) {
-        container = json.data as LoginResponseContainer;
-      } else if ("data" in json && json.data) {
-        container = json.data as LoginResponseContainer;
-      } else {
-        container = json as unknown as LoginResponseContainer;
+    /** 從多種後端格式取出含 token 的物件（data / result / user / 頂層） */
+    function getEffectiveContainer(
+      raw: typeof json
+    ): LoginResponseContainer | null {
+      if (!raw || typeof raw !== "object") return null;
+      const obj = raw as Record<string, unknown>;
+      const candidates: LoginResponseContainer[] = [
+        raw,
+        obj.data,
+        obj.result,
+        obj.user,
+        (obj.data as Record<string, unknown>)?.user,
+        (obj.data as Record<string, unknown>)?.result,
+      ].filter(
+        (c): c is LoginResponseContainer => c != null && typeof c === "object"
+      ) as LoginResponseContainer[];
+      for (const c of candidates) {
+        if (getTokenFromContainer(c)) return c;
       }
+      return raw as LoginResponseContainer;
     }
 
+    const container = getEffectiveContainer(json);
     if (!container) {
       throw new Error("登入回應格式錯誤，請聯絡系統管理員");
     }
 
     const token = getTokenFromContainer(container);
     if (!token) {
-      throw new Error("登入回應格式錯誤，請聯絡系統管理員");
+      throw new Error(
+        "登入回應格式錯誤：後端未回傳 token / accessToken，請確認 API 回傳格式（開發時請看主控台 🔐 Login response raw）"
+      );
     }
 
     const type = getTypeFromContainer(container);
-    const userId = getUserIdFromContainer(container);
     const usernameFromPayload = getUsernameFromContainer(container);
     const roleFromPayload = getRoleFromContainer(container);
-    const rolesFromPayload = getRolesFromContainer(container);
     /** 後端未回傳使用者名稱時，以表單輸入的帳號為後備，確保 getIdentity 有值 */
     const displayName = usernameFromPayload || username;
-    const fullName = getFullNameFromContainer(container, displayName);
 
     localStorage.setItem("token", token);
     localStorage.setItem("tokenType", type);
-    if (userId) localStorage.setItem("userId", userId);
     if (displayName) localStorage.setItem("username", displayName);
-    if (fullName) localStorage.setItem("fullName", fullName);
     if (roleFromPayload) localStorage.setItem("role", roleFromPayload);
-    if (rolesFromPayload) {
-      localStorage.setItem("roles", JSON.stringify(rolesFromPayload));
-      // 兼容舊邏輯：若尚未有單一 role，預設取 roles[0]
-      if (!roleFromPayload && rolesFromPayload[0]) {
-        localStorage.setItem("role", rolesFromPayload[0]);
-      }
-    }
   },
 
   logout: async () => {
+    const apiUrl = getApiUrl();
     const token = localStorage.getItem("token");
     if (token) {
       try {
@@ -297,30 +270,13 @@ export const authProvider: AuthProvider = {
 
   /** RBAC：無 role 時回傳 ROLE_USER 作為安全預設，避免選單全部顯示 */
   getPermissions: () => {
-    const rolesRaw = localStorage.getItem("roles");
-    if (rolesRaw) {
-      try {
-        const parsed = JSON.parse(rolesRaw) as unknown;
-        if (Array.isArray(parsed)) {
-          const roles = parsed
-            .map((r) => getString(r))
-            .filter((r): r is string => !!r);
-          if (roles.length > 0) {
-            return Promise.resolve(roles);
-          }
-        }
-      } catch {
-        // ignore parse error, fallback to single role
-      }
-    }
-
-    const singleRole = localStorage.getItem("role") || "ROLE_USER";
-    return Promise.resolve(singleRole);
+    const role = localStorage.getItem("role");
+    return Promise.resolve(role || "ROLE_USER");
   },
 
   /**
    * 401：未授權／token 無效 → 清除會話並導向登入。
-   * 403：已登入但無此資源權限 → 導向無權限頁（保留會話）。
+   * 403：已登入但無此資源權限 → 僅 reject，不清 token、不導向登入。
    */
   checkError: (error: unknown) => {
     const status = (error as { status?: number })?.status;
@@ -331,7 +287,6 @@ export const authProvider: AuthProvider = {
       return Promise.reject();
     }
     if (status === 403) {
-      redirectToForbidden();
       return Promise.reject();
     }
     return Promise.resolve();
@@ -340,88 +295,9 @@ export const authProvider: AuthProvider = {
   check: () =>
     hasValidToken() ? Promise.resolve() : Promise.reject(),
 
-  getIdentity: async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return Promise.reject();
-
-    let response: Response;
-    try {
-      response = await fetch(`${apiUrl}/users/me`, {
-        method: "GET",
-        headers: new Headers({
-          Accept: "application/json",
-          Authorization: `${localStorage.getItem("tokenType") || "Bearer"} ${token}`,
-        }),
-      });
-    } catch {
-      return Promise.reject();
-    }
-
-    if (response.status === 401) {
-      clearAppCache();
-      clearAuthStorage();
-      redirectToLogin();
-      return Promise.reject();
-    }
-
-    if (response.status === 403) {
-      redirectToForbidden();
-      return Promise.reject();
-    }
-
-    if (response.status < 200 || response.status >= 300) {
-      return Promise.reject();
-    }
-
-    const json = (await response.json().catch(() => null)) as
-      | { data?: Record<string, unknown> }
-      | Record<string, unknown>
-      | null;
-
-    const payload =
-      json && typeof json === "object" && "data" in json && json.data
-        ? (json.data as Record<string, unknown>)
-        : (json as Record<string, unknown> | null);
-
-    if (!payload) {
-      return Promise.reject();
-    }
-
-    const id = getString((payload as { id?: unknown }).id);
-    const username =
-      getString((payload as { username?: unknown }).username) ??
-      localStorage.getItem("username") ??
-      "";
-    const fullName =
-      getString((payload as { fullName?: unknown }).fullName) ?? username;
-    const email = getString((payload as { email?: unknown }).email);
-
-    // 後端也會回傳 roles / roleNames，與登入時保持同步
-    const rolesField =
-      (payload as { roles?: unknown[] }).roles ??
-      (payload as { roleNames?: unknown[] }).roleNames;
-    if (Array.isArray(rolesField)) {
-      const roles = rolesField
-        .map((r) => getString(r))
-        .filter((r): r is string => !!r);
-      if (roles.length > 0) {
-        localStorage.setItem("roles", JSON.stringify(roles));
-        // 若尚未有單一 role，預設取第一筆
-        if (!localStorage.getItem("role")) {
-          localStorage.setItem("role", roles[0]);
-        }
-      }
-    }
-
-    if (id) localStorage.setItem("userId", id);
-    if (username) localStorage.setItem("username", username);
-    if (fullName) localStorage.setItem("fullName", fullName);
-    if (email) localStorage.setItem("email", email);
-
-    return Promise.resolve({
-      id: id ?? username,
-      fullName,
-      email,
-    });
+  getIdentity: () => {
+    const username = localStorage.getItem("username");
+    if (!username) return Promise.reject();
+    return Promise.resolve({ id: username, fullName: username });
   },
 };

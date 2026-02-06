@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
+import { getApiUrl } from "@/config/apiUrl";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { authProvider } from "@/providers/authProvider";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
-const apiUrl: string =
-  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const apiUrl = getApiUrl();
 
 const ChangePasswordPage: React.FC = () => {
   const theme = useTheme();

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// 集中管理 API 地址
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+import { getApiUrl } from '@/config/apiUrl';
+
+const API_BASE_URL = getApiUrl();
 const TEST_USER_ID = 1;
 
 // 與 dataProvider 一致：自動附加 Authorization Bearer Token

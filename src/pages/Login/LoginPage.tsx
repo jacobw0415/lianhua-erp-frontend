@@ -1,7 +1,8 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useLogin, useTheme } from "react-admin";
+import { useLogin } from "react-admin";
+import { useColorMode } from "@/contexts/useColorMode";
 import {
   Box,
   Card,
@@ -32,8 +33,33 @@ export const LoginPage = () => {
   const login = useLogin();
   const location = useLocation();
   const navigate = useNavigate();
-  const [theme] = useTheme();
-  const isDark = theme === "dark";
+  const { mode } = useColorMode();
+  const isDark = mode === "dark";
+
+  // 與忘記密碼頁同步：鎖定 body/html 不捲動，背景與頁面一致（亮/暗主題）
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevHtmlHeight = html.style.height;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyHeight = body.style.height;
+    const prevBodyBackground = body.style.background;
+    html.style.overflow = "hidden";
+    html.style.height = "100vh";
+    body.style.overflow = "hidden";
+    body.style.height = "100vh";
+    body.style.background = isDark
+      ? "linear-gradient(135deg, #0d1f0e 0%, #1b2e1c 50%, #0d1f0e 100%)"
+      : "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)";
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      html.style.height = prevHtmlHeight;
+      body.style.overflow = prevBodyOverflow;
+      body.style.height = prevBodyHeight;
+      body.style.background = prevBodyBackground;
+    };
+  }, [isDark]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
