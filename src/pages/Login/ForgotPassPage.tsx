@@ -70,7 +70,17 @@ export const ForgotPassPage = () => {
     }
     setIsSubmitting(true);
     try {
-      const body = { email: trimmed };
+      // 傳送目前頁面基底網址，後端應以此產生信件中的重設連結，例：${resetLinkBaseUrl}/reset-password?token=xxx
+      // 如此從 http://10.18.2.103:5173 送出時，信件連結即為同源，點開後可於同 IP 完成重設並返回登入
+      const resetLinkBaseUrl =
+        typeof window !== "undefined"
+          ? window.location.origin +
+            (BASE_PATH.replace(/\/$/, "") || "")
+          : "";
+      const body = {
+        email: trimmed,
+        ...(resetLinkBaseUrl ? { resetLinkBaseUrl } : {}),
+      };
       const res = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: "POST",
         headers: new Headers({ "Content-Type": "application/json" }),

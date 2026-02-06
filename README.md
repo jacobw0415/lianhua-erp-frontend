@@ -137,9 +137,18 @@ npm run build
 | 條件 | 說明 |
 |------|------|
 | API 回傳格式 | React-Admin 預期為 `{ data: [...] }` 或直接陣列 |
-| CORS | 需允許 `http://localhost:5173` |
+| CORS | 需允許 `http://localhost:5173`（開發時前端可走同源代理） |
 | HTTP 方法 | 支援 `GET`, `POST`, `PUT`, `DELETE` |
 | 驗證 | JWT Token （未來階段） |
+
+### 忘記密碼／重設密碼（支援區網與 IP 訪問）
+
+- **POST `/api/auth/forgot-password`**  
+  前端會傳送 `{ email: string, resetLinkBaseUrl?: string }`。  
+  **後端必須讀取並使用 `resetLinkBaseUrl`** 組出信件中的重設連結，否則信件連結會一直是 localhost，無法從 IP 完成重設流程。  
+  - 連結格式：`${resetLinkBaseUrl}/reset-password?token=xxx`（路徑為 **reset-password**，勿寫成 eset-password 等錯字）  
+  - 若未傳 `resetLinkBaseUrl`，後端可 fallback 至 `http://localhost:5173`  
+- 後端實作範例與驗證步驟見：[docs/api-forgot-password-reset-link.md](docs/api-forgot-password-reset-link.md)
 
 ---
 
