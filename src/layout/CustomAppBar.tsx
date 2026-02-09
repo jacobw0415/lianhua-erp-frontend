@@ -22,6 +22,7 @@ import {
     Typography,
     Autocomplete,
     CircularProgress,
+    useMediaQuery,
     ListItemIcon,
     ListItemText,
     Divider,
@@ -48,8 +49,6 @@ import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useNotifications } from "@/hooks/useNotifications";
-import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
-import { Z_INDEX, APP_BAR_HEIGHT } from "@/constants/layoutConstants";
 
 import dayjs from "dayjs";
 import type { ElementType } from "react";
@@ -82,84 +81,48 @@ export const CustomAppBar = (props: AppBarProps) => {
     const location = useLocation();
     const pathname = location.pathname;
 
-    // 使用專案統一的 RWD hooks
-    const isMobile = useIsMobile();
-    const isSmallScreen = useIsSmallScreen();
+    const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
+    const isTablet = useMediaQuery(muiTheme.breakpoints.down("md"));
 
     /* =====================================================
      * 📌 狀態管理
      * ===================================================== */
     const [accountingPeriod, setAccountingPeriod] = useState<string>(dayjs().format("YYYY-MM"));
     const [periodMenuAnchor, setPeriodMenuAnchor] = useState<HTMLElement | null>(null);
-    const periodButtonRef = useRef<HTMLDivElement | null>(null); // 會計期間按鈕的 ref，用於獲取寬度
-    const [periodButtonWidth, setPeriodButtonWidth] = useState<number>(90); // 會計期間按鈕寬度
     const [notiAnchor, setNotiAnchor] = useState<HTMLElement | null>(null);
-    const notiButtonRef = useRef<HTMLElement | null>(null); // 通知按鈕的 ref，統一作為 anchor
     const [userAnchor, setUserAnchor] = useState<HTMLElement | null>(null);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
-
-    // 取得通知中心的 anchor 元素（統一邏輯）
-    const getNotificationAnchor = (): HTMLElement | null => {
-        // 優先使用通知按鈕的 ref
-        if (notiButtonRef.current && isValidAnchor(notiButtonRef.current)) {
-            return notiButtonRef.current;
-        }
-        // 其次使用 notiAnchor 狀態
-        if (notiAnchor && isValidAnchor(notiAnchor)) {
-            return notiAnchor;
-        }
-        return null;
-    };
 
     const [open, setOpen] = useState(false);
     const [options, setOptions] = useState<readonly SearchResult[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [loading, setLoading] = useState(false);
+    const moreMenuButtonRef = useRef<HTMLElement | null>(null);
+    const periodButtonRef = useRef<HTMLDivElement | null>(null);
+    const [periodMenuWidth, setPeriodMenuWidth] = useState<number | undefined>(undefined);
 
     /* =====================================================
      * 🚀 解決 Console 報警與 ARIA 衝突
-     * 只在斷點切換時關閉選單，而非每次 resize
      * ===================================================== */
-    const prevIsMobileRef = useRef(isMobile);
-    const prevIsSmallScreenRef = useRef(isSmallScreen);
-    
     useEffect(() => {
-        // 只在斷點切換時關閉選單
-        if (prevIsMobileRef.current !== isMobile || prevIsSmallScreenRef.current !== isSmallScreen) {
+        const handleForceClose = () => {
             setNotiAnchor(null);
             setMoreMenuAnchor(null);
             setPeriodMenuAnchor(null);
             setUserAnchor(null);
-            // 更新 ref 值
-            prevIsMobileRef.current = isMobile;
-            prevIsSmallScreenRef.current = isSmallScreen;
-        }
-    }, [isMobile, isSmallScreen]);
+        };
+        window.addEventListener('resize', handleForceClose);
+        return () => window.removeEventListener('resize', handleForceClose);
+    }, [isMobile, isTablet]);
 
-    // 驗證 anchorEl 是否有效（仍在 DOM 中且可見）
-    const isValidAnchor = (el: HTMLElement | null): el is HTMLElement => {
-        if (!el) return false;
-        // 檢查元素是否仍在 DOM 中
-        if (!el.isConnected || !document.body.contains(el)) return false;
-        // 檢查元素是否可見（不是 display: none）
-        const style = window.getComputedStyle(el);
-        return style.display !== 'none' && style.visibility !== 'hidden';
-    };
-
-    // 監聽 anchor 元素有效性，無效時自動關閉選單
+    /* =====================================================
+     * 📏 更新月曆選單寬度
+     * ===================================================== */
     useEffect(() => {
-        if (notiAnchor && !isValidAnchor(notiAnchor)) setNotiAnchor(null);
-        if (moreMenuAnchor && !isValidAnchor(moreMenuAnchor)) setMoreMenuAnchor(null);
-        if (periodMenuAnchor && !isValidAnchor(periodMenuAnchor)) setPeriodMenuAnchor(null);
-        if (userAnchor && !isValidAnchor(userAnchor)) setUserAnchor(null);
-    }, [notiAnchor, moreMenuAnchor, periodMenuAnchor, userAnchor]);
-
-    // 更新會計期間按鈕寬度（手機版時）
-    useEffect(() => {
-        if (isMobile && periodButtonRef.current) {
-            setPeriodButtonWidth(periodButtonRef.current.offsetWidth);
+        if (periodMenuAnchor && periodButtonRef.current) {
+            setPeriodMenuWidth(periodButtonRef.current.offsetWidth);
         }
-    }, [isMobile, accountingPeriod]); // 當裝置類型或會計期間改變時更新寬度
+    }, [periodMenuAnchor, accountingPeriod, isMobile]);
 
     const handleNotificationClick = async (noti: any) => {
         setNotiAnchor(null);
@@ -167,7 +130,7 @@ export const CustomAppBar = (props: AppBarProps) => {
         if (!actualId) return;
 
         const success = await markAsRead({ ...noti, userNotificationId: actualId });
-
+        
         if (success && noti.targetId) {
             switch (noti.targetType) {
                 case 'purchases': redirect(`/purchases/${noti.targetId}/show`); break;
@@ -259,17 +222,13 @@ export const CustomAppBar = (props: AppBarProps) => {
             color="inherit"
             elevation={0}
             sx={{
-                zIndex: Z_INDEX.appBar,
+                zIndex: (theme) => theme.zIndex.drawer + 1,
                 backdropFilter: "blur(10px)",
                 backgroundColor: isDark ? "rgba(46, 125, 50, 0.85)" : "rgba(56, 142, 60, 0.85)",
                 borderBottomLeftRadius: 12, borderBottomRightRadius: 12,
             }}
         >
-            <Toolbar sx={{ 
-                px: { xs: 0.5, sm: 2 }, 
-                height: { xs: `${APP_BAR_HEIGHT.mobile}px`, sm: `${APP_BAR_HEIGHT.desktop}px` },
-                minHeight: { xs: `${APP_BAR_HEIGHT.mobile}px`, sm: `${APP_BAR_HEIGHT.desktop}px` }
-            }}>
+            <Toolbar sx={{ px: { xs: 0.5, sm: 2 }, height: "52px !important", minHeight: "52px !important" }}>
                 <SidebarToggleButton />
 
                 <Box sx={{ display: "flex", alignItems: "center", mr: { xs: 0.5, sm: 2 }, ml: { xs: 0, sm: 1 }, flexShrink: 0 }}>
@@ -284,35 +243,37 @@ export const CustomAppBar = (props: AppBarProps) => {
                 <Box
                     ref={periodButtonRef}
                     onClick={(e) => {
-                        const target = e.currentTarget as HTMLElement;
-                        if (target && isMobile) {
-                            // 點擊時更新寬度，確保選單寬度與按鈕一致
-                            setPeriodButtonWidth(target.offsetWidth);
+                        setPeriodMenuAnchor(e.currentTarget);
+                        if (periodButtonRef.current) {
+                            setPeriodMenuWidth(periodButtonRef.current.offsetWidth);
                         }
-                        setPeriodMenuAnchor(target);
                     }}
                     sx={{
                         display: "flex", 
                         alignItems: "center", 
+                        justifyContent: "center",
                         flexShrink: 0, 
                         backgroundColor: "rgba(255,255,255,0.22)", 
-                        px: { xs: 0.8, sm: 1.5 }, 
-                        height: "34px", // 與搜尋條高度一致
+                        px: { xs: 1, sm: 1.5 }, 
+                        height: "34px",
                         borderRadius: 1.5, 
                         color: "#fff", 
                         cursor: "pointer", 
                         transition: "0.2s",
                         "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" }, 
                         whiteSpace: "nowrap", 
-                        mr: { xs: 0.5, sm: 0 }
+                        mr: { xs: 0.5, sm: 0 },
+                        minWidth: { xs: '90px', sm: '110px' },
+                        width: 'fit-content'
                     }}
                 >
-                    <Typography variant="body2" sx={{ mr: 0.2, fontWeight: 500, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                        {!isMobile 
-                            ? `📅 ${accountingPeriod}` 
-                            : accountingPeriod.replace('-', '/')}
+                    <Typography variant="body2" sx={{ mr: 0.5, fontWeight: 500, fontSize: "0.85rem", lineHeight: 1 }}>
+                        {(() => {
+                            const [year, month] = accountingPeriod.split('-');
+                            return `${year}/${parseInt(month)}`;
+                        })()}
                     </Typography>
-                    <ArrowDropDownIcon sx={{ fontSize: '1.1rem' }} />
+                    <ArrowDropDownIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
                 </Box>
 
                 <Autocomplete
@@ -327,11 +288,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                     groupBy={(option) => option.type}
                     getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
                     onChange={(_, val) => val && redirect(val.url)}
-                    sx={{ 
-                        ml: isMobile ? 0.5 : (isSmallScreen ? 1 : 3), 
-                        flexGrow: 1, 
-                        maxWidth: isMobile ? '200px' : (isSmallScreen ? '300px' : '400px') 
-                    }}
+                    sx={{ ml: { xs: 0.5, md: 3 }, flexGrow: 1, maxWidth: { xs: '160px', sm: '300px', md: '400px' } }}
                     slotProps={{
                         paper: { sx: { "& .MuiAutocomplete-listbox": { padding: 0, ...getScrollbarStyles(muiTheme) } } }
                     }}
@@ -370,22 +327,10 @@ export const CustomAppBar = (props: AppBarProps) => {
                 />
 
                 <Box sx={{ display: "flex", ml: "auto", alignItems: "center", flexShrink: 0 }}>
-                    {!isSmallScreen ? (
+                    {!isTablet ? (
                         <>
                             <Tooltip title="通知中心">
-                                <IconButton
-                                    ref={(el) => {
-                                        notiButtonRef.current = el;
-                                    }}
-                                    onClick={(e) => {
-                                        // 確保取得正確的 anchor 元素
-                                        const target = e.currentTarget as HTMLElement;
-                                        if (target && document.body.contains(target)) {
-                                            setNotiAnchor(target);
-                                        }
-                                    }}
-                                    sx={{ position: 'relative' }}
-                                >
+                                <IconButton onClick={(e) => setNotiAnchor(e.currentTarget)}>
                                     <Badge badgeContent={unreadCount} color="error">
                                         <NotificationsIcon sx={{ color: "#fff" }} />
                                     </Badge>
@@ -396,12 +341,18 @@ export const CustomAppBar = (props: AppBarProps) => {
                                     {isDark ? <Brightness7Icon sx={{ color: "#fff" }} /> : <Brightness4Icon sx={{ color: "#fff" }} />}
                                 </IconButton>
                             </Tooltip>
-                            <Tooltip title="重新整理">
+                            <Tooltip title="重新整理">  
                                 <IconButton onClick={() => window.location.reload()}><RefreshIcon sx={{ color: "#fff" }} /></IconButton>
                             </Tooltip>
                         </>
                     ) : (
-                        <IconButton onClick={(e) => setMoreMenuAnchor(e.currentTarget)}>
+                        <IconButton 
+                            ref={(el) => { moreMenuButtonRef.current = el; }}
+                            onClick={(e) => {
+                                moreMenuButtonRef.current = e.currentTarget;
+                                setMoreMenuAnchor(e.currentTarget);
+                            }}
+                        >
                             <Badge badgeContent={unreadCount} color="error" variant="dot">
                                 <MoreVertIcon sx={{ color: "#fff" }} />
                             </Badge>
@@ -415,59 +366,47 @@ export const CustomAppBar = (props: AppBarProps) => {
                     </Tooltip>
                 </Box>
 
-                {/* --- 🔔 通知中心彈窗 (統一使用 Menu 標準定位) --- */}
+                {/* --- 🔔 通知中心彈窗 (修正版：強制 Flex 結構與 Scrollbar) --- */}
                 <Menu
-                    anchorEl={getNotificationAnchor()}
-                    open={Boolean(getNotificationAnchor())}
-                    onClose={() => {
-                        setNotiAnchor(null);
-                    }}
-                    disableScrollLock={false}
-                    // 統一使用 anchorOrigin 和 transformOrigin 進行定位
-                    anchorOrigin={{ 
-                        vertical: 'bottom', 
-                        horizontal: isMobile ? 'center' : 'right' 
-                    }}
-                    transformOrigin={{ 
-                        vertical: 'top', 
-                        horizontal: isMobile ? 'center' : 'right' 
-                    }}
-                    // 統一使用 Portal，確保層級正確
-                    disablePortal={false}
-                    sx={{
-                        zIndex: Z_INDEX.appBarMenu,
-                        "& .MuiMenu-list": {
-                            p: 0,
-                            display: 'flex',
+                    anchorEl={notiAnchor}
+                    open={Boolean(notiAnchor)}
+                    onClose={() => setNotiAnchor(null)}
+                    disableScrollLock 
+                    anchorOrigin={{ vertical: 'bottom', horizontal: isMobile ? 'center' : 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: isMobile ? 'center' : 'right' }}
+                    // 關鍵修復：強制 MenuList 使用 Flex 並移除預設 Padding
+                    sx={{ 
+                        "& .MuiMenu-list": { 
+                            p: 0, 
+                            display: 'flex', 
                             flexDirection: 'column',
-                            // 動態計算最大高度：視窗高度 - AppBar 高度 - 間距
-                            maxHeight: `calc(100vh - ${APP_BAR_HEIGHT[isMobile ? 'mobile' : 'desktop']}px - ${muiTheme.spacing(2)})`,
-                        }
+                            maxHeight: 520 // 確保總高度限制
+                        } 
                     }}
                     slotProps={{
                         paper: {
                             sx: {
-                                // 使用 minWidth 和 maxWidth 而非固定 width，提供彈性
-                                minWidth: isMobile ? 280 : 320,
-                                maxWidth: isMobile ? '92vw' : 420,
-                                mt: 0.5,
+                                width: isMobile ? '92vw' : 380,
+                                maxWidth: '420px',
+                                mt: 1.5,
                                 borderRadius: 4,
                                 boxShadow: isDark ? '0px 12px 48px rgba(0,0,0,0.6)' : '0px 12px 32px rgba(0,0,0,0.12)',
-                                overflow: 'hidden',
+                                overflow: 'hidden', 
                                 backgroundImage: 'none',
                                 backgroundColor: isDark ? '#1e1e1e' : '#fff',
+                                ...(isMobile && { left: '4vw !important', right: '4vw !important' }),
                             }
                         }
                     }}
                 >
                     {/* 1. 固定標題區 */}
-                    <Box sx={{
-                        p: 2.5,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50',
-                        flexShrink: 0
+                    <Box sx={{ 
+                        p: 2.5, 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50', 
+                        flexShrink: 0 
                     }}>
                         <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>通知中心</Typography>
                         {unreadCount > 0 && (
@@ -476,11 +415,11 @@ export const CustomAppBar = (props: AppBarProps) => {
                     </Box>
                     <Divider />
 
-                    {/* 2. ✨ 捲動內容區 ✨ */}
-                    <Box sx={{
-                        flex: 1,
-                        overflowY: 'auto',
-                        minHeight: 0, // 允許 flex 子元素縮小
+                    {/* 2. ✨ 加回的捲動內容區 ✨ */}
+                    <Box sx={{ 
+                        flexGrow: 1, 
+                        overflowY: 'auto', 
+                        maxHeight: 340, // 限制中間捲動區高度
                         p: 1.5,
                         ...getScrollbarStyles(muiTheme) // 注入 Scrollbar 樣式
                     }}>
@@ -497,18 +436,18 @@ export const CustomAppBar = (props: AppBarProps) => {
                                         key={n.id || n.userNotificationId}
                                         onClick={() => handleNotificationClick(n)}
                                         sx={{
-                                            whiteSpace: 'normal',
-                                            p: 2,
-                                            mb: 1.5,
-                                            borderRadius: 3,
+                                            whiteSpace: 'normal', 
+                                            p: 2, 
+                                            mb: 1.5, 
+                                            borderRadius: 3, 
                                             display: 'flex',
                                             alignItems: 'flex-start',
-                                            backgroundColor: isUnread
+                                            backgroundColor: isUnread 
                                                 ? (isDark ? alpha(muiTheme.palette.primary.main, 0.08) : '#f1f8e9')
                                                 : (isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02)),
                                             borderLeft: isUnread ? `4px solid ${muiTheme.palette.success.main}` : '4px solid transparent',
                                             transition: '0.2s',
-                                            '&:hover': {
+                                            '&:hover': { 
                                                 backgroundColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.05),
                                             }
                                         }}
@@ -530,11 +469,11 @@ export const CustomAppBar = (props: AppBarProps) => {
                     </Box>
 
                     <Divider />
-
+                    
                     {/* 3. ✨ 加回的固定底部按鈕 ✨ */}
                     <Box sx={{ p: 1, flexShrink: 0, bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50' }}>
-                        <MenuItem
-                            sx={{ justifyContent: 'center', borderRadius: 2 }}
+                        <MenuItem 
+                            sx={{ justifyContent: 'center', borderRadius: 2 }} 
                             onClick={() => { setNotiAnchor(null); redirect('/notifications'); }}
                         >
                             <Typography variant="button" color="success.main" sx={{ fontWeight: 800 }}>
@@ -545,18 +484,12 @@ export const CustomAppBar = (props: AppBarProps) => {
                 </Menu>
 
                 {/* --- 其他選單 --- */}
-                <Menu 
-                    anchorEl={isValidAnchor(moreMenuAnchor) ? moreMenuAnchor : null} 
-                    open={Boolean(moreMenuAnchor && isValidAnchor(moreMenuAnchor))} 
-                    onClose={() => setMoreMenuAnchor(null)} 
-                    PaperProps={{ sx: { width: 180, mt: 1, borderRadius: 3, zIndex: Z_INDEX.appBarMoreButton } }}
-                >
-                    <MenuItem onClick={() => {
-                        // 從更多選單打開通知中心：統一使用通知按鈕的 ref 作為 anchor
-                        if (notiButtonRef.current) {
-                            setNotiAnchor(notiButtonRef.current);
+                <Menu anchorEl={moreMenuAnchor} open={Boolean(moreMenuAnchor)} onClose={() => setMoreMenuAnchor(null)} PaperProps={{ sx: { width: 180, mt: 1, borderRadius: 3 } }}>
+                    <MenuItem onClick={() => { 
+                        if (moreMenuButtonRef.current) {
+                            setNotiAnchor(moreMenuButtonRef.current);
                         }
-                        setMoreMenuAnchor(null);
+                        setMoreMenuAnchor(null); 
                     }}>
                         <ListItemIcon><Badge badgeContent={unreadCount} color="error"><NotificationsIcon fontSize="small" /></Badge></ListItemIcon>
                         <ListItemText>通知中心</ListItemText>
@@ -572,79 +505,48 @@ export const CustomAppBar = (props: AppBarProps) => {
                 </Menu>
 
                 <Menu 
-                    anchorEl={isValidAnchor(periodMenuAnchor) ? periodMenuAnchor : null} 
-                    open={Boolean(periodMenuAnchor && isValidAnchor(periodMenuAnchor))} 
+                    anchorEl={periodMenuAnchor} 
+                    open={Boolean(periodMenuAnchor)} 
                     onClose={() => setPeriodMenuAnchor(null)}
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: isMobile ? 'center' : 'left', // 手機版居中對齊，桌面版左對齊
-                    }}
-                    transformOrigin={{
-                        vertical: 'top',
-                        horizontal: isMobile ? 'center' : 'left', // 手機版居中對齊，桌面版左對齊
-                    }}
-                    PaperProps={{ 
-                        sx: { 
-                            mt: 0.5, 
-                            borderRadius: 3, 
-                            maxHeight: 300,
-                            // 手機版：與按鈕寬度一致，確保對齊
-                            // 桌面版：根據內容自動調整寬度
-                            ...(isMobile ? {
-                                width: `${periodButtonWidth}px`,
-                                minWidth: `${periodButtonWidth}px`,
-                                maxWidth: `${periodButtonWidth}px`,
-                            } : {
-                                width: 'auto',
-                                minWidth: 100,
-                                maxWidth: 'none',
-                            }),
-                            ...getScrollbarStyles(muiTheme) 
-                        } 
+                    slotProps={{
+                        paper: { 
+                            sx: { 
+                                mt: 1, 
+                                borderRadius: 3, 
+                                width: periodMenuWidth ? `${periodMenuWidth}px` : { xs: '120px', sm: '150px' },
+                                minWidth: periodMenuWidth ? `${periodMenuWidth}px` : { xs: '120px', sm: '150px' },
+                                maxHeight: 300,
+                                ...getScrollbarStyles(muiTheme) 
+                            } 
+                        }
                     }}
                     sx={{
-                        // 確保所有 MenuItem 寬度一致
-                        "& .MuiMenuItem-root": {
-                            width: "100%",
-                            minWidth: "100%",
-                            // 手機版：減少 padding，讓選單更緊湊
-                            padding: isMobile ? "6px 8px" : "8px 16px",
-                            margin: isMobile ? "1px 2px" : "2px 4px",
-                            borderRadius: 1,
-                            display: "flex",
-                            justifyContent: "center", // 文字居中對齊
-                            alignItems: "center",
-                            textAlign: "center",
-                            fontSize: isMobile ? "0.75rem" : "0.875rem", // 手機版字體稍小
-                            // 選中狀態的背景色也要保持相同寬度
-                            "&.Mui-selected": {
-                                backgroundColor: isDark ? alpha(muiTheme.palette.primary.main, 0.16) : alpha(muiTheme.palette.primary.main, 0.12),
-                                width: "100%",
-                                minWidth: "100%",
-                                "&:hover": {
-                                    backgroundColor: isDark ? alpha(muiTheme.palette.primary.main, 0.24) : alpha(muiTheme.palette.primary.main, 0.18),
-                                },
-                            },
-                            "&:hover": {
-                                backgroundColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.04),
-                            },
-                        },
+                        '& .MuiMenu-list': {
+                            p: 0
+                        }
                     }}
                 >
                     {periodOptions.map((p) => (
                         <MenuItem 
                             key={p} 
                             selected={p === accountingPeriod} 
-                            onClick={() => { 
-                                setAccountingPeriod(p); 
-                                setPeriodMenuAnchor(null); 
-                            }}
+                            onClick={() => { setAccountingPeriod(p); setPeriodMenuAnchor(null); }}
                             sx={{
-                                // 確保每個項目都有相同的寬度和樣式，文字居中
-                                width: "100%",
-                                minWidth: "100%",
-                                justifyContent: "center",
-                                textAlign: "center",
+                                minHeight: '34px',
+                                height: '34px',
+                                py: 0,
+                                px: { xs: 1, sm: 1.5 },
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                '&.Mui-selected': {
+                                    backgroundColor: muiTheme.palette.mode === 'dark' 
+                                        ? alpha(muiTheme.palette.primary.main, 0.2)
+                                        : alpha(muiTheme.palette.primary.main, 0.1),
+                                    '&:hover': {
+                                        backgroundColor: muiTheme.palette.mode === 'dark' 
+                                            ? alpha(muiTheme.palette.primary.main, 0.3)
+                                            : alpha(muiTheme.palette.primary.main, 0.15),
+                                    }
+                                }
                             }}
                         >
                             {p}
@@ -653,8 +555,8 @@ export const CustomAppBar = (props: AppBarProps) => {
                 </Menu>
 
                 <Menu
-                    anchorEl={isValidAnchor(userAnchor) ? userAnchor : null}
-                    open={Boolean(userAnchor && isValidAnchor(userAnchor))}
+                    anchorEl={userAnchor}
+                    open={Boolean(userAnchor)}
                     onClose={() => setUserAnchor(null)}
                     PaperProps={{ sx: { mt: 1, borderRadius: 3, minWidth: 180 } }}
                 >
