@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { Box, Fade } from '@mui/material';
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
+import { CONTENT_BOX_SX } from '@/constants/layoutConstants';
 
 interface DashboardLayoutProps {
   isLoading: boolean;
@@ -22,8 +23,16 @@ export const DashboardLayout = ({
 
   return (
     <Fade in={!showSkeleton} timeout={500}>
-      {/* ★ 修改重點：將 padding 縮小至 1 (8px) */}
-      <Box sx={{ width: '100%', mt: 1, pb: 4 }}>
+      <Box
+        sx={{
+          ...CONTENT_BOX_SX,
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          mt: { xs: 1, sm: 1 },
+          pb: 4,
+        }}
+      >
         {children}
       </Box>
     </Fade>

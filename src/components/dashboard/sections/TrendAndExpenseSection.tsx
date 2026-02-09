@@ -342,7 +342,17 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
     return <>{expensePaper}</>;
   }
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: '1fr', md: '1fr 1fr' },
+        gap: 3,
+        mb: 4,
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+      }}
+    >
       {trendPaper}
       {expensePaper}
     </Box>

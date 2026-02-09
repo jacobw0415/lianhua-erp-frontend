@@ -53,7 +53,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
       <Paper
         elevation={0}
         sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           borderRadius: 2,
           bgcolor: theme.palette.action.hover,
           border: '1px solid',
@@ -62,6 +62,10 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
           flexDirection: { xs: 'column', md: 'row' },
           alignItems: { xs: 'stretch', md: 'center' },
           gap: 2,
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
         }}
       >
         <Box sx={{ flex: 1 }}>
@@ -84,7 +88,16 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
               </Button>
             )}
           </Typography>
-          <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1}
+            sx={{
+              overflowX: { md: 'auto' },
+              overflowY: 'visible',
+              pb: 0.5,
+              width: '100%',
+            }}
+          >
             {quickActions.map((action) => (
               <Button
                 key={action.label}
@@ -93,7 +106,12 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                 color={action.color}
                 startIcon={action.icon}
                 onClick={() => navigate(action.path)}
-                sx={{ whiteSpace: 'nowrap', borderRadius: 4 }}
+                sx={{
+                  whiteSpace: 'nowrap',
+                  borderRadius: 4,
+                  width: { xs: '100%', md: 'auto' },
+                  justifyContent: { xs: 'flex-start', md: 'center' },
+                }}
               >
                 {action.label}
               </Button>
@@ -136,7 +154,12 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                 <WarningIcon fontSize="small" color="warning" /> 待辦事項
               </Typography>
 
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+              >
                 {alerts.map((alert) => (
                   <Chip
                     key={alert.label}
@@ -144,7 +167,11 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                     color={alert.color}
                     size="small"
                     onClick={() => navigate(alert.path)}
-                    sx={{ cursor: 'pointer' }}
+                    sx={{
+                      cursor: 'pointer',
+                      width: { xs: '100%', sm: 'auto' },
+                      justifyContent: { xs: 'flex-start', sm: 'center' },
+                    }}
                   />
                 ))}
               </Stack>

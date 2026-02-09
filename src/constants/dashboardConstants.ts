@@ -14,7 +14,7 @@ export const ORDER_STAGE_LABELS: Record<string, string> = {
 
 /** 儀表板區塊網格設定（響應式） */
 export const DASHBOARD_GRID = {
-  columns: { xs: '1fr', md: '1fr 1fr' as const },
+  columns: { xs: '1fr', sm: '1fr', md: '1fr 1fr' as const },
   gap: 2,
   mb: 2,
 } as const;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Stack,
@@ -7,9 +7,9 @@ import {
   Button,
   IconButton,
   Popover,
+  Drawer,
   Typography,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
 
 import {
@@ -31,6 +31,7 @@ import { formatFilters } from "@/utils/formatFilters";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { MonthPicker } from "./MonthPicker";
+import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -68,7 +69,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useIsMobile();
+  const isSmallScreen = useIsSmallScreen();
 
   const [localInputValues, setLocalInputValues] = useState<
     Record<string, string>
@@ -82,6 +84,29 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   const redirect = useRedirect();
 
   const alert = useGlobalAlert();
+
+  // 當 isSmallScreen 改變時，清除 anchor 以避免 anchorEl 無效錯誤
+  useEffect(() => {
+    // 當從 Popover 切換到 Drawer 或反之時，清除 anchor
+    if (anchor) {
+      // 檢查 anchor 元素是否仍在 DOM 中且可見
+      const isValid = anchor.offsetParent !== null || document.body.contains(anchor);
+      if (!isValid) {
+        setAnchor(null);
+      }
+    }
+  }, [isSmallScreen]);
+
+  // 當 anchor 改變時，驗證其有效性
+  useEffect(() => {
+    if (anchor && !isSmallScreen) {
+      // 對於 Popover，確保 anchor 有效
+      const isValid = anchor.offsetParent !== null || document.body.contains(anchor);
+      if (!isValid) {
+        setAnchor(null);
+      }
+    }
+  }, [anchor, isSmallScreen]);
 
   /** 🔍 搜尋 */
   const handleSearch = () => {
@@ -385,8 +410,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             {advancedFilters.length > 0 && !disableButton && (
               <IconButton
                 onClick={(e) => {
-                  setAnchor(e.currentTarget);
-                  (e.currentTarget as HTMLButtonElement).blur();
+                  const target = e.currentTarget;
+                  // 確保元素在 DOM 中
+                  if (target && target.offsetParent !== null) {
+                    setAnchor(target);
+                  }
+                  (target as HTMLButtonElement).blur();
                 }}
               >
                 <FilterListIcon fontSize="small" />
@@ -472,52 +501,107 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           </Stack>
         </Stack>
 
-        <Popover
-          open={Boolean(anchor)}
-          anchorEl={anchor}
-          onClose={() => setAnchor(null)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          PaperProps={{
-            sx: { width: { xs: "90%", sm: 350 }, maxWidth: 350 },
-          }}
-        >
-          <Box sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              更多篩選條件
-            </Typography>
+        {/* 進階篩選：小螢幕使用 Drawer，桌面版使用 Popover */}
+        {isSmallScreen ? (
+          <Drawer
+            anchor="bottom"
+            open={Boolean(anchor)}
+            onClose={() => setAnchor(null)}
+            PaperProps={{
+              sx: {
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                maxHeight: "80vh",
+              },
+            }}
+          >
+            <Box sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                更多篩選條件
+              </Typography>
 
-            <Stack spacing={2}>
-              {advancedFilters.map((f, idx) => (
-                <Box key={idx}>{renderFilter(f)}</Box>
-              ))}
-            </Stack>
+              <Stack spacing={2}>
+                {advancedFilters.map((f, idx) => (
+                  <Box key={idx}>{renderFilter(f)}</Box>
+                ))}
+              </Stack>
 
-            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={(e) => {
-                  (e.currentTarget as HTMLButtonElement).blur();
-                  handleSearch();
-                  setAnchor(null);
-                }}
-              >
-                套用
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                color="error"
-                onClick={() => {
-                  clearFilters();
-                  setAnchor(null);
-                }}
-              >
-                清除
-              </Button>
-            </Stack>
-          </Box>
-        </Popover>
+              <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={(e) => {
+                    (e.currentTarget as HTMLButtonElement).blur();
+                    handleSearch();
+                    setAnchor(null);
+                  }}
+                >
+                  套用
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="error"
+                  onClick={() => {
+                    clearFilters();
+                    setAnchor(null);
+                  }}
+                >
+                  清除
+                </Button>
+              </Stack>
+            </Box>
+          </Drawer>
+        ) : (
+          <Popover
+            open={Boolean(anchor) && anchor !== null}
+            anchorEl={anchor}
+            onClose={() => setAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            PaperProps={{
+              sx: { width: 350, maxWidth: 350 },
+            }}
+            // 確保 anchorEl 有效
+            disablePortal={false}
+          >
+            <Box sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                更多篩選條件
+              </Typography>
+
+              <Stack spacing={2}>
+                {advancedFilters.map((f, idx) => (
+                  <Box key={idx}>{renderFilter(f)}</Box>
+                ))}
+              </Stack>
+
+              <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={(e) => {
+                    (e.currentTarget as HTMLButtonElement).blur();
+                    handleSearch();
+                    setAnchor(null);
+                  }}
+                >
+                  套用
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="error"
+                  onClick={() => {
+                    clearFilters();
+                    setAnchor(null);
+                  }}
+                >
+                  清除
+                </Button>
+              </Stack>
+            </Box>
+          </Popover>
+        )}
       </Box>
 
       <GlobalAlertDialog

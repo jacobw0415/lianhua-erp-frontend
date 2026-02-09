@@ -1,8 +1,9 @@
 import { Datagrid, type DatagridProps, useListContext } from "react-admin";
 import { styled } from "@mui/material/styles";
-import { Box, useMediaQuery, type Theme } from "@mui/material"; 
+import { Box } from "@mui/material"; 
 import { EmptyPlaceholder } from "@/components/common/EmptyPlaceholder";
 import { LoadingPlaceholder } from "@/components/common/LoadingPlaceholder";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface StyledDatagridProps extends DatagridProps {
   maxHeight?: string;
@@ -115,7 +116,7 @@ export const StyledListDatagrid = (props: StyledDatagridProps) => {
   const { rowClick = false, maxHeight = "500px", ...rest } = props;
   const { isLoading, data } = useListContext();
   
-  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
+  const isMobile = useIsMobile();
 
   return (
     <Box

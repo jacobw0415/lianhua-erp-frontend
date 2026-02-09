@@ -20,6 +20,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useApiErrorHandler } from "@/hooks/useApiErrorHandler";
+import { FORM_MAX_WIDTH } from "@/constants/layoutConstants";
 
 /* =======================================================
  * 🔐 Props 定義
@@ -164,22 +165,27 @@ export const GenericEditPage: React.FC<GenericEditPageProps> = ({
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box
         sx={(theme) => ({
-          pt: "50px",
+          pt: { xs: 2, sm: 4, md: 5 },
+          px: { xs: 1, sm: 2 },
+          pb: 4,
           display: "flex",
           justifyContent: "center",
           bgcolor: theme.palette.background.default,
+          minHeight: "100vh",
         })}
       >
         <Box
-          sx={(theme) => ({
-            width,
-            maxWidth: width,
-            bgcolor: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
-            boxShadow: theme.shadows[3],
-            borderRadius: "12px",
-            padding: "2rem 3rem",
-          })}
+          sx={{
+            width: "100%",
+            maxWidth: { xs: "100%", sm: width || FORM_MAX_WIDTH },
+            bgcolor: "background.paper",
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+            boxShadow: 3,
+            borderRadius: 2,
+            boxSizing: "border-box",
+            px: { xs: 1.25, sm: 2, md: 3 },
+            py: { xs: 1.5, sm: 2, md: 2.5 },
+          }}
         >
           <Edit title={title} actions={false}>
             <EditContent

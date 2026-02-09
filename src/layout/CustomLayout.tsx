@@ -32,13 +32,22 @@ export const CustomLayout = (props: LayoutProps) => {
             menu={menu}
             sidebar={sidebar}
             sx={{
+                width: '100%',
+                maxWidth: '100%',
+                minWidth: 0,
                 // 這裡選取 react-admin 內部的內容區塊類別
                 "& .RaLayout-content": {
                     paddingTop: 0, // 移除頂部間距
                     marginTop: 0,
+                    width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
                 },
                 "& .RaLayout-appFrame": {
                     marginTop: 0,  //  appFrame 上間距
+                    width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
                 }
             }}
         />

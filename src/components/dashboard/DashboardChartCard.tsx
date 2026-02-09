@@ -27,11 +27,15 @@ export const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
 }) => (
   <Paper
     sx={{
-      p: 2,
+      p: { xs: 1.5, sm: 2 },
       borderRadius: 2,
-      minHeight: 320,
+      minHeight: { xs: 280, sm: 320 },
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
+      maxWidth: '100%',
+      minWidth: 0,
+      boxSizing: 'border-box',
     }}
   >
     <Box

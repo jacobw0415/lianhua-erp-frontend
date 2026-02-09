@@ -67,6 +67,10 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({
         position: 'relative',
         overflow: 'hidden',
         transition: 'box-shadow 0.3s ease-in-out',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
       }}
     >
       <Box

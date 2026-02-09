@@ -63,7 +63,17 @@ export const DashboardInsightsBlock: React.FC = () => {
           subtitle="Cost Structure & Business Insights"
           icon={<ReceiptIcon color="primary" />}
         />
-        <Box sx={{ display: 'grid', gridTemplateColumns: DASHBOARD_GRID.columns, gap: DASHBOARD_GRID.gap, mb: DASHBOARD_GRID.mb }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: DASHBOARD_GRID.columns,
+            gap: DASHBOARD_GRID.gap,
+            mb: DASHBOARD_GRID.mb,
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+          }}
+        >
           <TrendAndExpenseSection
             trendDays={trendDays}
             setTrendDays={setTrendDays}
@@ -101,7 +111,17 @@ export const DashboardInsightsBlock: React.FC = () => {
             </Box>
           )}
         </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: DASHBOARD_GRID.columns, gap: DASHBOARD_GRID.gap, mb: DASHBOARD_GRID.mb }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: DASHBOARD_GRID.columns,
+            gap: DASHBOARD_GRID.gap,
+            mb: DASHBOARD_GRID.mb,
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+          }}
+        >
           <ProductParetoSection
             data={productPareto}
             isLoading={isProductParetoLoading}

@@ -57,7 +57,17 @@ export const DashboardFinancialBlock: React.FC = () => {
           isProfitLossTrendLoading={isProfitLossTrendLoading}
         />
       </Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: DASHBOARD_GRID.columns, gap: DASHBOARD_GRID.gap, mb: DASHBOARD_GRID.mb }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: DASHBOARD_GRID.columns,
+          gap: DASHBOARD_GRID.gap,
+          mb: DASHBOARD_GRID.mb,
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+        }}
+      >
         <BreakEvenSection
           breakEvenPeriod={breakEvenPeriod}
           setBreakEvenPeriod={setBreakEvenPeriod}
