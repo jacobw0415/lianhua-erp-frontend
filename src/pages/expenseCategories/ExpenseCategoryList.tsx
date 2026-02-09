@@ -8,7 +8,7 @@ import {
 } from "react-admin";
 
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
@@ -69,7 +69,7 @@ export const ExpenseCategoryList = () => {
           },
         ]}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
 
           <TextField source="accountCode" label="會計科目代碼" />
 
@@ -103,7 +103,7 @@ export const ExpenseCategoryList = () => {
             render={() => <ActionColumns />}
           />
 
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );

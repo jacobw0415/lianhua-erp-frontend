@@ -93,28 +93,46 @@ export const StyledListWrapper: React.FC<{
         minHeight: isMobile ? "auto" : LIST_MIN_HEIGHT.desktop,
       }}
     >
-      <GenericFilterBar
-        quickFilters={quickFilters}
-        advancedFilters={advancedFilters}
-        enableExport={!!exportConfig}
-        onExport={exportConfig ? handleExport : undefined}
-        disableCreate={disableCreate}
-        disableButton={disableButton}
-      />
+      {/* 內部內容的水平間距 wrapper */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: 0.75, sm: 1.5, md: 2 },
+          paddingX: { xs: 1, sm: 2, md: 2 }, // 內部內容的水平間距
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <GenericFilterBar
+          quickFilters={quickFilters}
+          advancedFilters={advancedFilters}
+          enableExport={!!exportConfig}
+          onExport={exportConfig ? handleExport : undefined}
+          disableCreate={disableCreate}
+          disableButton={disableButton}
+        />
 
-      <ListContextProvider value={enhancedListContext as ListControllerResult<any>}>
-        <Box sx={LIST_CONTENT_AREA_SX}>
-          {children}
-        </Box>
-      </ListContextProvider>
+        <ListContextProvider value={enhancedListContext as ListControllerResult<any>}>
+          <Box sx={LIST_CONTENT_AREA_SX}>
+            {children}
+          </Box>
+        </ListContextProvider>
+      </Box>
 
       <GlobalAlertDialog
         open={alert.open}
+        title={alert.title}
         message={alert.message}
+        severity={alert.severity}
+        confirmLabel={alert.confirmText}
+        cancelLabel={alert.cancelText}
+        hideCancel={!alert.cancelText}
         onClose={() => {
           alert.close();
           if (hasNoResult) resetFilters();
         }}
+        onConfirm={alert.onConfirm}
       />
     </Box>
   );

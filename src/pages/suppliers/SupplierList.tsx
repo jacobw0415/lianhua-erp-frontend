@@ -7,7 +7,7 @@ import {
   FunctionField,
 } from "react-admin";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { SupplierStatusToggle } from "./SupplierStatusToggle";
@@ -59,7 +59,7 @@ export const SupplierList = () => {
           ]
         }}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
 
           <TextField source="name" label="供應商名稱" />
           <TextField source="contact" label="聯絡人" />
@@ -89,7 +89,7 @@ export const SupplierList = () => {
             render={() => <ActionColumns />}
           />
 
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );

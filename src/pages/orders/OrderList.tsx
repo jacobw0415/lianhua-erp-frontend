@@ -5,7 +5,7 @@ import { List, TextField, DateField, FunctionField } from "react-admin";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
@@ -151,7 +151,7 @@ export const OrderList = () => {
             ],
           }}
         >
-          <StyledListDatagrid>
+          <ResponsiveListDatagrid rowClick={false}>
             <TextField source="orderNo" label="訂單編號" />
             <TextField source="customerName" label="客戶" />
             <TextField source="orderStatus" label="訂單狀態" />
@@ -163,7 +163,14 @@ export const OrderList = () => {
             <FunctionField
               label="明細"
               render={(record: OrderListRow) => (
-                <IconButton size="small" onClick={() => openDetails(record)}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDetails(record);
+                  }}
+                  title="查看訂單明細"
+                >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>
               )}
@@ -175,7 +182,7 @@ export const OrderList = () => {
               className="column-action"
               render={() => <ActionColumns />}
             />
-          </StyledListDatagrid>
+          </ResponsiveListDatagrid>
         </StyledListWrapper>
       </List>
 

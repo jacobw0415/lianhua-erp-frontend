@@ -8,7 +8,7 @@ import {
 } from "react-admin";
 import { Button, useTheme } from "@mui/material";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -106,7 +106,7 @@ export const ReceiptList = () => {
           ],
         }}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
           {/* 訂單編號（可點擊） */}
           <FunctionField
             label="訂單編號"
@@ -152,7 +152,7 @@ export const ReceiptList = () => {
             className="column-action"
             render={() => <ReceiptActionColumns />}
           />
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );

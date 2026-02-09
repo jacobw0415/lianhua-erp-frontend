@@ -101,6 +101,16 @@ export const LIST_MIN_HEIGHT = {
 export const FORM_MAX_WIDTH = 700;
 export const FORM_WIDE_MAX_WIDTH = 970;
 
+/**
+ * 表單固定高度設定（與 StyledListDatagrid 保持一致）
+ * 桌面端：800px（考慮作廢資訊框約占用 150px，確保按鈕可見）
+ * 移動端：600px（考慮作廢資訊框約占用 150px，確保按鈕可見）
+ */
+export const FORM_FIXED_HEIGHT = {
+  mobile: "600px",
+  desktop: "800px",
+} as const;
+
 /** 表單外層卡片：響應式內距 */
 export const FORM_CONTAINER_SX: SxProps<Theme> = {
   width: "100%",
@@ -127,23 +137,26 @@ export const FORM_FIELD_ROW_SX: SxProps<Theme> = {
 /**
  * 列表頁「篩選 + 列表」外層容器
  * 使用統一的響應式間距與樣式
+ * 與 Dashboard 保持一致的左右間距
+ * 注意：水平間距由 .RaLayout-content 提供，此處僅保留垂直間距
+ * 內部內容的水平間距和 gap 由 StyledListWrapper 的內部 wrapper 提供
  */
 export const LIST_WRAPPER_CONTENT_SX: SxProps<Theme> = {
   width: "100%",
   maxWidth: "100%",
   minWidth: 0,
   boxSizing: "border-box",
-  padding: { xs: 1, sm: 1.5, md: 2 },
+  paddingY: { xs: 1, sm: 2, md: 2 },
+  paddingX: 0, // 水平間距由父層 .RaLayout-content 提供
   borderRadius: { xs: 1, md: 2 },
   border: (theme) => ({ xs: "none", sm: `1px solid ${theme.palette.divider}` }),
   bgcolor: "background.paper",
   display: "flex",
   flexDirection: "column",
-  gap: { xs: 1, md: 2 },
   boxShadow: { xs: "none", sm: 1 },
   minHeight: { xs: "auto", sm: LIST_MIN_HEIGHT.desktop },
   height: "auto",
-  overflow: "visible",
+  overflow: "hidden",
 };
 
 /**

@@ -9,7 +9,7 @@ import {
 } from "react-admin";
 import { Chip } from "@mui/material";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { EmployeeStatusToggle } from "./EmployeeStatusToggle";
@@ -77,7 +77,7 @@ export const EmployeeList = () => (
         ],
       }}
     >
-      <StyledListDatagrid>
+      <ResponsiveListDatagrid rowClick={false}>
         <TextField source="fullName" label="員工姓名" />
         <TextField source="position" label="職位" />
         <CurrencyField source="salary" label="薪資" />
@@ -104,7 +104,7 @@ export const EmployeeList = () => (
           className="column-action"
           render={() => <ActionColumns />}
         />
-      </StyledListDatagrid>
+      </ResponsiveListDatagrid>
     </StyledListWrapper>
   </List>
 );

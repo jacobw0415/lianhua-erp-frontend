@@ -9,7 +9,7 @@ import { useEffect } from "react";
   } from "react-admin";
   import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
-  import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+  import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
   import { StyledListWrapper } from "@/components/common/StyledListWrapper";
   import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
@@ -38,7 +38,7 @@ import { useEffect } from "react";
           disableCreate
           disableButton
         >
-          <StyledListDatagrid>
+          <ResponsiveListDatagrid>
             <TextField source="targetType" label="類別" />
             <TextField source="title" label="主旨" sortable={false}/>
             
@@ -113,7 +113,7 @@ import { useEffect } from "react";
                 );
               }}
             />
-          </StyledListDatagrid>
+          </ResponsiveListDatagrid>
         </StyledListWrapper>
       </List>
     );

@@ -6,7 +6,7 @@ import {
 import { useTheme } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
@@ -61,7 +61,7 @@ export const OrderCustomerList = () => {
         ],
       }}
     >
-      <StyledListDatagrid>
+      <ResponsiveListDatagrid>
         <TextField source="name" label="客戶名稱" />
         <TextField source="contactPerson" label="聯絡人" />
         <TextField source="phone" label="電話" />
@@ -76,7 +76,7 @@ export const OrderCustomerList = () => {
           className="column-action"
           render={() => <ActionColumns />}
         />
-      </StyledListDatagrid>
+      </ResponsiveListDatagrid>
     </StyledListWrapper>
   </List>
   );

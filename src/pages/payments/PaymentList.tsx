@@ -12,7 +12,7 @@ import {
   useRedirect,
 } from "react-admin";
 import { Button } from "@mui/material";
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
@@ -147,7 +147,7 @@ export const PaymentList = () => {
           ],
         }}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
           {/* 進貨單號（可點擊） */}
           <FunctionField
             label="進貨單號"
@@ -176,7 +176,7 @@ export const PaymentList = () => {
           />
           <TextField source="accountingPeriod" label="會計期間" />
           <TextField source="note" label="備註" />
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
 
       {/* 作廢原因輸入對話框 */}

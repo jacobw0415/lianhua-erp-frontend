@@ -10,7 +10,7 @@ import {
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -124,7 +124,7 @@ export const ExpenseList = () => {
           ],
         }}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid rowClick={false}>
           <DateField source="expenseDate" label="支出日期" />
           <TextField source="categoryName" label="費用類別" />
           <CurrencyField source="amount" label="金額" />
@@ -154,7 +154,10 @@ export const ExpenseList = () => {
             render={(record: ExpenseListRow) => (
               <IconButton
                 size="small"
-                onClick={() => openDetails(record)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openDetails(record);
+                }}
                 title="查看完整明細"
               >
                 <VisibilityIcon fontSize="small" />
@@ -167,7 +170,7 @@ export const ExpenseList = () => {
             className="column-action"
             render={() => <ExpenseActionColumns />}
           />
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
 

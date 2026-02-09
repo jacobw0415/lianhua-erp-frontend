@@ -9,6 +9,7 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 import {
   Datagrid,
@@ -62,6 +63,7 @@ export const PurchaseItemDetailDrawer: React.FC<PurchaseItemDetailDrawerProps> =
   supplierName,
 }) => {
   const theme = useTheme();
+  const isMobile = useIsMobile();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const [items, setItems] = useState<PurchaseItemRow[]>([]);
@@ -103,44 +105,129 @@ export const PurchaseItemDetailDrawer: React.FC<PurchaseItemDetailDrawerProps> =
       anchor="right"
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { width: 560 } }}
+      PaperProps={{
+        sx: {
+          width: { xs: "100%", sm: 560 },
+          maxWidth: { xs: "100%", sm: 560 },
+        },
+      }}
     >
-      <Box p={2}>
+      <Box
+        sx={{
+          p: { xs: 1.5, sm: 2 },
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         {/* ================= Header ================= */}
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography variant="h6">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 1,
+            mb: { xs: 1.5, sm: 2 },
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: { xs: "1rem", sm: "1.25rem" },
+                fontWeight: 600,
+                lineHeight: 1.4,
+                wordBreak: "break-word",
+              }}
+            >
               📄 進貨項目明細
             </Typography>
             {purchaseNo && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  mt: { xs: 0.5, sm: 0.5 },
+                  display: "block",
+                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                }}
+              >
                 進貨單號：{purchaseNo}
               </Typography>
             )}
             {supplierName && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "block",
+                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                }}
+              >
                 供應商：{supplierName}
               </Typography>
             )}
           </Box>
-          <IconButton size="small" onClick={onClose}>
-            <CloseIcon />
+          <IconButton
+            size="small"
+            onClick={onClose}
+            sx={{ flexShrink: 0 }}
+          >
+            <CloseIcon fontSize={isMobile ? "medium" : "small"} />
           </IconButton>
         </Box>
 
-        <Box sx={{ mt: 3 }}>
+        {/* ================= Content Area (Scrollable) ================= */}
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            pr: { xs: 0.5, sm: 0 },
+            "&::-webkit-scrollbar": {
+              width: "6px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: theme.palette.divider,
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: theme.palette.action.disabled,
+            },
+          }}
+        >
           {itemsLoading ? (
             <Box display="flex" justifyContent="center" py={4}>
               <CircularProgress />
             </Box>
           ) : items.length > 0 ? (
             <>
-              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: { xs: 1.5, sm: 2 },
+                  mb: { xs: 1.5, sm: 2 },
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 600,
+                    mb: 1,
+                    fontSize: { xs: "0.85rem", sm: "0.875rem" },
+                  }}
+                >
                   📄 進貨項目明細
                 </Typography>
                 <Box
-                  sx={getDrawerScrollableStyles(theme, 185, enableItemsScroll)}
+                  sx={getDrawerScrollableStyles(
+                    theme,
+                    isMobile ? 200 : 185,
+                    enableItemsScroll
+                  )}
                 >
                   <Datagrid
                     data={items}
@@ -149,24 +236,26 @@ export const PurchaseItemDetailDrawer: React.FC<PurchaseItemDetailDrawerProps> =
                     sx={{
                       "& th": {
                         textAlign: "left",
-                        height: "32px",
-                        minHeight: "32px",
-                        maxHeight: "32px",
-                        padding: "4px 8px",
-                        lineHeight: "32px",
+                        height: { xs: "36px", sm: "32px" },
+                        minHeight: { xs: "36px", sm: "32px" },
+                        maxHeight: { xs: "36px", sm: "32px" },
+                        padding: { xs: "6px 8px", sm: "4px 8px" },
+                        lineHeight: { xs: "36px", sm: "32px" },
+                        fontSize: { xs: "0.75rem", sm: "0.8rem" },
                       },
                       "& td": {
                         textAlign: "left",
-                        height: "42px",
-                        minHeight: "42px",
-                        maxHeight: "42px",
-                        padding: "0 8px",
-                        lineHeight: "42px",
+                        height: { xs: "44px", sm: "42px" },
+                        minHeight: { xs: "44px", sm: "42px" },
+                        maxHeight: { xs: "44px", sm: "42px" },
+                        padding: { xs: "4px 8px", sm: "0 8px" },
+                        lineHeight: { xs: "44px", sm: "42px" },
+                        fontSize: { xs: "0.75rem", sm: "0.8rem" },
                       },
                       "& .RaDatagrid-row": {
-                        height: "42px",
-                        minHeight: "42px",
-                        maxHeight: "42px",
+                        height: { xs: "44px", sm: "42px" },
+                        minHeight: { xs: "44px", sm: "42px" },
+                        maxHeight: { xs: "44px", sm: "42px" },
                       },
                     }}
                   >
@@ -190,17 +279,29 @@ export const PurchaseItemDetailDrawer: React.FC<PurchaseItemDetailDrawerProps> =
                 <Paper
                   variant="outlined"
                   sx={{
-                    p: 2,
-                    mb: 2,
+                    p: { xs: 1.5, sm: 2 },
+                    mb: { xs: 1.5, sm: 2 },
                     bgcolor: "background.default",
                   }}
                 >
-                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                  <Typography
+                    variant="subtitle2"
+                    gutterBottom
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      fontSize: { xs: "0.85rem", sm: "0.875rem" },
+                    }}
+                  >
                     📝 備註
                   </Typography>
                   <Box
                     sx={{
-                      ...getDrawerScrollableStyles(theme, 120, enableNotesScroll),
+                      ...getDrawerScrollableStyles(
+                        theme,
+                        isMobile ? 140 : 120,
+                        enableNotesScroll
+                      ),
                       display: "flex",
                       flexDirection: "column",
                       gap: 1,
@@ -208,10 +309,20 @@ export const PurchaseItemDetailDrawer: React.FC<PurchaseItemDetailDrawerProps> =
                   >
                     {itemsWithNotes.map((item, index) => (
                       <Box key={item.id || index}>
-                        <Typography variant="body2" component="span" fontWeight={600}>
+                        <Typography
+                          variant="body2"
+                          component="span"
+                          fontWeight={600}
+                          sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+                        >
                           {item.item}：
                         </Typography>
-                        <Typography variant="body2" component="span" color="text.secondary">
+                        <Typography
+                          variant="body2"
+                          component="span"
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+                        >
                           {item.note}
                         </Typography>
                       </Box>
@@ -224,32 +335,61 @@ export const PurchaseItemDetailDrawer: React.FC<PurchaseItemDetailDrawerProps> =
               <Paper
                 variant="outlined"
                 sx={{
-                  p: 2,
+                  p: { xs: 1.5, sm: 2 },
                   borderRadius: 2,
                   bgcolor: "background.default",
                 }}
               >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+                  >
                     總數量
                   </Typography>
-                  <Typography variant="body1" fontWeight={600}>
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}
+                  >
                     {totalQty}
                   </Typography>
                 </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mt: 1 }}
+                >
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+                  >
                     明細合計
                   </Typography>
-                  <Typography variant="h6" fontWeight={700} color="success.main">
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    color="success.main"
+                    sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}
+                  >
                     NT${totalAmount.toLocaleString()}
                   </Typography>
                 </Box>
               </Paper>
             </>
           ) : (
-            <Paper variant="outlined" sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="body2" color="text.secondary">
+            <Paper
+              variant="outlined"
+              sx={{ p: { xs: 3, sm: 4 }, textAlign: "center" }}
+            >
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+              >
                 尚無進貨項目
               </Typography>
             </Paper>

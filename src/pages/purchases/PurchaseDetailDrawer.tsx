@@ -34,6 +34,7 @@ import { PaymentStatusField } from "@/components/common/PaymentStatusField";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { PurchaseItemDetailDrawer } from "./PurchaseItemDetailDrawer";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 /* =========================================================
  * 型別定義
@@ -95,6 +96,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   onRefresh,
 }) => {
   const theme = useTheme();
+  const isMobile = useIsMobile();
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
   const [openItemDrawer, setOpenItemDrawer] = useState(false);
   const [update, { isLoading: isVoiding }] = useUpdate();
@@ -223,26 +225,76 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
       anchor="right"
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { width: 560 } }}
+      PaperProps={{
+        sx: {
+          width: { xs: "100%", sm: 560 },
+          maxWidth: { xs: "100%", sm: 560 },
+        },
+      }}
     >
-      <Box p={2}>
+      <Box
+        sx={{
+          p: { xs: 1.5, sm: 2 },
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         {/* ================= Header ================= */}
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
-            📦 進貨付款明細 — {supplierName}
-          </Typography>
-          <IconButton size="small" onClick={onClose}>
-            <CloseIcon />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 1,
+            mb: { xs: 1.5, sm: 2 },
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: { xs: "1rem", sm: "1.25rem" },
+                fontWeight: 600,
+                lineHeight: 1.4,
+                wordBreak: "break-word",
+              }}
+            >
+              📦 進貨付款明細 — {supplierName}
+            </Typography>
+          </Box>
+          <IconButton
+            size="small"
+            onClick={onClose}
+            sx={{ flexShrink: 0 }}
+          >
+            <CloseIcon fontSize={isMobile ? "medium" : "small"} />
           </IconButton>
         </Box>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-          <Box display="flex" gap={1} alignItems="center">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1, sm: 0 },
+            mb: { xs: 1.5, sm: 2 },
+            flexShrink: 0,
+          }}
+        >
+          <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
             <Chip
               size="small"
               label={statusMeta.label}
               color={statusMeta.color}
-              sx={{ fontWeight: 600 }}
+              sx={{
+                fontWeight: 600,
+                fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                height: { xs: "24px", sm: "auto" },
+              }}
             />
             {recordStatus && (
               <PurchaseStatusField
@@ -252,7 +304,14 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
             )}
           </Box>
           <RecordContextProvider value={purchase}>
-            <Typography color="success.main" fontWeight={700}>
+            <Typography
+              color="success.main"
+              fontWeight={700}
+              sx={{
+                fontSize: { xs: "0.9rem", sm: "1rem" },
+                mt: { xs: 0.5, sm: 0 },
+              }}
+            >
               總金額：<CurrencyField source="totalAmount" />
             </Typography>
           </RecordContextProvider>
@@ -263,25 +322,61 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           <Alert
             severity="error"
             sx={{
-              mt: 2,
+              mt: { xs: 1.5, sm: 2 },
+              mb: { xs: 1.5, sm: 2 },
+              flexShrink: 0,
               "& .MuiAlert-message": {
                 width: "100%",
               },
             }}
           >
-            <Box sx={{ display: "flex", gap: 2, width: "100%", alignItems: "stretch" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: { xs: 1.5, sm: 2 },
+                width: "100%",
+                alignItems: { xs: "flex-start", sm: "stretch" },
+              }}
+            >
               {/* 左側：作廢資訊 */}
-              <Box sx={{ flex: "0 0 auto", minWidth: 170, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <Typography variant="body2" fontWeight={600}>
+              <Box
+                sx={{
+                  flex: { xs: "none", sm: "0 0 auto" },
+                  minWidth: { xs: "100%", sm: 170 },
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+                >
                   此進貨單已作廢
                 </Typography>
                 {voidedAt && (
-                  <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    sx={{
+                      mt: 0.5,
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                    }}
+                  >
                     作廢時間：{voidedAt}
                   </Typography>
                 )}
                 {voidedPaymentsTotal > 0 && (
-                  <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    sx={{
+                      mt: 0.5,
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                    }}
+                  >
                     已作廢付款：NT${voidedPaymentsTotal.toLocaleString()}
                   </Typography>
                 )}
@@ -293,15 +388,27 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                     flex: 1,
                     minWidth: 0,
                     py: 0,
-                    px: 1,
-                    borderColor: "divider",
+                    px: { xs: 0, sm: 1 },
+                    borderLeft: { xs: "none", sm: `1px solid ${theme.palette.divider}` },
+                    borderTop: { xs: `1px solid ${theme.palette.divider}`, sm: "none" },
+                    pt: { xs: 1, sm: 0 },
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "flex-start",
                     overflow: "hidden",
                   }}
                 >
-                  <Typography variant="body2" fontWeight={600} color="text.secondary" display="block" sx={{ lineHeight: 1.3, mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    color="text.secondary"
+                    display="block"
+                    sx={{
+                      lineHeight: 1.3,
+                      mb: 0.5,
+                      fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                    }}
+                  >
                     作廢原因
                   </Typography>
                   <Typography
@@ -310,6 +417,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                       wordBreak: "break-word",
                       whiteSpace: "pre-wrap",
                       lineHeight: 1.3,
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
                     }}
                   >
                     {displayVoidReason}
@@ -322,11 +430,26 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
 
         {/* 操作按鈕 */}
         {!isVoided && id && (
-          <Box mt={2} display="flex" justifyContent="space-between" gap={1}>
+          <Box
+            sx={{
+              mt: { xs: 1.5, sm: 2 },
+              mb: { xs: 1.5, sm: 2 },
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "space-between",
+              gap: { xs: 1, sm: 1 },
+              flexShrink: 0,
+            }}
+          >
             <Button
               variant="outlined"
               startIcon={<ListIcon />}
               onClick={() => setOpenItemDrawer(true)}
+              fullWidth={isMobile}
+              sx={{
+                fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                minHeight: { xs: "40px", sm: "auto" },
+              }}
             >
               查看進貨項目明細
             </Button>
@@ -337,6 +460,11 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                 startIcon={<BlockIcon />}
                 onClick={() => setOpenVoidDialog(true)}
                 disabled={isVoiding}
+                fullWidth={isMobile}
+                sx={{
+                  fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                  minHeight: { xs: "40px", sm: "auto" },
+                }}
               >
                 {isVoiding ? "處理中..." : "作廢進貨單"}
               </Button>
@@ -344,154 +472,285 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
           </Box>
         )}
 
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: { xs: 1.5, sm: 2 }, flexShrink: 0 }} />
 
-        {/* ================= 單據資訊（UI 強化） ================= */}
-        <Paper
-          variant="outlined"
+        {/* ================= Content Area (Scrollable) ================= */}
+        <Box
           sx={{
-            mb: 2,
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: "background.default",
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            pr: { xs: 0.5, sm: 0 },
+            "&::-webkit-scrollbar": {
+              width: "6px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: theme.palette.divider,
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: theme.palette.action.disabled,
+            },
           }}
         >
-          <Box display="flex" justifyContent="space-between">
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                進貨單號
-              </Typography>
-              <Typography fontWeight={600}>
-                {purchaseNo}
-              </Typography>
-            </Box>
-
-            <Box textAlign="right">
-              <Typography variant="caption" color="text.secondary">
-                進貨日期
-              </Typography>
-              <Typography fontWeight={600}>
-                {purchaseDate}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-
-        {/* ================= 付款進度 ================= */}
-        {!isVoided && (
-          <>
-            <Box mb={2}>
-              <Typography variant="caption" color="text.secondary">
-                付款進度
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={progress}
-                sx={{
-                  mt: 0.5,
-                  height: 10,
-                  borderRadius: 5,
-                  bgcolor: "action.hover",
-                  "& .MuiLinearProgress-bar": {
-                    borderRadius: 5,
-                  },
-                }}
-              />
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-          </>
-        )}
-
-        {/* ================= 已付款紀錄 ================= */}
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            💰 已付款紀錄
-          </Typography>
-
-          {payments.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              尚未有付款紀錄
-            </Typography>
-          ) : (
-            <Box
-              sx={getDrawerScrollableStyles(theme, 150, enablePaymentScroll)}
-            >
-              <Datagrid data={payments} bulkActionButtons={false} rowClick={false}>
-                <DateField source="payDate" label="付款日期" />
-                <CurrencyField source="amount" label="金額" />
-                <TextField source="method" label="方式" />
-                <FunctionField
-                  label="狀態"
-                  render={(record: PaymentRow) => (
-                    <PaymentStatusField
-                      source="status"
-                      record={record}
-                    />
-                  )}
-                />
-                <TextField source="note" label="備註" />
-              </Datagrid>
-            </Box>
-          )}
-        </Paper>
-
-        <Divider sx={{ my: 1 }} />
-
-        {/* ================= 金額摘要（UI 強化） ================= */}
-        <RecordContextProvider value={purchase}>
+          {/* ================= 單據資訊（UI 強化） ================= */}
           <Paper
             variant="outlined"
             sx={{
-              p: 2,
+              mb: { xs: 1.5, sm: 2 },
+              p: { xs: 1.25, sm: 1.5 },
               borderRadius: 2,
               bgcolor: "background.default",
             }}
           >
-            <Box display="flex" justifyContent="space-between">
+            <Box
+              display="flex"
+              flexDirection={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              gap={{ xs: 1.5, sm: 0 }}
+            >
               <Box>
-                <Typography variant="caption" color="text.secondary">
-                  已付款
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                >
+                  進貨單號
                 </Typography>
                 <Typography
-                  fontWeight={700}
-                  fontSize={18}
-                  color={isVoided ? "text.secondary" : "success.main"}
+                  fontWeight={600}
+                  sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}
                 >
-                  <CurrencyField source="paidAmount" />
+                  {purchaseNo}
                 </Typography>
-                {isVoided && voidedPaymentsTotal > 0 && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                    （已作廢付款：NT${voidedPaymentsTotal.toLocaleString()}）
-                  </Typography>
-                )}
-                {isVoided && voidedPaymentsTotal === 0 && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                    （作廢後所有付款已取消）
-                  </Typography>
-                )}
               </Box>
 
-              <Box textAlign="right">
-                <Typography variant="caption" color="text.secondary">
-                  尚欠款
+              <Box textAlign={{ xs: "left", sm: "right" }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                >
+                  進貨日期
                 </Typography>
                 <Typography
-                  fontWeight={700}
-                  fontSize={18}
-                  color={isVoided ? "text.secondary" : "error.main"}
+                  fontWeight={600}
+                  sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}
                 >
-                  <CurrencyField source="balance" />
+                  {purchaseDate}
                 </Typography>
-                {isVoided && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                    （等於總金額）
-                  </Typography>
-                )}
               </Box>
             </Box>
           </Paper>
-        </RecordContextProvider>
+
+          {/* ================= 付款進度 ================= */}
+          {!isVoided && (
+            <>
+              <Box mb={{ xs: 1.5, sm: 2 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                >
+                  付款進度
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={progress}
+                  sx={{
+                    mt: 0.5,
+                    height: { xs: 8, sm: 10 },
+                    borderRadius: 5,
+                    bgcolor: "action.hover",
+                    "& .MuiLinearProgress-bar": {
+                      borderRadius: 5,
+                    },
+                  }}
+                />
+              </Box>
+
+              <Divider sx={{ my: { xs: 1.5, sm: 2 } }} />
+            </>
+          )}
+
+          {/* ================= 已付款紀錄 ================= */}
+          <Paper
+            variant="outlined"
+            sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 1.5, sm: 2 } }}
+          >
+            <Typography
+              variant="subtitle2"
+              gutterBottom
+              sx={{
+                fontSize: { xs: "0.85rem", sm: "0.875rem" },
+                fontWeight: 600,
+              }}
+            >
+              💰 已付款紀錄
+            </Typography>
+
+            {payments.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+              >
+                尚未有付款紀錄
+              </Typography>
+            ) : (
+              <Box
+                sx={getDrawerScrollableStyles(
+                  theme,
+                  isMobile ? 200 : 150,
+                  enablePaymentScroll
+                )}
+              >
+                <Datagrid
+                  data={payments}
+                  bulkActionButtons={false}
+                  rowClick={false}
+                  sx={{
+                    "& th": {
+                      textAlign: "left",
+                      height: { xs: "36px", sm: "32px" },
+                      minHeight: { xs: "36px", sm: "32px" },
+                      maxHeight: { xs: "36px", sm: "32px" },
+                      padding: { xs: "6px 8px", sm: "4px 8px" },
+                      lineHeight: { xs: "36px", sm: "32px" },
+                      fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                    },
+                    "& td": {
+                      textAlign: "left",
+                      height: { xs: "44px", sm: "42px" },
+                      minHeight: { xs: "44px", sm: "42px" },
+                      maxHeight: { xs: "44px", sm: "42px" },
+                      padding: { xs: "4px 8px", sm: "0 8px" },
+                      lineHeight: { xs: "44px", sm: "42px" },
+                      fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                    },
+                    "& .RaDatagrid-row": {
+                      height: { xs: "44px", sm: "42px" },
+                      minHeight: { xs: "44px", sm: "42px" },
+                      maxHeight: { xs: "44px", sm: "42px" },
+                    },
+                  }}
+                >
+                  <DateField source="payDate" label="付款日期" />
+                  <CurrencyField source="amount" label="金額" />
+                  <TextField source="method" label="方式" />
+                  <FunctionField
+                    label="狀態"
+                    render={(record: PaymentRow) => (
+                      <PaymentStatusField
+                        source="status"
+                        record={record}
+                      />
+                    )}
+                  />
+                  <TextField source="note" label="備註" />
+                </Datagrid>
+              </Box>
+            )}
+          </Paper>
+
+          <Divider sx={{ my: { xs: 1, sm: 1 } }} />
+
+          {/* ================= 金額摘要（UI 強化） ================= */}
+          <RecordContextProvider value={purchase}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: 2,
+                bgcolor: "background.default",
+              }}
+            >
+              <Box
+                display="flex"
+                flexDirection={{ xs: "column", sm: "row" }}
+                justifyContent="space-between"
+                gap={{ xs: 1.5, sm: 0 }}
+              >
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                  >
+                    已付款
+                  </Typography>
+                  <Typography
+                    fontWeight={700}
+                    sx={{
+                      fontSize: { xs: "1rem", sm: "18px" },
+                      color: isVoided ? "text.secondary" : "success.main",
+                    }}
+                  >
+                    <CurrencyField source="paidAmount" />
+                  </Typography>
+                  {isVoided && voidedPaymentsTotal > 0 && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.5,
+                        display: "block",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                      }}
+                    >
+                      （已作廢付款：NT${voidedPaymentsTotal.toLocaleString()}）
+                    </Typography>
+                  )}
+                  {isVoided && voidedPaymentsTotal === 0 && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.5,
+                        display: "block",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                      }}
+                    >
+                      （作廢後所有付款已取消）
+                    </Typography>
+                  )}
+                </Box>
+
+                <Box textAlign={{ xs: "left", sm: "right" }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                  >
+                    尚欠款
+                  </Typography>
+                  <Typography
+                    fontWeight={700}
+                    sx={{
+                      fontSize: { xs: "1rem", sm: "18px" },
+                      color: isVoided ? "text.secondary" : "error.main",
+                    }}
+                  >
+                    <CurrencyField source="balance" />
+                  </Typography>
+                  {isVoided && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.5,
+                        display: "block",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                      }}
+                    >
+                      （等於總金額）
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Paper>
+          </RecordContextProvider>
+        </Box>
       </Box>
 
       {/* 作廢原因輸入對話框 */}

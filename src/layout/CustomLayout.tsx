@@ -7,6 +7,7 @@ import { CustomSidebar } from "./CustomSidebar";
 import { CustomAppBar } from "./CustomAppBar";
 import { IdleTimer } from "@/components/IdleTimer";
 import { setQueryClientRef } from "@/utils/appCache";
+import { CONTENT_BOX_SX } from "@/constants/layoutConstants";
 
 /** 登入狀態下註冊 QueryClient，供登出時 clearAppCache() 使用 */
 const QueryClientRefSetter = () => {
@@ -42,12 +43,28 @@ export const CustomLayout = (props: LayoutProps) => {
                     width: '100%',
                     maxWidth: '100%',
                     minWidth: 0,
+                    // 與 Dashboard 保持一致的左右間距
+                    paddingX: { xs: 1, sm: 2, md: 2 },
+                    paddingLeft: { xs: 1, sm: 2, md: 2 },
+                    paddingRight: { xs: 1, sm: 2, md: 2 },
                 },
                 "& .RaLayout-appFrame": {
                     marginTop: 0,  //  appFrame 上間距
                     width: '100%',
                     maxWidth: '100%',
                     minWidth: 0,
+                },
+                "& .RaList-main": {
+                    width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
+                    // 移除 paddingX: 0，讓它繼承父層 .RaLayout-content 的間距
+                },
+                "& .RaList-content": {
+                    width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
+                    // 移除 paddingX: 0，讓它繼承父層 .RaLayout-content 的間距
                 }
             }}
         />

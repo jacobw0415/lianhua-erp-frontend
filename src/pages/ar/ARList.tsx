@@ -8,7 +8,7 @@ import {
 } from "react-admin";
 
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
@@ -131,7 +131,7 @@ export const ARList = () => {
             ],
           }}
         >
-          <StyledListDatagrid>
+          <ResponsiveListDatagrid rowClick={false}>
             <TextField source="customerName" label="客戶" />
 
             <CurrencyField source="aging0to30" label="0–30 天" />
@@ -147,13 +147,17 @@ export const ARList = () => {
               render={(record: ARAgingSummaryRow) => (
                 <IconButton
                   size="small"
-                  onClick={() => handleOpen(record)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpen(record);
+                  }}
+                  title="查看未收訂單明細"
                 >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>
               )}
             />
-          </StyledListDatagrid>
+          </ResponsiveListDatagrid>
         </StyledListWrapper>
       </List>
 

@@ -153,9 +153,19 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         value={value}
         size="small"
         sx={{
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
           "& .MuiInputBase-root": {
             height: 40,
-            fontSize: "0.85rem",
+            fontSize: { xs: "0.8rem", sm: "0.85rem" },
+            width: "100%",
+            maxWidth: "100%",
+          },
+          "& .MuiInputBase-input": {
+            fontSize: { xs: "0.8rem", sm: "0.85rem" },
+            width: "100%",
+            maxWidth: "100%",
           },
         }}
         onCompositionStart={() => setIsComposing(true)}
@@ -191,8 +201,21 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         value={localInputValues[key] ?? ""}
         size="small"
         sx={{
-          "& .MuiInputBase-root": { height: 40 },
-          "& .MuiSelect-select": { padding: "10px 14px" },
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          "& .MuiInputBase-root": { 
+            height: 40,
+            fontSize: { xs: "0.8rem", sm: "0.85rem" },
+            width: "100%",
+            maxWidth: "100%",
+          },
+          "& .MuiSelect-select": { 
+            padding: { xs: "8px 12px", sm: "10px 14px" },
+            fontSize: { xs: "0.8rem", sm: "0.85rem" },
+            width: "100%",
+            maxWidth: "100%",
+          },
         }}
         onChange={(e) => {
           setLocalInputValues((prev) => ({ ...prev, [key]: e.target.value }));
@@ -213,24 +236,26 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     const value = localInputValues[key] || null;
 
     return (
-      <MonthPicker
-        label={f.label}
-        value={value}
-        onChange={(newValue) => {
-          setLocalInputValues((prev) => {
-            const next = { ...prev };
-            if (newValue && newValue.trim()) {
-              next[key] = newValue;
-            } else {
-              delete next[key];
-            }
-            return next;
-          });
-        }}
-        fullWidth
-        size="small"
-        format="YYYY-MM"
-      />
+      <Box sx={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
+        <MonthPicker
+          label={f.label}
+          value={value}
+          onChange={(newValue) => {
+            setLocalInputValues((prev) => {
+              const next = { ...prev };
+              if (newValue && newValue.trim()) {
+                next[key] = newValue;
+              } else {
+                delete next[key];
+              }
+              return next;
+            });
+          }}
+          fullWidth
+          size="small"
+          format="YYYY-MM"
+        />
+      </Box>
     );
   };
 
@@ -250,16 +275,26 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             setLocalInputValues((prev) => ({ ...prev, [key]: formatted }));
           }}
           slots={{ openPickerIcon: CalendarMonthIcon }}
-          slotProps={{
-            openPickerIcon: {
-              sx: { color: theme.palette.text.primary },
-            },
-            textField: {
-              fullWidth: true,
-              size: "small",
-              sx: { "& .MuiInputBase-root": { height: 40 } },
-            },
-          }}
+            slotProps={{
+              openPickerIcon: {
+                sx: { color: theme.palette.text.primary },
+              },
+              textField: {
+                fullWidth: true,
+                size: "small",
+                sx: { 
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  "& .MuiInputBase-root": { 
+                    height: 40,
+                    fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                    width: "100%",
+                    maxWidth: "100%",
+                  },
+                },
+              },
+            }}
         />
       </LocalizationProvider>
     );
@@ -280,7 +315,15 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Stack direction="row" spacing={1}>
+        <Stack 
+          direction={{ xs: "column", sm: "row" }} 
+          spacing={1}
+          sx={{ 
+            width: "100%",
+            maxWidth: "100%",
+            minWidth: 0,
+          }}
+        >
           <DatePicker
             label="開始"
             format="YYYY-MM-DD"
@@ -300,7 +343,17 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               textField: {
                 fullWidth: true,
                 size: "small",
-                sx: { "& .MuiInputBase-root": { height: 40 } },
+                sx: { 
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  "& .MuiInputBase-root": { 
+                    height: 40,
+                    fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                    width: "100%",
+                    maxWidth: "100%",
+                  },
+                },
               },
             }}
           />
@@ -321,7 +374,17 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               textField: {
                 fullWidth: true,
                 size: "small",
-                sx: { "& .MuiInputBase-root": { height: 40 } },
+                sx: { 
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  "& .MuiInputBase-root": { 
+                    height: 40,
+                    fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                    width: "100%",
+                    maxWidth: "100%",
+                  },
+                },
               },
             }}
           />
@@ -373,32 +436,45 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     <>
       <Box
         sx={{
-          p: { xs: 1.5, md: "6px 10px" },
-          mb: 1,
+          p: { xs: 0.75, sm: 1.25, md: "6px 10px" },
+          mb: { xs: 0.75, sm: 1 },
           borderRadius: 2,
           border: `1px solid ${theme.palette.action.disabled}`,
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
           alignItems: { xs: "stretch", md: "center" },
-          gap: 1.5,
+          gap: { xs: 0.75, sm: 1.25, md: 1.5 },
           minHeight: "60px",
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
+          overflow: "hidden",
         }}
       >
         {/* 左側快速搜尋區塊 */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
+          spacing={{ xs: 0.75, sm: 1.25, md: 1.5 }}
           flexWrap="wrap"
           alignItems={{ xs: "stretch", sm: "center" }}
-          sx={{ flex: 1 }}
+          sx={{ 
+            flex: 1,
+            width: "100%",
+            maxWidth: "100%",
+            minWidth: 0,
+            overflow: "hidden",
+          }}
         >
           {quickFilters.map((f, idx) => (
             <Box
               key={idx}
               sx={{
-                minWidth: { xs: "100%", sm: 220 },
-                flex: { xs: 1, sm: "none" },
+                width: { xs: "100%", sm: "auto" },
+                minWidth: { xs: 0, sm: 200, md: 220 },
+                maxWidth: { xs: "100%", sm: "none" },
+                flex: { xs: "1 1 100%", sm: "0 1 auto" },
               }}
             >
               {renderFilter(f)}
@@ -406,7 +482,17 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           ))}
 
           {/* 按鈕群組：進階(左)、搜尋(中)、清除(右) */}
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack 
+            direction={{ xs: "row", sm: "row" }} 
+            spacing={{ xs: 0.75, sm: 1 }} 
+            alignItems="center"
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              maxWidth: { xs: "100%", sm: "none" },
+              minWidth: 0,
+              flexShrink: 0,
+            }}
+          >
             {advancedFilters.length > 0 && !disableButton && (
               <IconButton
                 onClick={(e) => {
@@ -417,6 +503,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   }
                   (target as HTMLButtonElement).blur();
                 }}
+                sx={{
+                  flexShrink: 0,
+                  padding: { xs: 0.5, sm: 1 },
+                }}
               >
                 <FilterListIcon fontSize="small" />
               </IconButton>
@@ -425,11 +515,19 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             {!disableButton && (  // 搜尋按鈕
               <Button
                 variant="contained"
-              size="small"
-              startIcon={isMobile ? <SearchIcon /> : null}
-              sx={{ height: 32, flex: isMobile ? 1 : "none" }}
-              onClick={handleSearch}
-                >
+                size="small"
+                startIcon={isMobile ? <SearchIcon /> : null}
+                sx={{ 
+                  height: 32, 
+                  flex: { xs: "1 1 0", sm: "none" },
+                  minWidth: { xs: 0, sm: "auto" },
+                  maxWidth: { xs: "100%", sm: "none" },
+                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  padding: { xs: "4px 8px", sm: "6px 16px" },
+                  whiteSpace: "nowrap",
+                }}
+                onClick={handleSearch}
+              >
                 搜尋
               </Button>
             )}
@@ -437,12 +535,20 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             {!disableButton && (  // 清除按鈕
               <Button
                 variant="outlined"
-              color="error"
-              size="small"
-              startIcon={isMobile ? <DeleteOutlineIcon /> : null}
-              sx={{ height: 32, flex: isMobile ? 1 : "none" }}
-              onClick={clearFilters}
-                >
+                color="error"
+                size="small"
+                startIcon={isMobile ? <DeleteOutlineIcon /> : null}
+                sx={{ 
+                  height: 32, 
+                  flex: { xs: "1 1 0", sm: "none" },
+                  minWidth: { xs: 0, sm: "auto" },
+                  maxWidth: { xs: "100%", sm: "none" },
+                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  padding: { xs: "4px 8px", sm: "6px 16px" },
+                  whiteSpace: "nowrap",
+                }}
+                onClick={clearFilters}
+              >
                 清除
               </Button>
             )}
@@ -452,17 +558,37 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         {/* 右側 Chips + 功能按鈕區塊 */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
+          spacing={{ xs: 1, sm: 1.25, md: 1.5 }}
           alignItems={{ xs: "stretch", sm: "center" }}
           justifyContent="flex-end"
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            flexShrink: 0,
+          }}
         >
           {chips.length > 0 && (
-            <Box sx={{ overflowX: "auto", py: { xs: 0.5, md: 0 } }}>
+            <Box 
+              sx={{ 
+                overflowX: "auto", 
+                py: { xs: 0.5, md: 0 },
+                width: { xs: "100%", sm: "auto" },
+                maxWidth: { xs: "100%", sm: "none" },
+              }}
+            >
               <SearchChipsCompact chips={chips} onRemove={removeFilter} />
             </Box>
           )}
 
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Stack 
+            direction={{ xs: "column", sm: "row" }} 
+            spacing={{ xs: 0.75, sm: 1 }} 
+            justifyContent="flex-end"
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              maxWidth: { xs: "100%", sm: "none" },
+              minWidth: 0,
+            }}
+          >
             {enableCreate && !disableCreate && (
               <Button
                 variant="contained"
@@ -474,10 +600,13 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 }}
                 sx={{
                   height: 32,
-                  minWidth: { xs: "auto", sm: 90 },
-                  flex: { xs: 1, sm: "none" },
+                  minWidth: { xs: 0, sm: 90 },
+                  width: { xs: "100%", sm: "auto" },
+                  maxWidth: { xs: "100%", sm: "none" },
+                  flex: { xs: "none", sm: "none" },
                   whiteSpace: "nowrap",
-                  fontSize: "0.85rem",
+                  fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                  padding: { xs: "4px 8px", sm: "6px 16px" },
                 }}
               >
                 {createLabel}
@@ -490,8 +619,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 startIcon={<DownloadIcon />}
                 sx={{
                   height: 32,
-                  flex: { xs: 1, sm: "none" },
+                  width: { xs: "100%", sm: "auto" },
+                  maxWidth: { xs: "100%", sm: "none" },
+                  flex: { xs: "none", sm: "none" },
                   whiteSpace: "nowrap",
+                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  padding: { xs: "4px 8px", sm: "6px 16px" },
                 }}
                 onClick={onExport}
               >
@@ -506,7 +639,20 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           <Drawer
             anchor="bottom"
             open={Boolean(anchor)}
-            onClose={() => setAnchor(null)}
+            onClose={() => {
+              // 修復 aria-hidden 警告：在關閉 Drawer 前先移除所有焦點
+              // 這確保在 Drawer 設置 aria-hidden 之前，焦點已經被移除
+              if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+              }
+              setAnchor(null);
+            }}
+            ModalProps={{
+              // 禁用自動焦點管理，避免與 aria-hidden 衝突
+              disableAutoFocus: true,
+              disableEnforceFocus: true,
+              disableRestoreFocus: true,
+            }}
             PaperProps={{
               sx: {
                 borderTopLeftRadius: 16,
@@ -531,9 +677,13 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   fullWidth
                   variant="contained"
                   onClick={(e) => {
+                    // 先移除焦點，避免 aria-hidden 警告
                     (e.currentTarget as HTMLButtonElement).blur();
                     handleSearch();
-                    setAnchor(null);
+                    // 延遲關閉，確保焦點已移除
+                    setTimeout(() => {
+                      setAnchor(null);
+                    }, 0);
                   }}
                 >
                   套用
@@ -542,9 +692,14 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   fullWidth
                   variant="outlined"
                   color="error"
-                  onClick={() => {
+                  onClick={(e) => {
+                    // 先移除焦點，避免 aria-hidden 警告
+                    (e.currentTarget as HTMLButtonElement).blur();
                     clearFilters();
-                    setAnchor(null);
+                    // 延遲關閉，確保焦點已移除
+                    setTimeout(() => {
+                      setAnchor(null);
+                    }, 0);
                   }}
                 >
                   清除
@@ -606,8 +761,14 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
       <GlobalAlertDialog
         open={alert.open}
+        title={alert.title}
         message={alert.message}
+        severity={alert.severity}
+        confirmLabel={alert.confirmText}
+        cancelLabel={alert.cancelText}
+        hideCancel={!alert.cancelText}
         onClose={alert.close}
+        onConfirm={alert.onConfirm}
       />
     </>
   );

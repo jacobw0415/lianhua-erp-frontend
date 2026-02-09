@@ -8,7 +8,7 @@ import {
 } from "react-admin";
 
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
@@ -52,7 +52,7 @@ export const ProductList = () => {
           },
         ]}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
 
           {/* ⭐ 顯示可以用 category.code，但搜尋不能 */}
           <TextField source="category.code" label="分類代碼" />
@@ -80,7 +80,7 @@ export const ProductList = () => {
             render={() => <ActionColumns />}
           />
 
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );

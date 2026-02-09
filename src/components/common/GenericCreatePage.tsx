@@ -13,7 +13,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import { useApiErrorHandler } from "@/hooks/useApiErrorHandler";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { FORM_MAX_WIDTH } from "@/constants/layoutConstants";
 
 interface GenericCreatePageProps {
   resource: string;
@@ -69,25 +68,20 @@ export const GenericCreatePage: React.FC<GenericCreatePageProps> = ({
         sx={(theme) => ({
           display: "flex",
           justifyContent: "center",
-          pt: { xs: 2, sm: 4, md: 5 },
-          px: { xs: 1, sm: 2 },
-          pb: 4,
+          paddingTop: "40px",
           bgcolor: theme.palette.background.default,
-          minHeight: "100vh",
         })}
       >
         <Box
-          sx={{
-            width: "100%",
-            maxWidth: { xs: "100%", sm: width || FORM_MAX_WIDTH },
+          sx={(theme) => ({
+            width,
+            maxWidth: width,
             borderRadius: 2,
-            bgcolor: "background.paper",
-            border: (theme) => `1px solid ${theme.palette.divider}`,
-            boxShadow: 3,
-            boxSizing: "border-box",
-            px: { xs: 1.25, sm: 2, md: 3 },
-            py: { xs: 1.5, sm: 2, md: 2.5 },
-          }}
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: theme.shadows[3],
+            padding: "2rem 3rem",
+          })}
         >
           <Create
             title={title}

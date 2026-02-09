@@ -10,7 +10,7 @@ import {
   FunctionField,
 } from "react-admin";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
@@ -69,7 +69,7 @@ export const SaleList = () => {
           ],
         }}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
           <TextField source="productName" label="商品" />
           <NumberField source="qty" label="數量" />
           <TextField source="payMethod" label="付款方式" />
@@ -83,7 +83,7 @@ export const SaleList = () => {
             className="column-action"
             render={() => <ActionColumns />}
           />
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );

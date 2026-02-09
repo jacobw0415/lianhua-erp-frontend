@@ -14,7 +14,7 @@ import { IconButton, Box } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ListIcon from "@mui/icons-material/List";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { CurrencyField } from "@/components/money/CurrencyField";
@@ -202,7 +202,7 @@ export const PurchaseList = () => {
             ],
           }}
         >
-          <StyledListDatagrid>
+          <ResponsiveListDatagrid rowClick={false}>
             <TextField source="purchaseNo" label="進貨單號" />
             <TextField source="supplierName" label="供應商名稱" />
             <DateField source="purchaseDate" label="進貨日期" />
@@ -228,14 +228,20 @@ export const PurchaseList = () => {
                 <Box display="flex" gap={0.5} alignItems="center">
                   <IconButton
                     size="small"
-                    onClick={() => openDetails(record)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDetails(record);
+                    }}
                     title="查看完整明細"
                   >
                     <VisibilityIcon fontSize="small" />
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => openItemDetails(record)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openItemDetails(record);
+                    }}
                     title="查看進貨項目明細"
                   >
                     <ListIcon fontSize="small" />
@@ -251,7 +257,7 @@ export const PurchaseList = () => {
               className="column-action"
               render={() => <ActionColumns />}
             />
-          </StyledListDatagrid>
+          </ResponsiveListDatagrid>
         </StyledListWrapper>
       </List>
 

@@ -8,7 +8,7 @@ import {
   type RaRecord,
 } from "react-admin";
 
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
@@ -49,7 +49,7 @@ export const UserList = () => {
           },
         ]}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
           <TextField source="username" label="帳號" />
           <TextField source="fullName" label="姓名" />
           <TextField source="email" label="Email" />
@@ -82,7 +82,7 @@ export const UserList = () => {
             className="column-action"
             render={() => <ActionColumns />}
           />
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );

@@ -8,7 +8,7 @@ import {
 } from "react-admin";
 
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
-import { StyledListDatagrid } from "@/components/StyledListDatagrid";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
@@ -51,7 +51,7 @@ export const ProductCategoryList = () => {
           },
         ]}
       >
-        <StyledListDatagrid>
+        <ResponsiveListDatagrid>
 
           <TextField source="code" label="分類代碼" />
 
@@ -79,7 +79,7 @@ export const ProductCategoryList = () => {
             render={() => <ActionColumns />}
           />
 
-        </StyledListDatagrid>
+        </ResponsiveListDatagrid>
       </StyledListWrapper>
     </List>
   );
