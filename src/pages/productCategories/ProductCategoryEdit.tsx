@@ -9,6 +9,7 @@ import {
 } from "react-admin";
 import { Typography, Box } from "@mui/material";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
@@ -90,23 +91,15 @@ const ProductCategoryFormFields: React.FC = () => {
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
         {/* 第一列：分類名稱 / 分類代碼 */}
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <TextInput
-              source="name"
-              label="分類名稱 *"
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-          <Box flex={1}>
-            <TextInput
-              source="code"
-              label="分類代碼"
-              fullWidth
-            />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput
+            source="name"
+            label="分類名稱 *"
+            fullWidth
+            validate={[required()]}
+          />
+          <TextInput source="code" label="分類代碼" fullWidth />
+        </FormFieldRow>
 
         {/* 第二列：說明 */}
         <Box mb={2}>

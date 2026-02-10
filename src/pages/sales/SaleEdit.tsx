@@ -8,6 +8,7 @@ import {
 } from "react-admin";
 import { Box, Typography, useTheme } from "@mui/material"; 
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
@@ -79,10 +80,9 @@ const SaleFormFields: React.FC = () => {
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
         {/* 第一列：唯讀欄位（商品 + 總金額）- 帶外框和標籤 */}
-        <Box display="flex" gap={2} mb={3}>
+        <FormFieldRow sx={{ mb: 3 }}>
           {/* 商品 - 唯讀顯示，帶外框和標籤 */}
           <Box
-            flex={1}
             sx={(theme) => ({
               position: "relative",
               border: `2px solid ${theme.palette.divider}`,
@@ -119,7 +119,6 @@ const SaleFormFields: React.FC = () => {
 
           {/* 總金額 - 唯讀顯示，帶外框和標籤 */}
           <Box
-            flex={1}
             sx={(theme) => ({
               position: "relative",
               border: `2px solid ${theme.palette.divider}`,
@@ -159,13 +158,11 @@ const SaleFormFields: React.FC = () => {
               })}
             </Typography>
           </Box>
-        </Box>
+        </FormFieldRow>
 
-        {/* 第二列：可編輯欄位（付款方式 + 數量）- 兩兩相並 */}
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          {/* 付款方式 - 可編輯 */}
-          <Box flex={1}>
-            <SelectInput
+        {/* 第二列：可編輯欄位（付款方式 + 數量） */}
+        <FormFieldRow sx={{ mb: 2 }}>
+          <SelectInput
               source="payMethod"
               label="付款方式 *"
               choices={[
@@ -176,18 +173,14 @@ const SaleFormFields: React.FC = () => {
               fullWidth
               validate={[required()]}
             />
-          </Box>
-          {/* 數量 - 可編輯 */}
-          <Box flex={1}>
-            <TextInput
+          <TextInput
               source="qty"
               label="數量 *"
               type="number"
               fullWidth
               validate={[required()]}
             />
-          </Box>
-        </Box>
+        </FormFieldRow>
 
         {/* 第三列：銷售日期（可編輯）- 單獨一行 */}
         <Box mb={2}>

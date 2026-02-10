@@ -73,13 +73,14 @@ const OrderFormFields = () => {
 
   return (
     <Box>
-      {/* 🔹 Header Row：Chips 移至左側，編號資訊移至右側 */}
-      <Box 
-        sx={{ 
-          display: "grid", 
-          gridTemplateColumns: "580px 1fr", // 擴大左側空間以容納 Chips
-          alignItems: "center", 
-          mb: 2 
+      {/* 🔹 Header Row (響應式：手機單欄、電腦雙欄) */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 580px) 1fr" },
+          gap: { xs: 1, sm: 0 },
+          alignItems: "center",
+          mb: 2,
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -108,13 +109,13 @@ const OrderFormFields = () => {
         </Box>
       </Box>
 
-      {/* 🔹 主要內容佈局：左側彈性伸縮，右側固定寬度 (380px) */}
-      <Box 
-        sx={{ 
-          display: "grid", 
-          gridTemplateColumns: "1fr 380px", 
-          gap: 4, 
-          alignItems: "start" 
+      {/* 🔹 主要內容佈局 (響應式：手機單欄、電腦雙欄) */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 380px" },
+          gap: 4,
+          alignItems: "start",
         }}
       >
         
@@ -230,7 +231,7 @@ const OrderEditToolbar = (props: any) => {
 const OrderSkeleton = () => (
   <Box>
     <Skeleton variant="text" width="40%" height={40} sx={{ mb: 3 }} />
-    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 4 }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 380px" }, gap: 4 }}>
       <Skeleton variant="rounded" height={400} />
       <Box>
         <Skeleton variant="rounded" height={150} />

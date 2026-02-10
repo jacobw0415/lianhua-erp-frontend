@@ -64,8 +64,8 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: "48vw",
-          maxWidth: "620px",
+          width: { xs: "100%", sm: "48vw" },
+          maxWidth: { xs: "100%", sm: "620px" },
           bgcolor: "background.paper",
           p: 0,
           display: "flex",

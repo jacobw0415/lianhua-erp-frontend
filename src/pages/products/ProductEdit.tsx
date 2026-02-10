@@ -11,6 +11,7 @@ import {
 } from "react-admin";
 import { Box, Typography } from "@mui/material";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useActiveProductCategories } from "@/hooks/useActiveProductCategories";
@@ -86,20 +87,16 @@ export const ProductEdit: React.FC = () => {
           <TextInput source="name" label="商品名稱 *" fullWidth validate={[required()]} />
         </Box>
 
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          <Box flex={1}>
-            <BooleanInput source="active" label="啟用" />
-          </Box>
-          <Box flex={1}>
-            <TextInput
-              source="unitPrice"
-              label="單價 *"
-              type="number"
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <BooleanInput source="active" label="啟用" />
+          <TextInput
+            source="unitPrice"
+            label="單價 *"
+            type="number"
+            fullWidth
+            validate={[required()]}
+          />
+        </FormFieldRow>
       </Box>
     </GenericEditPage>
   );

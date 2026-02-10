@@ -10,6 +10,7 @@ import {
 import LockIcon from "@mui/icons-material/Lock";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
@@ -114,13 +115,6 @@ const ReceiptFormFields: React.FC = () => {
     }
   }, [isVoided, showAlert]);
 
-  const gridStyle = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 2.5,
-    mb: 2,
-    width: "100%",
-  };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -161,13 +155,12 @@ const ReceiptFormFields: React.FC = () => {
         </Box>
       )}
 
-      {/* 🔹 主要資料區 */}
-      <Box sx={gridStyle}>
-        {/* 第一列 */}
+      {/* 🔹 主要資料區 (響應式：手機單欄、電腦雙欄) */}
+      <FormFieldRow sx={{ mb: 2 }}>
         <ReadonlyField label="收款日期" value={record.receivedDate} />
         <ReadonlyField label="訂單編號" value={record.orderNo} />
-
-        {/* 第二列 */}
+      </FormFieldRow>
+      <FormFieldRow sx={{ mb: 2 }}>
         <ReadonlyField label="客戶名稱" value={record.customerName} />
         <ReadonlyField
           label="收款金額"
@@ -181,21 +174,22 @@ const ReceiptFormFields: React.FC = () => {
               : "—"
           }
         />
-
-        {/* 第三列 */}
-        <ReadonlyField 
-           label="收款方式" 
-           value={
-             record.method === "CASH" ? "現金" : 
-             record.method === "TRANSFER" ? "轉帳" : 
-             record.method === "CARD" ? "刷卡" : 
-             record.method === "CHECK" ? "支票" : record.method
-           } 
+      </FormFieldRow>
+      <FormFieldRow sx={{ mb: 2 }}>
+        <ReadonlyField
+          label="收款方式"
+          value={
+            record.method === "CASH" ? "現金" :
+            record.method === "TRANSFER" ? "轉帳" :
+            record.method === "CARD" ? "刷卡" :
+            record.method === "CHECK" ? "支票" : record.method
+          }
         />
         <ReadonlyField label="會計期間" value={(record as any).accountingPeriod || "—"} />
+      </FormFieldRow>
 
-        {/* 第四列：備註 (唯一可修改) */}
-        <Box sx={{ gridColumn: "1 / -1", mt: 1 }}>
+      {/* 備註 (唯一可修改) */}
+        <Box sx={{ mt: 1 }}>
           <TextInput
             source="note"
             label="備註 (可修改)"
@@ -206,7 +200,6 @@ const ReceiptFormFields: React.FC = () => {
             helperText={isVoided ? "紀錄已作廢，無法修改備註" : "僅備註欄位可供修改"}
           />
         </Box>
-      </Box>
     </Box>
   );
 };

@@ -8,6 +8,7 @@ import {
 } from "react-admin";
 import { Typography, Box, useTheme } from "@mui/material"; // 2. 加入 useTheme
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { SupplierStatusField } from "./SupplierStatusField";
@@ -92,51 +93,39 @@ const SupplierFormFields: React.FC = () => {
       </Typography>
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <TextInput
-              source="name"
-              label="供應商名稱 *"
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-          <Box flex={1}>
-            <TextInput 
-            source="contact" 
-            label="聯絡人" 
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput
+            source="name"
+            label="供應商名稱 *"
             fullWidth
             validate={[required()]}
-            />
-          </Box>
-        </Box>
+          />
+          <TextInput
+            source="contact"
+            label="聯絡人"
+            fullWidth
+            validate={[required()]}
+          />
+        </FormFieldRow>
 
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <TextInput source="phone" label="電話" fullWidth />
-          </Box>
-          <Box flex={1}>
-            <TextInput source="note" label="備註" fullWidth />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput source="phone" label="電話" fullWidth />
+          <TextInput source="note" label="備註" fullWidth />
+        </FormFieldRow>
 
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <SupplierStatusField />
-          </Box>
-          <Box flex={1}>
-            <SelectInput
-              source="billingCycle"
-              label="帳單週期"
-              fullWidth
-              choices={[
-                { id: "WEEKLY", name: "每週" },
-                { id: "BIWEEKLY", name: "每兩週" },
-                { id: "MONTHLY", name: "每月" },
-              ]}
-            />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <SupplierStatusField />
+          <SelectInput
+            source="billingCycle"
+            label="帳單週期"
+            fullWidth
+            choices={[
+              { id: "WEEKLY", name: "每週" },
+              { id: "BIWEEKLY", name: "每兩週" },
+              { id: "MONTHLY", name: "每月" },
+            ]}
+          />
+        </FormFieldRow>
       </Box>
     </>
   );

@@ -8,6 +8,7 @@ import {
 import { Box, Typography, useTheme } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
@@ -60,70 +61,40 @@ export const OrderCustomerCreate: React.FC = () => {
       </Typography>
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 客戶 / 聯絡人 */}
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          <Box flex={1}>
-            <TextInput
-              source="name"
-              label="客戶 *"
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput
+            source="name"
+            label="客戶 *"
+            fullWidth
+            validate={[required()]}
+          />
+          <TextInput
+            source="contactPerson"
+            label="聯絡人 *"
+            fullWidth
+            validate={[required()]}
+          />
+        </FormFieldRow>
 
-          <Box flex={1}>
-            <TextInput
-              source="contactPerson"
-              label="聯絡人 *"
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <SelectInput
+            source="billingCycle"
+            label="結帳週期 *"
+            fullWidth
+            validate={[required()]}
+            choices={[
+              { id: "WEEKLY", name: "每週" },
+              { id: "BIWEEKLY", name: "每兩週" },
+              { id: "MONTHLY", name: "每月" },
+            ]}
+          />
+          <TextInput source="phone" label="電話" fullWidth />
+        </FormFieldRow>
 
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          {/* 結帳週期 */}
-          <Box flex={1}>
-            <SelectInput
-              source="billingCycle"
-              label="結帳週期 *"
-              fullWidth
-              validate={[required()]}
-              choices={[
-                { id: "WEEKLY", name: "每週" },
-                { id: "BIWEEKLY", name: "每兩週" },
-                { id: "MONTHLY", name: "每月" },
-              ]}
-            />
-          </Box>
-          {/* 電話 */}
-          <Box flex={1}>
-            <TextInput
-              source="phone"
-              label="電話"
-              fullWidth
-            />
-          </Box>
-        </Box>
-
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          {/* 地址 */}
-          <Box flex={1}>
-            <TextInput
-              source="address"
-              label="地址"
-              fullWidth
-            />
-          </Box>
-          {/* 備註 */}
-          <Box flex={1}>
-            <TextInput
-              source="note"
-              label="備註"
-              fullWidth
-            />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput source="address" label="地址" fullWidth />
+          <TextInput source="note" label="備註" fullWidth />
+        </FormFieldRow>
       </Box>
     </GenericCreatePage>
   );

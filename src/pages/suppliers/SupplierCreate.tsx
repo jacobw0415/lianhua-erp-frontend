@@ -7,6 +7,7 @@ import {
 } from "react-admin";
 import { Box, Typography, useTheme } from "@mui/material"; // 2. 加入 useTheme
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; // 3. 引入樣式工具
@@ -60,35 +61,25 @@ export const SupplierCreate: React.FC = () => {
 
       {/* 整體固定最大寬度 */}
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 第一列：名稱 / 聯絡人 */}
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <TextInput
-              source="name"
-              label="供應商名稱 *"
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-          <Box flex={1}>
-            <TextInput 
-            source="contact" 
-            label="聯絡人" 
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput
+            source="name"
+            label="供應商名稱 *"
             fullWidth
             validate={[required()]}
-            />
-          </Box>
-        </Box>
+          />
+          <TextInput
+            source="contact"
+            label="聯絡人"
+            fullWidth
+            validate={[required()]}
+          />
+        </FormFieldRow>
 
-        {/* 第二列：電話 / 備註 */}
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <TextInput source="phone" label="電話" fullWidth />
-          </Box>
-          <Box flex={1}>
-            <TextInput source="note" label="備註" multiline fullWidth />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <TextInput source="phone" label="電話" fullWidth />
+          <TextInput source="note" label="備註" multiline fullWidth />
+        </FormFieldRow>
 
         {/* 帳單週期 */}
         <Box mb={2}>

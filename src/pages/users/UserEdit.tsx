@@ -10,6 +10,7 @@ import {
   required,
 } from "react-admin";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
@@ -79,7 +80,7 @@ const UserFormFields: React.FC = () => {
       </Typography>
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        <Box mb={2}>
+        <Box sx={{ mb: 2 }}>
           <TextInput
             source="username"
             label="帳號 *"
@@ -88,41 +89,20 @@ const UserFormFields: React.FC = () => {
           />
         </Box>
 
-        <Box mb={2}>
-          <TextInput
-            source="fullName"
-            label="姓名"
-            fullWidth
-          />
+        <Box sx={{ mb: 2 }}>
+          <TextInput source="fullName" label="姓名" fullWidth />
         </Box>
 
-        <Box mb={2}>
-          <TextInput
-            source="employeeId"
-            label="員工工號"
-            fullWidth
-          />
+        <Box sx={{ mb: 2 }}>
+          <TextInput source="employeeId" label="員工工號" fullWidth />
         </Box>
 
-        <Box mb={2}>
-          <TextInput
-            source="email"
-            label="Email"
-            type="email"
-            fullWidth
-          />
+        <Box sx={{ mb: 2 }}>
+          <TextInput source="email" label="Email" type="email" fullWidth />
         </Box>
 
         {/* 重設密碼（選填） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "flex-start",
-          }}
-        >
+        <FormFieldRow sx={{ mb: 2 }}>
           <TextInput
             source="newPassword"
             type="password"
@@ -135,22 +115,10 @@ const UserFormFields: React.FC = () => {
             label="確認新密碼"
             fullWidth
           />
-        </Box>
+        </FormFieldRow>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "flex-start",
-          }}
-        >
-          <BooleanInput
-            source="enabled"
-            label="啟用"
-          />
-
+        <FormFieldRow sx={{ mb: 2 }}>
+          <BooleanInput source="enabled" label="啟用" />
           <SelectArrayInput
             source="roleNames"
             label="角色（多選）"
@@ -159,7 +127,7 @@ const UserFormFields: React.FC = () => {
               { id: "ROLE_USER", name: "一般使用者" },
             ]}
           />
-        </Box>
+        </FormFieldRow>
       </Box>
     </>
   );

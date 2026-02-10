@@ -10,6 +10,7 @@ import {
 import LockIcon from "@mui/icons-material/Lock";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
@@ -128,14 +129,6 @@ const ExpenseFormFields: React.FC = () => {
     }
   }, [isVoided, showAlert]);
 
-  const gridStyle = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 2.5,
-    mb: 2,
-    width: "100%",
-  };
-
   return (
     <Box sx={{ width: "100%" }}>
       {/* 🔹 Header Row: 標題與狀態 Chip */}
@@ -178,13 +171,12 @@ const ExpenseFormFields: React.FC = () => {
         </Box>
       )}
 
-      {/* 🔹 主要資料區 (雙欄網格) */}
-      <Box sx={gridStyle}>
-        {/* 第一列 */}
+      {/* 🔹 主要資料區 (響應式：手機單欄、電腦雙欄) */}
+      <FormFieldRow sx={{ mb: 2 }}>
         <ReadonlyField label="支出日期" value={record.expenseDate} />
         <ReadonlyField label="費用類別" value={record.categoryName} />
-
-        {/* 第二列 */}
+      </FormFieldRow>
+      <FormFieldRow sx={{ mb: 2 }}>
         <ReadonlyField
           label="支出金額"
           value={
@@ -198,9 +190,10 @@ const ExpenseFormFields: React.FC = () => {
           }
         />
         <ReadonlyField label="關聯員工" value={record.employeeName || "無"} />
+      </FormFieldRow>
 
-        {/* 第三列：備註 (佔滿整行) */}
-        <Box sx={{ gridColumn: "1 / -1", mt: 1 }}>
+      {/* 備註 (佔滿整行) */}
+        <Box sx={{ mt: 1 }}>
           <TextInput
             source="note"
             label="備註 (可修改)"
@@ -211,7 +204,6 @@ const ExpenseFormFields: React.FC = () => {
             helperText={isVoided ? "紀錄已作廢，無法修改備註" : "僅備註欄位可供修改"}
           />
         </Box>
-      </Box>
     </Box>
   );
 };

@@ -11,6 +11,7 @@ import {
 } from "react-admin";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Box, Typography, useTheme } from "@mui/material";
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
@@ -104,30 +105,8 @@ export const PurchaseCreate: React.FC = () => {
             flexDirection: "column",
           }}
         >
-          {/* 供應商 + 進貨日期 */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 2,
-              mb: 3,
-              alignItems: "start",
-              // 統一兩個輸入框的對齊方式
-              "& .RaInput-input, & .MuiFormControl-root": {
-                marginTop: 0,
-                marginBottom: 0,
-              },
-              // 確保標籤在同一水平線
-              "& .MuiInputLabel-root": {
-                top: 0,
-                transformOrigin: "top left",
-              },
-              // 統一輸入框高度
-              "& .MuiInputBase-root": {
-                marginTop: 0,
-              },
-            }}
-          >
+          {/* 供應商 + 進貨日期 (響應式：手機單欄、電腦雙欄) */}
+          <FormFieldRow sx={{ mb: 3 }}>
             <SelectInput
               source="supplierId"
               label="供應商"
@@ -138,13 +117,8 @@ export const PurchaseCreate: React.FC = () => {
               isLoading={suppliersLoading}
               validate={[required()]}
             />
-
-            <LhDateInput
-              source="purchaseDate"
-              label="進貨日期"
-              fullWidth
-            />
-          </Box>
+            <LhDateInput source="purchaseDate" label="進貨日期" fullWidth />
+          </FormFieldRow>
 
           {/* 新增付款紀錄 */}
           <Box

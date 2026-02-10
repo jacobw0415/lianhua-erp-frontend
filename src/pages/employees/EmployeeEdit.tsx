@@ -10,6 +10,7 @@ import {
 } from "react-admin";
 import { Typography, Box } from "@mui/material";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { EmployeeStatusField } from "./EmployeeStatusField";
@@ -106,34 +107,11 @@ const EmployeeFormFields: React.FC = () => {
         </Box>
 
         {/* 第二列：職位 / 薪資 */}
-        <Box
+        <FormFieldRow
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
             mb: 2,
-            alignItems: "start",
-            // 統一兩個輸入框的對齊方式
-            "& .RaInput-input, & .MuiFormControl-root": {
-              marginTop: 0,
-              marginBottom: 0,
-            },
-            // 確保標籤在同一水平線
-            "& .MuiInputLabel-root": {
-              top: 0,
-              transformOrigin: "top left",
-            },
-            // 統一輸入框高度
-            "& .MuiInputBase-root": {
-              marginTop: 0,
-              height: "56px", // 統一高度
-            },
-            // 確保 NumberInput 和 TextInput 高度一致
-            "& .MuiTextField-root": {
-              "& .MuiInputBase-root": {
-                height: "56px",
-              },
-            },
+            "& .MuiInputBase-root": { height: "56px" },
+            "& .MuiTextField-root .MuiInputBase-root": { height: "56px" },
           }}
         >
           <TextInput source="position" label="職位" fullWidth />
@@ -144,41 +122,15 @@ const EmployeeFormFields: React.FC = () => {
             min={0}
             step={1000}
           />
-        </Box>
+        </FormFieldRow>
 
         {/* 第三列：聘用日期 / 狀態切換 */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-            // 統一兩個輸入框的對齊方式
-            "& .RaInput-input, & .MuiFormControl-root": {
-              marginTop: 0,
-              marginBottom: 0,
-            },
-            // 確保標籤在同一水平線
-            "& .MuiInputLabel-root": {
-              top: 0,
-              transformOrigin: "top left",
-            },
-            // 統一輸入框高度
-            "& .MuiInputBase-root": {
-              marginTop: 0,
-            },
-          }}
-        >
-          <LhDateInput
-            source="hireDate"
-            label="聘用日期"
-            fullWidth
-          />
+        <FormFieldRow sx={{ mb: 2 }}>
+          <LhDateInput source="hireDate" label="聘用日期" fullWidth />
           <Box>
             <EmployeeStatusField />
           </Box>
-        </Box>
+        </FormFieldRow>
       </Box>
     </>
   );

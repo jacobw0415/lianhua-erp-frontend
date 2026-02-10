@@ -10,6 +10,7 @@ import {
 } from "react-admin";
 import { Box, Typography } from "@mui/material";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 /* -------------------------------------------------------
@@ -61,30 +62,8 @@ export const ExpenseCategoryCreate: React.FC = () => {
 
       {/* 整體固定最大寬度 */}
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 第一列：費用分類名稱 + 費用頻率類型（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-            // 統一兩個輸入框的對齊方式
-            "& .RaInput-input, & .MuiFormControl-root": {
-              marginTop: 0,
-              marginBottom: 0,
-            },
-            // 確保標籤在同一水平線
-            "& .MuiInputLabel-root": {
-              top: 0,
-              transformOrigin: "top left",
-            },
-            // 統一輸入框高度
-            "& .MuiInputBase-root": {
-              marginTop: 0,
-            },
-          }}
-        >
+        {/* 第一列：費用分類名稱 + 費用頻率類型 (響應式：手機單欄、電腦雙欄) */}
+        <FormFieldRow sx={{ mb: 2 }}>
           <TextInput
             source="name"
             label="費用分類名稱 *"
@@ -104,7 +83,7 @@ export const ExpenseCategoryCreate: React.FC = () => {
             fullWidth
             helperText="設定此類別的費用新增頻率限制"
           />
-        </Box>
+        </FormFieldRow>
 
         {/* 第二列：說明 */}
         <Box mb={2}>
@@ -117,16 +96,8 @@ export const ExpenseCategoryCreate: React.FC = () => {
           />
         </Box>
 
-        {/* 第三列：啟用狀態 + 是否為薪資類別（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-          }}
-        >
+        {/* 第三列：啟用狀態 + 是否為薪資類別 (響應式：手機單欄、電腦雙欄) */}
+        <FormFieldRow sx={{ mb: 2 }}>
           <BooleanInput
             source="active"
             label="啟用"
@@ -138,7 +109,7 @@ export const ExpenseCategoryCreate: React.FC = () => {
             defaultValue={false}
             helperText="勾選後，此類別將用於員工薪資支出"
           />
-        </Box>
+        </FormFieldRow>
       </Box>
     </GenericCreatePage>
   );

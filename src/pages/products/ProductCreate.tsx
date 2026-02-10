@@ -10,6 +10,7 @@ import {
 } from "react-admin";
 import { Box, Typography } from "@mui/material";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { useActiveProductCategories } from "@/hooks/useActiveProductCategories";
@@ -85,27 +86,21 @@ export const ProductCreate: React.FC = () => {
           />
         </Box>
 
-        {/* 啟用 + 單價（同一列，不變動位置） */}
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          <Box flex={1}>
-            <BooleanInput
-              source="active"
-              label="啟用"
-              defaultValue={true}
-            />
-          </Box>
-
-          <Box flex={1}>
-            <TextInput
-              source="unitPrice"
-              label="單價 *"
-              type="number"
-              inputProps={{ min: 0 }}
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-        </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <BooleanInput
+            source="active"
+            label="啟用"
+            defaultValue={true}
+          />
+          <TextInput
+            source="unitPrice"
+            label="單價 *"
+            type="number"
+            inputProps={{ min: 0 }}
+            fullWidth
+            validate={[required()]}
+          />
+        </FormFieldRow>
       </Box>
     </GenericCreatePage>
   );

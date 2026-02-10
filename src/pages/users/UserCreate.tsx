@@ -9,6 +9,7 @@ import {
   required,
 } from "react-admin";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 
@@ -73,14 +74,7 @@ export const UserCreate: React.FC = () => {
           />
         </Box>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-          }}
-        >
+        <FormFieldRow sx={{ mb: 2 }}>
           <TextInput
             source="password"
             type="password"
@@ -94,7 +88,7 @@ export const UserCreate: React.FC = () => {
             label="確認密碼 *"
             fullWidth
           />
-        </Box>
+        </FormFieldRow>
 
         <Box mb={2}>
           <TextInput
@@ -121,21 +115,12 @@ export const UserCreate: React.FC = () => {
           />
         </Box>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "flex-start",
-          }}
-        >
+        <FormFieldRow sx={{ mb: 2 }}>
           <BooleanInput
             source="enabled"
             label="啟用"
             defaultValue={true}
           />
-
           <SelectArrayInput
             source="roleNames"
             label="角色（多選）"
@@ -144,7 +129,7 @@ export const UserCreate: React.FC = () => {
               { id: "ROLE_USER", name: "一般使用者" },
             ]}
           />
-        </Box>
+        </FormFieldRow>
       </Box>
     </GenericCreatePage>
   );

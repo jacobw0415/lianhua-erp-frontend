@@ -11,6 +11,7 @@ import {
 } from "react-admin";
 import { Typography, Box } from "@mui/material";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 /* -------------------------------------------------------
@@ -93,15 +94,7 @@ const ExpenseCategoryFormFields: React.FC = () => {
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
         {/* 第一列：會計科目代碼 + 費用分類名稱（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-          }}
-        >
+        <FormFieldRow sx={{ mb: 2 }}>
           <TextInput
             source="accountCode"
             label="會計科目代碼"
@@ -109,39 +102,16 @@ const ExpenseCategoryFormFields: React.FC = () => {
             disabled
             helperText="系統自動生成，無法修改"
           />
-
           <TextInput
             source="name"
             label="費用分類名稱 *"
             fullWidth
             validate={[required()]}
           />
-        </Box>
+        </FormFieldRow>
 
         {/* 第二列：說明 + 費用頻率類型（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-            // 統一兩個輸入框的對齊方式
-            "& .RaInput-input, & .MuiFormControl-root": {
-              marginTop: 0,
-              marginBottom: 0,
-            },
-            // 確保標籤在同一水平線
-            "& .MuiInputLabel-root": {
-              top: 0,
-              transformOrigin: "top left",
-            },
-            // 統一輸入框高度
-            "& .MuiInputBase-root": {
-              marginTop: 0,
-            },
-          }}
-        >
+        <FormFieldRow sx={{ mb: 2 }}>
           <TextInput
             source="description"
             label="說明"
@@ -161,28 +131,17 @@ const ExpenseCategoryFormFields: React.FC = () => {
             fullWidth
             helperText="設定此類別的費用新增頻率限制"
           />
-        </Box>
+        </FormFieldRow>
 
         {/* 第三列：啟用狀態 + 是否為薪資類別（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-          }}
-        >
-          <BooleanInput
-            source="active"
-            label="啟用"
-          />
+        <FormFieldRow sx={{ mb: 2 }}>
+          <BooleanInput source="active" label="啟用" />
           <BooleanInput
             source="isSalary"
             label="是否為薪資類別"
             helperText="勾選後，此類別將用於員工薪資支出"
           />
-        </Box>
+        </FormFieldRow>
       </Box>
     </>
   );

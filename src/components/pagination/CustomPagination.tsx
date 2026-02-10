@@ -14,8 +14,11 @@ import LastPageIcon from "@mui/icons-material/LastPage";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
+import { useIsMobile } from "@/hooks/useIsMobile";
+
 export const CustomPaginationBar = ({ showPerPage = true }) => {
   const theme = useTheme();
+  const isMobile = useIsMobile();
   const { page, perPage, total, setPage, setPerPage } = useListContext();
 
   if (!total) return null;
@@ -54,15 +57,35 @@ export const CustomPaginationBar = ({ showPerPage = true }) => {
       display="flex"
       justifyContent="flex-end"
       alignItems="center"
-      px={2}
+      flexWrap="nowrap"
+      gap={{ xs: 0.5, sm: 0 }}
+      px={{ xs: 1.5, sm: 2 }}
       py={1}
-      sx={{ fontSize: "0.85rem", color: textColor }}
+      sx={{
+        fontSize: "0.85rem",
+        color: textColor,
+        overflowX: "auto",
+        "& > *": { flexShrink: 0 },
+      }}
     >
       {/* --------- Rows per page ----------- */}
       {showPerPage && (
-        <Box display="flex" alignItems="center" mr={2}>
-          <Typography fontSize="0.75rem" mr={1} color={textColor}>
+        <Box display="flex" alignItems="center" flexShrink={0} mr={{ xs: 0.5, sm: 2 }}>
+          <Typography
+            fontSize="0.75rem"
+            mr={1}
+            color={textColor}
+            sx={{ display: isMobile ? "none" : "block" }}
+          >
             Rows per page:
+          </Typography>
+          <Typography
+            fontSize="0.75rem"
+            mr={1}
+            color={textColor}
+            sx={{ display: isMobile ? "block" : "none" }}
+          >
+            每頁:
           </Typography>
 
           <FormControl size="small" sx={{ minWidth: 65 }}>
@@ -94,12 +117,12 @@ export const CustomPaginationBar = ({ showPerPage = true }) => {
         </Box>
       )}
 
-      {/* --------- 新增目前筆數 / 總筆數 ----------- */}
+      {/* --------- 筆數範圍 ----------- */}
       <Typography
         fontSize="0.8rem"
         color={textColor}
-        mx={2}
-        sx={{ minWidth: "90px", textAlign: "center" }}
+        mx={{ xs: 0.5, sm: 2 }}
+        sx={{ minWidth: { xs: "fit-content", sm: "90px" }, textAlign: "center", whiteSpace: "nowrap" }}
       >
         {start}–{end} of {total}
       </Typography>
@@ -109,7 +132,10 @@ export const CustomPaginationBar = ({ showPerPage = true }) => {
         size="small"
         onClick={() => setPage(1)}
         disabled={current === 1}
-        sx={{ color: current === 1 ? disabledColor : textColor }}
+        sx={{
+          color: current === 1 ? disabledColor : textColor,
+          ...(isMobile && { p: 0.5, minWidth: 36, minHeight: 36 }),
+        }}
       >
         <FirstPageIcon fontSize="small" />
       </IconButton>
@@ -118,34 +144,53 @@ export const CustomPaginationBar = ({ showPerPage = true }) => {
         size="small"
         onClick={() => setPage(current - 1)}
         disabled={current === 1}
-        sx={{ color: current === 1 ? disabledColor : textColor }}
+        sx={{
+          color: current === 1 ? disabledColor : textColor,
+          ...(isMobile && { p: 0.5, minWidth: 36, minHeight: 36 }),
+        }}
       >
         <NavigateBeforeIcon fontSize="small" />
       </IconButton>
 
-      {pages.map((p) => (
+      {/* 手機隱藏頁碼數字， desktop 顯示 */}
+      {!isMobile &&
+        pages.map((p) => (
+          <Typography
+            key={p}
+            onClick={() => setPage(p)}
+            sx={{
+              px: 1,
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: p === current ? 700 : 400,
+              color: p === current ? activeColor : textColor,
+              textDecoration: p === current ? "underline" : "none",
+              "&:hover": { color: activeColor },
+            }}
+          >
+            {p}
+          </Typography>
+        ))}
+
+      {/* 手機顯示目前頁/總頁 */}
+      {isMobile && (
         <Typography
-          key={p}
-          onClick={() => setPage(p)}
-          sx={{
-            px: 1,
-            cursor: "pointer",
-            fontSize: "0.85rem",
-            fontWeight: p === current ? 700 : 400,
-            color: p === current ? activeColor : textColor,
-            textDecoration: p === current ? "underline" : "none",
-            "&:hover": { color: activeColor },
-          }}
+          fontSize="0.8rem"
+          color={textColor}
+          sx={{ px: 0.5, fontWeight: 500 }}
         >
-          {p}
+          {current}/{totalPages}
         </Typography>
-      ))}
+      )}
 
       <IconButton
         size="small"
         onClick={() => setPage(current + 1)}
         disabled={current === totalPages}
-        sx={{ color: current === totalPages ? disabledColor : textColor }}
+        sx={{
+          color: current === totalPages ? disabledColor : textColor,
+          ...(isMobile && { p: 0.5, minWidth: 36, minHeight: 36 }),
+        }}
       >
         <NavigateNextIcon fontSize="small" />
       </IconButton>
@@ -154,7 +199,10 @@ export const CustomPaginationBar = ({ showPerPage = true }) => {
         size="small"
         onClick={() => setPage(totalPages)}
         disabled={current === totalPages}
-        sx={{ color: current === totalPages ? disabledColor : textColor }}
+        sx={{
+          color: current === totalPages ? disabledColor : textColor,
+          ...(isMobile && { p: 0.5, minWidth: 36, minHeight: 36 }),
+        }}
       >
         <LastPageIcon fontSize="small" />
       </IconButton>

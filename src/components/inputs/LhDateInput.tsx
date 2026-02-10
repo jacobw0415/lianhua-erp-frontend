@@ -3,6 +3,8 @@ import { useInput } from "react-admin";
 import type { UseInputValue } from "react-admin";
 import dayjs from "dayjs";
 
+import { useIsSmallScreen } from "@/hooks/useIsMobile";
+
 interface LhDateInputProps {
   source: string;
   label?: string;
@@ -28,6 +30,8 @@ export const LhDateInput = ({
     validate: validate as Parameters<typeof useInput>[0]["validate"],
   }) as UseInputValue;
 
+  const isSmallScreen = useIsSmallScreen();
+
   return (
     <DatePicker
       label={label}
@@ -46,14 +50,14 @@ export const LhDateInput = ({
           size,
         },
 
-        /**  永遠讓彈窗出現在 icon 的右方 */
+        /** RWD：小螢幕時彈窗在欄位正下方，避免超出畫面；桌面版在右方 */
         popper: {
-          placement: "right-start",
+          placement: isSmallScreen ? "bottom-start" : "right-start",
           modifiers: [
             {
               name: "offset",
               options: {
-                offset: [8, 0], // ➜ 向右偏移 8px，讓位置更漂亮
+                offset: isSmallScreen ? [0, 8] : [8, 0],
               },
             },
           ],

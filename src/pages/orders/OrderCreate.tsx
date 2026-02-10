@@ -9,6 +9,7 @@
   import { Box, Typography, useTheme } from "@mui/material";
   import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
+  import { FormFieldRow } from "@/components/common/FormFieldRow";
   import { GenericCreatePage } from "@/components/common/GenericCreatePage";
   import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
   import { LhDateInput } from "@/components/inputs/LhDateInput";
@@ -104,15 +105,8 @@
               flexDirection: "column",
             }}
           >
-            {/* 客戶 + 訂單狀態 */}
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 2,
-                mb: 2,
-              }}
-            >
+            {/* 客戶 + 訂單狀態 (響應式：手機單欄、電腦雙欄) */}
+            <FormFieldRow sx={{ mb: 2 }}>
               <SelectInput
                 source="customerId"
                 label="客戶"
@@ -123,7 +117,6 @@
                 isLoading={customersLoading}
                 validate={[required()]}
               />
-
               <SelectInput
                 source="orderStatus"
                 label="訂單狀態"
@@ -134,30 +127,21 @@
                   { id: "CONFIRMED", name: "已確認" },
                 ]}
               />
-            </Box>
+            </FormFieldRow>
 
-            {/* 日期 */}
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 2,
-                mb: 2,
-              }}
-            >
+            {/* 日期 (響應式：手機單欄、電腦雙欄) */}
+            <FormFieldRow sx={{ mb: 2 }}>
               <LhDateInput
                 source="orderDate"
                 label="訂單日期"
                 fullWidth
-
               />
-
               <LhDateInput
                 source="deliveryDate"
                 label="交貨日期"
                 fullWidth
               />
-            </Box>
+            </FormFieldRow>
 
             {/* 備註 */}
             <TextInput

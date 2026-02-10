@@ -7,6 +7,7 @@ import {
 } from "react-admin";
 import { Box, Typography, useTheme } from "@mui/material"; 
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
@@ -62,36 +63,30 @@ export const SaleCreate: React.FC = () => {
       </Typography>
 
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        <Box display="flex" gap={2} mb={2} alignItems="center">
-          {/* 商品 */}
-          <Box  flex={1}>
-            <SelectInput
-              source="productId"
-              label="商品 *"
-              choices={products}
-              optionText="name"
-              optionValue="id"
-              isLoading={loading}
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
-          <Box flex={1}>
-            <SelectInput
-              source="payMethod"
-              label="付款方式 *"
-              choices={[
-                { id: "CASH", name: "現金" },
-                { id: "CARD", name: "刷卡" },
-              ]}
-              fullWidth
-              validate={[required()]}
-            />
-          </Box>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <SelectInput
+            source="productId"
+            label="商品 *"
+            choices={products}
+            optionText="name"
+            optionValue="id"
+            isLoading={loading}
+            fullWidth
+            validate={[required()]}
+          />
+          <SelectInput
+            source="payMethod"
+            label="付款方式 *"
+            choices={[
+              { id: "CASH", name: "現金" },
+              { id: "CARD", name: "刷卡" },
+            ]}
+            fullWidth
+            validate={[required()]}
+          />
+        </FormFieldRow>
 
-        </Box>
-        {/* 數量 */}
-        <Box mb={2}>
+        <Box sx={{ mb: 2 }}>
           <TextInput
             source="qty"
             label="數量 *"
@@ -102,11 +97,9 @@ export const SaleCreate: React.FC = () => {
           />
         </Box>
 
-        <Box flex={1}>
-          {/* 修正：將 source="payDate" 改為 "saleDate" 以符合 Interface */}
+        <Box sx={{ mb: 2 }}>
           <LhDateInput source="saleDate" label="銷售日期" />
         </Box>
-
       </Box>
     </GenericCreatePage>
   );

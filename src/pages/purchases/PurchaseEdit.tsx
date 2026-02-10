@@ -106,11 +106,12 @@ const PurchaseFormFields: React.FC = () => {
 
   return (
     <Box>
-      {/* 🔹 Header Row */}
+      {/* 🔹 Header Row (響應式：手機單欄、電腦雙欄) */}
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "430px 1fr",
+          gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 430px) 1fr" },
+          gap: { xs: 1, sm: 0 },
           alignItems: "center",
           mb: isVoided ? 2 : 1,
         }}
@@ -195,14 +196,14 @@ const PurchaseFormFields: React.FC = () => {
         </Box>
       )}
 
-      {/* 🔹 主要內容區 */}
+      {/* 🔹 主要內容區 (響應式：手機單欄、電腦雙欄) */}
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "400px 1fr",
+          gridTemplateColumns: { xs: "1fr", md: "400px 1fr" },
           gap: 4,
           alignItems: "start",
-          minHeight: "370px",
+          minHeight: { xs: "auto", md: "370px" },
         }}
       >
         {/* 左側：歷史付款紀錄 */}
@@ -263,11 +264,12 @@ const PurchaseFormFields: React.FC = () => {
         <Box
           sx={(theme) => ({
             borderRadius: 2,
-            width: "400px",
+            width: { xs: "100%", md: "400px" },
+            maxWidth: "100%",
             bgcolor: theme.palette.background.paper,
             border: `2px solid ${theme.palette.divider}`,
             p: 3,
-            minHeight: "380px",
+            minHeight: { xs: "auto", md: "380px" },
             ...(isVoided && {
               opacity: 0.5,
               pointerEvents: "none",

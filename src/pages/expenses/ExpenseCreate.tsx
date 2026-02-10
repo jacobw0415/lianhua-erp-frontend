@@ -8,6 +8,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useFormContext, useWatch } from "react-hook-form";
 
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
@@ -98,66 +99,20 @@ export const ExpenseCreate: React.FC = () => {
 
       {/* 整體固定最大寬度 */}
       <Box sx={{ maxWidth: 600, width: "100%" }}>
-        {/* 第一列：支出日期 + 費用類別（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-            // 統一兩個輸入框的對齊方式
-            "& .RaInput-input, & .MuiFormControl-root": {
-              marginTop: 0,
-              marginBottom: 0,
-            },
-            // 確保標籤在同一水平線
-            "& .MuiInputLabel-root": {
-              top: 0,
-              transformOrigin: "top left",
-            },
-            // 統一輸入框高度
-            "& .MuiInputBase-root": {
-              marginTop: 0,
-            },
-          }}
-        >
+        {/* 第一列：支出日期 + 費用類別 (響應式：手機單欄、電腦雙欄) */}
+        <FormFieldRow sx={{ mb: 2 }}>
           <LhDateInput
             source="expenseDate"
             label="支出日期 *"
             fullWidth
             validate={[required()]}
           />
-
           <CategoryInput categories={categories} isLoading={categoriesLoading} />
-        </Box>
+        </FormFieldRow>
 
-        {/* 第二列：金額 + 員工（並排） */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mb: 2,
-            alignItems: "start",
-            // 統一兩個輸入框的對齊方式
-            "& .RaInput-input, & .MuiFormControl-root": {
-              marginTop: 0,
-              marginBottom: 0,
-            },
-            // 確保標籤在同一水平線
-            "& .MuiInputLabel-root": {
-              top: 0,
-              transformOrigin: "top left",
-            },
-            // 統一輸入框高度
-            "& .MuiInputBase-root": {
-              marginTop: 0,
-            },
-          }}
-        >
+        {/* 第二列：金額 + 員工 (響應式：手機單欄、電腦雙欄) */}
+        <FormFieldRow sx={{ mb: 2 }}>
           <AmountInput />
-
           <SelectInput
             source="employeeId"
             label="員工（選填）"
@@ -168,7 +123,7 @@ export const ExpenseCreate: React.FC = () => {
             isLoading={employeesLoading}
             helperText="選擇員工時會自動選擇薪資類別並填入員工薪資"
           />
-        </Box>
+        </FormFieldRow>
 
         {/* 第三列：備註 */}
         <Box mb={2}>

@@ -8,7 +8,6 @@ import {
   Divider,
   useTheme,
 } from "@mui/material";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 /**
@@ -172,58 +171,47 @@ export const ListCard: React.FC<ListCardProps> = ({ fields, onClick, sx }) => {
               const isCurrency = fieldType === "currency";
 
               return (
-                <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
                   <Typography
                     variant="caption"
                     sx={{
                       color: "text.secondary",
                       fontWeight: 500,
                       fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                      display: "block",
-                      mb: { xs: 0.5, sm: 0.75 },
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
+                      flexShrink: 0,
                     }}
                   >
                     {primaryField.label}
                   </Typography>
-                  <Box
+                  <Typography
+                    component="div"
+                    variant="caption"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: { xs: 0.75, sm: 1 },
-                      flexWrap: "wrap",
+                      fontWeight: isCurrency ? 600 : 500,
+                      color: isCurrency ? "primary.main" : "text.primary",
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                      lineHeight: 1.5,
+                      wordBreak: "break-word",
+                      overflowWrap: "break-word",
+                      textAlign: "right",
                     }}
                   >
-                    {isCurrency && (
-                      <AttachMoneyIcon
-                        sx={{
-                          fontSize: { xs: "1.1rem", sm: "1.25rem" },
-                          color: "primary.main",
-                        }}
-                      />
-                    )}
-                    <Typography
-                      component="div"
-                      variant={isCurrency ? "h6" : "body1"}
-                      sx={{
-                        fontWeight: isCurrency ? 700 : 600,
-                        color: isCurrency ? "primary.main" : "text.primary",
-                        fontSize: isCurrency
-                          ? { xs: "1.1rem", sm: "1.25rem" }
-                          : { xs: "0.9rem", sm: "1rem" },
-                        lineHeight: 1.4,
-                        wordBreak: "break-word",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {isCurrency && typeof primaryField.value !== "object"
-                        ? formatCurrency(primaryField.value)
-                        : React.isValidElement(primaryField.value)
-                        ? primaryField.value
-                        : String(primaryField.value || "-")}
-                    </Typography>
-                  </Box>
+                    {isCurrency && typeof primaryField.value !== "object"
+                      ? formatCurrency(primaryField.value)
+                      : React.isValidElement(primaryField.value)
+                      ? primaryField.value
+                      : String(primaryField.value || "-")}
+                  </Typography>
                 </Box>
               );
             })()}
@@ -252,17 +240,13 @@ export const ListCard: React.FC<ListCardProps> = ({ fields, onClick, sx }) => {
                   key={field.source || index}
                   sx={{
                     display: "flex",
-                    flexDirection: "column",
-                    gap: { xs: 0.5, sm: 0.75 },
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: { xs: 0.5, sm: 0.75 },
-                    }}
-                  >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 0.75 } }}>
                     {isDate && (
                       <CalendarTodayIcon
                         sx={{
@@ -283,42 +267,25 @@ export const ListCard: React.FC<ListCardProps> = ({ fields, onClick, sx }) => {
                       {field.label}:
                     </Typography>
                   </Box>
-                  <Box
+                  <Typography
+                    component="div"
+                    variant="caption"
                     sx={{
-                      pl: isDate ? { xs: 1.5, sm: 1.75 } : 0,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: { xs: 0.5, sm: 0.75 },
-                      flexWrap: "wrap",
+                      fontWeight: isCurrency ? 600 : 500,
+                      color: isCurrency ? "primary.main" : "text.primary",
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                      lineHeight: 1.5,
+                      wordBreak: "break-word",
+                      overflowWrap: "break-word",
+                      textAlign: "right",
                     }}
                   >
-                    {isCurrency && (
-                      <AttachMoneyIcon
-                        sx={{
-                          fontSize: { xs: "0.9rem", sm: "1rem" },
-                          color: "primary.main",
-                        }}
-                      />
-                    )}
-                    <Typography
-                      component="div"
-                      variant="body2"
-                      sx={{
-                        fontWeight: isCurrency ? 600 : 500,
-                        color: isCurrency ? "primary.main" : "text.primary",
-                        fontSize: { xs: "0.8rem", sm: "0.875rem" },
-                        lineHeight: 1.5,
-                        wordBreak: "break-word",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {isCurrency && typeof field.value !== "object"
-                        ? formatCurrency(field.value)
-                        : React.isValidElement(field.value)
-                        ? field.value
-                        : String(field.value || "-")}
-                    </Typography>
-                  </Box>
+                    {isCurrency && typeof field.value !== "object"
+                      ? formatCurrency(field.value)
+                      : React.isValidElement(field.value)
+                      ? field.value
+                      : String(field.value || "-")}
+                  </Typography>
                 </Box>
               );
             })}
