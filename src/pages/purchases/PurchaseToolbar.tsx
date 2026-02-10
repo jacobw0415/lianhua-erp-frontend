@@ -33,9 +33,9 @@ export const PurchaseToolbar = (props: any) => {
                 ) : (
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         {/* 只有非作廢狀態才渲染刪除按鈕 */}
-                        <Button 
-                            variant="contained" 
-                            color="error" 
+                        <Button
+                            variant="contained"
+                            color="error"
                             onClick={props.onDelete}
                         >
                             刪除

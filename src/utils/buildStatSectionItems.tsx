@@ -13,8 +13,7 @@ export type StatColorMap = typeof STAT_CARD_COLORS;
 function getValueNode(
   item: StatSectionItemConfig,
   stats: DashboardStats,
-  loading: boolean,
-  colorMap: StatColorMap
+  loading: boolean
 ): React.ReactNode {
   if (loading) return null;
   const raw = stats[item.valueKey];
@@ -76,7 +75,7 @@ export function buildStatSectionItems(
   const items: StatCardProps[] = sectionConfig.items.map((item) => ({
     title: item.title,
     icon: iconMap[item.iconKey] ?? null,
-    value: getValueNode(item, stats, loading, colorMap) ?? '—',
+    value: getValueNode(item, stats, loading) ?? '—',
     iconColor: getIconColor(item, stats, colorMap),
     loading,
     onClick: item.path ? () => navigate(item.path!) : undefined,

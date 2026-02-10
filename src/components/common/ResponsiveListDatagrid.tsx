@@ -46,22 +46,42 @@ const renderFieldValue = (
 interface ResponsiveListDatagridProps extends DatagridProps {
   maxHeight?: string;
   /**
-   * true（預設）：僅手機 (< 600px) 顯示卡片，平板/桌面顯示表格
-   * false：小螢幕 (< 900px) 含平板也顯示卡片
+   * 是否僅在「手機」強制顯示卡片
+   *
+   * - true（預設）：
+   *   - 手機 (mobile, < 600px)：一定顯示卡片
+   *   - 平板區段 (tablet, 600–1199px)：依 tabletLayout 決定顯示卡片或表格
+   *   - 桌面 (desktop, >= 1200px)：顯示表格
+   *
+   * - false：
+   *   - 手機 (mobile, < 600px)：一定顯示卡片
+   *   - 平板區段 (tablet, 600–1199px)：一律顯示卡片（忽略 tabletLayout）
+   *   - 桌面 (desktop, >= 1200px)：顯示表格
    */
   cardOnlyOnMobile?: boolean;
   /**
-   * 平板 (600–900px) 布局，預設 'table' 與桌面一致
-   * 'card'：平板也顯示卡片
+   * 平板 (tablet) 區段的列表布局
+   *
+   * - 範圍：600–1199px（useBreakpoint() === 'tablet'）
+   * - 'card'（預設）：平板區段顯示卡片列表
+   * - 'table'：平板區段顯示表格（與桌面一致）
+   *
+   * 注意：
+   * - 當 cardOnlyOnMobile === false 時，平板區段一律顯示卡片，
+   *   tabletLayout 設定會被覆寫。
    */
   tabletLayout?: "card" | "table";
 }
 
 /**
  * 響應式列表組件（三層：手機 / 平板 / 桌面）
- * - 手機 (< 600px)：卡片列表
- * - 平板 (600–1199px)：依 tabletLayout，預設「卡片」
- * - 桌面 (>= 1200px)：表格
+ *
+ * - 手機 (mobile, < 600px)：卡片列表
+ * - 平板 (tablet, 600–1199px)：
+ *   - 預設：卡片列表（tabletLayout = 'card'）
+ *   - 可設定 tabletLayout = 'table' 讓平板也使用表格
+ *   - 若 cardOnlyOnMobile = false，平板一律顯示卡片
+ * - 桌面 (desktop, >= 1200px)：表格
  */
 export const ResponsiveListDatagrid: React.FC<
   ResponsiveListDatagridProps

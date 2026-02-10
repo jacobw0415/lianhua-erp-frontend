@@ -3,10 +3,16 @@ import type { SxProps, Theme } from "@mui/material";
 /**
  * RWD 斷點語意（三層：手機／平板／桌面）
  * - 手機 (mobile): < 600px → useIsMobile() / useBreakpoint() === 'mobile'
- * - 平板 (tablet): 600–900px → useIsTablet() / useBreakpoint() === 'tablet'
- * - 桌面 (desktop): >= 900px → useBreakpoint() === 'desktop'
+ * - 平板 (tablet): 600–1199px → useIsTablet() / useBreakpoint() === 'tablet'
+ * - 桌面 (desktop): >= 1200px → useBreakpoint() === 'desktop'
  * - 小螢幕 (smallScreen): < 900px → useIsSmallScreen()（平板+手機）
- * 請統一使用 @/hooks/useIsMobile
+ *
+ * 說明：
+ * - 斷點數值與 MUI 預設一致（sm=600, md=900, lg=1200）
+ * - 在實務設計上，我們將 900–1199px 的窄桌機／橫向平板也視為「平板區段」，
+ *   讓整體 UX（FilterBar 直立 + 卡片列表等）保持一致。
+ * - 請統一使用 @/hooks/useIsMobile 與 @/hooks/useIsTablet、useBreakpoint 等語意化 hook，
+ *   避免在各元件中自行硬寫 breakpoints 判斷。
  */
 
 /** RWD 斷點（px），與 MUI 預設一致 */
@@ -18,7 +24,15 @@ export const BREAKPOINTS = {
   xl: 1536,
 } as const;
 
-/** 平板 (600–900px) 專用常數，供 useBreakpoint() === 'tablet' 時選用 */
+/**
+ * 平板 (600–1199px) 專用常數，供 useBreakpoint() === 'tablet' 時選用
+ *
+ * 注意：
+ * - useIsTablet() 的嚴格判斷仍是 600–900px（between('sm','md')），
+ *   適合用在需要「真正平板」行為的場景。
+ * - useBreakpoint() === 'tablet' 則涵蓋 600–1199px，
+ *   主要用於 layout 分層（例如列表卡片／表格切換）。
+ */
 export const TABLET_CONSTANTS = {
   /** 列表建議最小高度 */
   listMinHeight: 520,
