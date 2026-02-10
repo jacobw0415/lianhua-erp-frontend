@@ -18,6 +18,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
@@ -73,33 +74,44 @@ const OrderFormFields = () => {
 
   return (
     <Box>
-      {/* 🔹 Header Row (響應式：手機單欄、電腦雙欄) */}
+      {/* 🔹 Header（響應式：手機各區塊直立單列、電腦橫向排列） */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 580px) 1fr" },
-          gap: { xs: 1, sm: 0 },
-          alignItems: "center",
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          flexWrap: "wrap",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: { xs: 1.5, sm: 2 },
           mb: 2,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mr: 1 }}>
+        {/* 標題列 */}
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
             🧾 編輯訂單資訊
           </Typography>
-          
-          {/* 所有 Chips 移到這裡 */}
-          <Chip
-            size="small"
-            label={record.orderStatus}
-            color={record.orderStatus === "DELIVERED" ? "success" : "primary"}
-          />
-          <Chip size="small" label={record.paymentStatus} variant="outlined" />
-          {isVoided && <Chip size="small" label="已作廢" color="error" />}
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            <Chip
+              size="small"
+              label={record.orderStatus}
+              color={record.orderStatus === "DELIVERED" ? "success" : "primary"}
+            />
+            <Chip size="small" label={record.paymentStatus} variant="outlined" />
+            {isVoided && <Chip size="small" label="已作廢" color="error" />}
+          </Box>
         </Box>
 
-        {/* 右側僅保留編號與客戶名稱 */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1, fontSize: "0.9rem" }}>
+        {/* 編號與客戶名稱（手機時獨立一列） */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: { xs: "flex-start", sm: "flex-end" },
+            gap: 1,
+            fontSize: "0.9rem",
+            flex: { sm: 1 },
+          }}
+        >
           <Box component="span" sx={{ fontWeight: 700 }}>{record.orderNo}</Box>
           {record.customerName && (
             <Box component="span" sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -119,37 +131,41 @@ const OrderFormFields = () => {
         }}
       >
         
-        {/* 左側：基本資訊表單 (1fr 彈性寬度) */}
+        {/* 左側：基本資訊表單（響應式：每欄位直立單列） */}
         <Box 
           sx={(t) => ({ 
             border: `2px solid ${t.palette.divider}`, 
-            p: 3, 
+            p: { xs: 2, sm: 3 }, 
             borderRadius: 2,
             bgcolor: t.palette.background.paper,
             ...(!editable && { opacity: 0.6, pointerEvents: "none" })
           })}
         >
           <Typography fontWeight={600} mb={2}>📅 訂單基本資訊</Typography>
-          <LhDateInput source="orderDate" label="訂單日期" fullWidth disabled={!editable} />
-          <Box sx={{ mt: 2 }} />
-          <LhDateInput source="deliveryDate" label="交貨日期" fullWidth disabled={!editable} />
-          <TextInput
-            source="note"
-            label="備註"
-            fullWidth
-            multiline
-            minRows={4}
-            disabled={!editable}
-            sx={{ mt: 2 }}
-          />
+          <FormFieldRow sx={{ mb: 2 }}>
+            <LhDateInput source="orderDate" label="訂單日期" fullWidth disabled={!editable} />
+          </FormFieldRow>
+          <FormFieldRow sx={{ mb: 2 }}>
+            <LhDateInput source="deliveryDate" label="交貨日期" fullWidth disabled={!editable} />
+          </FormFieldRow>
+          <FormFieldRow>
+            <TextInput
+              source="note"
+              label="備註"
+              fullWidth
+              multiline
+              minRows={4}
+              disabled={!editable}
+            />
+          </FormFieldRow>
         </Box>
 
-        {/* 右側：狀態與作廢資訊 (固定 380px) */}
-        <Box>
+        {/* 右側：狀態與作廢資訊（手機時直立單列） */}
+        <Box sx={{ width: "100%", minWidth: 0 }}>
           <Box 
             sx={(t) => ({ 
               border: `2px solid ${t.palette.divider}`, 
-              p: 3, 
+              p: { xs: 2, sm: 3 }, 
               borderRadius: 2,
               bgcolor: t.palette.background.paper,
             })}

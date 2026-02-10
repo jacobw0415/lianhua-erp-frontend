@@ -13,6 +13,7 @@ import { Box, Typography, Alert, Chip, useTheme } from "@mui/material";
 
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { GenericSubTablePanel } from "@/components/common/GenericSubTablePanel";
+import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { CustomClearButton } from "@/components/forms/CustomClearButton";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
@@ -106,13 +107,14 @@ const PurchaseFormFields: React.FC = () => {
 
   return (
     <Box>
-      {/* 🔹 Header Row (響應式：手機單欄、電腦雙欄) */}
+      {/* 🔹 Header（響應式：手機各區塊直立單列、電腦橫向排列） */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 430px) 1fr" },
-          gap: { xs: 1, sm: 0 },
-          alignItems: "center",
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          flexWrap: "wrap",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: { xs: 1.5, sm: 2 },
           mb: isVoided ? 2 : 1,
         }}
       >
@@ -123,50 +125,77 @@ const PurchaseFormFields: React.FC = () => {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1.5,
-            py: 0.25,
+            flexDirection: { xs: "column", sm: "row" },
+            flexWrap: "wrap",
+            alignItems: { xs: "flex-start", sm: "center" },
+            gap: { xs: 0.75, sm: 1 },
             fontSize: "0.8rem",
-            overflow: "hidden",
+            flex: { sm: 1 },
+            justifyContent: { xs: "flex-start", sm: "flex-end" },
+            width: "100%",
           }}
         >
-          <Box component="span" sx={{ fontWeight: 600, flexShrink: 0 }}>
-            {record.purchaseNo}
+          {/* 手機：第一行 單號｜日期｜狀態，第二行 廠商 */}
+          {/* 電腦：單行 單號｜廠商｜日期｜狀態 */}
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 1,
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
+            <Box component="span" sx={{ fontWeight: 600 }}>
+              {record.purchaseNo}
+            </Box>
+            {record.supplierName && (
+              <Box
+                component="span"
+                sx={{
+                  color: "text.secondary",
+                  display: { xs: "none", sm: "inline" },
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: 200,
+                }}
+                title={record.supplierName}
+              >
+                ｜{record.supplierName}
+              </Box>
+            )}
+            {record.purchaseDate && (
+              <Box component="span" sx={{ color: "text.secondary" }}>
+                ｜{record.purchaseDate}
+              </Box>
+            )}
+            <Chip
+              size="small"
+              label={isVoided ? "已作廢" : record.status}
+              color={
+                isVoided ? "error" :
+                record.status === "PAID" ? "success" :
+                record.status === "PARTIAL" ? "warning" : "default"
+              }
+            />
           </Box>
-
           {record.supplierName && (
             <Box
-              component="span"
               sx={{
-                flex: 1,
-                minWidth: 0,
+                width: "100%",
+                color: "text.secondary",
+                fontSize: "0.8rem",
+                display: { xs: "block", sm: "none" },
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                wordBreak: "break-word",
               }}
               title={record.supplierName}
             >
-              ｜{record.supplierName}
+              廠商：{record.supplierName}
             </Box>
           )}
-
-          {record.purchaseDate && (
-            <Box component="span" sx={{ flexShrink: 0 }}>
-              ｜{record.purchaseDate}
-            </Box>
-          )}
-
-          {/* 狀態 Chip：若作廢顯示紅色已作廢 */}
-          <Chip
-            size="small"
-            label={isVoided ? "已作廢" : record.status}
-            color={
-              isVoided ? "error" : 
-              record.status === "PAID" ? "success" : 
-              record.status === "PARTIAL" ? "warning" : "default"
-            }
-          />
         </Box>
       </Box>
 
@@ -206,8 +235,8 @@ const PurchaseFormFields: React.FC = () => {
           minHeight: { xs: "auto", md: "370px" },
         }}
       >
-        {/* 左側：歷史付款紀錄 */}
-        <Box sx={{ width: "100%" }}>
+        {/* 左側：歷史付款紀錄（手機時直立單列） */}
+        <Box sx={{ width: "100%", minWidth: 0 }}>
           <GenericSubTablePanel
             title="💰 歷史付款紀錄"
             rows={payments}
@@ -224,7 +253,7 @@ const PurchaseFormFields: React.FC = () => {
               borderRadius: "10px",
               bgcolor: theme.palette.background.paper,
               border: `2px solid ${theme.palette.divider}`,
-              p: 0.7,
+              p: { xs: 1.5, sm: 0.7 },
               mt: 0.7,
             })}
           >
@@ -268,7 +297,7 @@ const PurchaseFormFields: React.FC = () => {
             maxWidth: "100%",
             bgcolor: theme.palette.background.paper,
             border: `2px solid ${theme.palette.divider}`,
-            p: 3,
+            p: { xs: 2, sm: 3 },
             minHeight: { xs: "auto", md: "380px" },
             ...(isVoided && {
               opacity: 0.5,
@@ -305,26 +334,32 @@ const PaymentArrayInput: React.FC = () => {
   const hasPayment = Array.isArray(payments) && payments.length > 0;
 
   return (
-    <ArrayInput source="newPayments" label="">
+        <ArrayInput source="newPayments" label="">
       <SimpleFormIterator
         disableAdd={hasPayment}
         disableRemove
         disableReordering
         getItemLabel={() => ""}
       >
-        <NumberInput source="amount" label="金額" />
-        <LhDateInput source="payDate" label="付款日期" />
-        <SelectInput
-          source="method"
-          label="付款方式"
-          choices={[
-            { id: "CASH", name: "現金" },
-            { id: "TRANSFER", name: "轉帳" },
-            { id: "CARD", name: "刷卡" },
-            { id: "CHECK", name: "支票" },
-          ]}
-          sx={{ mt: 2.5 }}
-        />
+        <FormFieldRow sx={{ mb: 2 }}>
+          <NumberInput source="amount" label="金額" fullWidth />
+        </FormFieldRow>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <LhDateInput source="payDate" label="付款日期" fullWidth />
+        </FormFieldRow>
+        <FormFieldRow sx={{ mb: 2 }}>
+          <SelectInput
+            source="method"
+            label="付款方式"
+            fullWidth
+            choices={[
+              { id: "CASH", name: "現金" },
+              { id: "TRANSFER", name: "轉帳" },
+              { id: "CARD", name: "刷卡" },
+              { id: "CHECK", name: "支票" },
+            ]}
+          />
+        </FormFieldRow>
         <CustomClearButton
           onClear={({ setValue }) => {
             setValue("newPayments.0.amount", "");

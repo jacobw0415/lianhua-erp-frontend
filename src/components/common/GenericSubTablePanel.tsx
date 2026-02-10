@@ -9,6 +9,7 @@ import {
 import type { RaRecord, ListControllerResult } from "react-admin";
 import { Box, Typography } from "@mui/material";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 /* =========================================================
  * 型別定義
@@ -28,11 +29,24 @@ interface GenericSubTablePanelProps {
 /* =========================================================
  * Component
  * ========================================================= */
+const formatCellValue = (row: RaRecord, col: ColumnConfig): string => {
+  const val = row[col.source];
+  if (val == null) return "-";
+  if (col.type === "currency" && typeof val === "number") {
+    return val.toLocaleString("zh-TW", { style: "currency", currency: "TWD", minimumFractionDigits: 0 });
+  }
+  if (col.type === "date") {
+    return typeof val === "string" ? val : String(val);
+  }
+  return String(val);
+};
+
 export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
   title,
   rows,
   columns,
 }) => {
+  const isMobile = useIsMobile();
   const enableScroll = rows.length > 2;
   const maxHeight = 150;
 
@@ -88,6 +102,53 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
           }}
         >
           目前尚無紀錄
+        </Box>
+      ) : isMobile ? (
+        /* 手機：直立卡片列表，每筆紀錄一卡 */
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+            maxHeight: enableScroll ? 240 : "none",
+            overflowY: enableScroll ? "auto" : "visible",
+            ...(enableScroll && {
+              "&::-webkit-scrollbar": { width: 6 },
+              "&::-webkit-scrollbar-thumb": { borderRadius: 3, bgcolor: "divider" },
+            }),
+          }}
+        >
+          {rows.map((row, idx) => (
+            <Box
+              key={String((row as RaRecord & { id?: string | number }).id ?? idx)}
+              sx={(theme) => ({
+                p: 1.5,
+                borderRadius: 1.5,
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.default,
+              })}
+            >
+              {columns.map((col) => (
+                <Box
+                  key={col.source}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    py: 0.5,
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    {col.label}：
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: col.type === "currency" ? 600 : 400 }}>
+                    {formatCellValue(row, col)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          ))}
         </Box>
       ) : (
         <ListContextProvider value={listContext}>
