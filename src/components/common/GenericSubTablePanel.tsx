@@ -9,7 +9,7 @@ import {
 import type { RaRecord, ListControllerResult } from "react-admin";
 import { Box, Typography } from "@mui/material";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useBreakpoint } from "@/hooks/useIsMobile";
 
 /* =========================================================
  * 型別定義
@@ -24,6 +24,8 @@ interface GenericSubTablePanelProps {
   title: string;
   rows: RaRecord[];
   columns: ColumnConfig[];
+  /** 平板 (600–900px) 布局，預設 'table' 與桌面一致 */
+  tabletLayout?: "card" | "table";
 }
 
 /* =========================================================
@@ -45,8 +47,11 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
   title,
   rows,
   columns,
+  tabletLayout = "table",
 }) => {
-  const isMobile = useIsMobile();
+  const breakpoint = useBreakpoint();
+  const useCardLayout =
+    breakpoint === "mobile" || (breakpoint === "tablet" && tabletLayout === "card");
   const enableScroll = rows.length > 2;
   const maxHeight = 150;
 
@@ -103,8 +108,8 @@ export const GenericSubTablePanel: React.FC<GenericSubTablePanelProps> = ({
         >
           目前尚無紀錄
         </Box>
-      ) : isMobile ? (
-        /* 手機：直立卡片列表，每筆紀錄一卡 */
+      ) : useCardLayout ? (
+        /* 手機 / 平板（選配）：直立卡片列表，每筆紀錄一卡 */
         <Box
           sx={{
             display: "flex",

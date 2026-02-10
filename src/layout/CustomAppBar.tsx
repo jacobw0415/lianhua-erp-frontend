@@ -22,7 +22,6 @@ import {
     Typography,
     Autocomplete,
     CircularProgress,
-    useMediaQuery,
     ListItemIcon,
     ListItemText,
     Divider,
@@ -49,6 +48,7 @@ import { useColorMode } from "@/contexts/useColorMode";
 import { menuGroups } from "@/layout/menuConfig";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 
 import dayjs from "dayjs";
 import type { ElementType } from "react";
@@ -81,8 +81,8 @@ export const CustomAppBar = (props: AppBarProps) => {
     const location = useLocation();
     const pathname = location.pathname;
 
-    const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
-    const isTablet = useMediaQuery(muiTheme.breakpoints.down("md"));
+    const isMobile = useIsMobile();
+    const isTablet = useIsSmallScreen();
 
     /* =====================================================
      * 📌 狀態管理

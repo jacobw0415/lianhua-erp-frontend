@@ -37,7 +37,7 @@ export const RoleList = () => {
           { type: "text", source: "displayName", label: "角色名稱" },
         ]}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
           <TextField source="name" label="角色代碼" />
           <TextField source="displayName" label="角色名稱" />
           <TextField source="description" label="說明" />

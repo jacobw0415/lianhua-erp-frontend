@@ -51,7 +51,7 @@ export const ProductCategoryList = () => {
           },
         ]}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
 
           <TextField source="code" label="分類代碼" />
 

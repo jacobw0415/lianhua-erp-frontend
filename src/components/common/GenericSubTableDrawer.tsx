@@ -7,12 +7,8 @@ import {
   ListContextProvider,
   type ListControllerResult,
 } from "react-admin";
-import {
-  Drawer,
-  Box,
-  Typography,
-  IconButton,
-} from "@mui/material";
+import { Drawer, Box, Typography, IconButton } from "@mui/material";
+import { useIsSmallScreen } from "@/hooks/useIsMobile";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface ColumnConfig {
@@ -41,6 +37,8 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
   totalField = "amount",
 }) => {
 
+  const isSmallScreen = useIsSmallScreen();
+
   const enableScroll = rows.length > 2;
   const maxHeight = enableScroll ? "150px" : "auto";
 
@@ -60,16 +58,22 @@ export const GenericSubTableDrawer: React.FC<GenericSubTableDrawerProps> = ({
   return (
     <Drawer
       open={open}
-      anchor="right"
+      anchor={isSmallScreen ? "bottom" : "right"}
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", sm: "48vw" },
-          maxWidth: { xs: "100%", sm: "620px" },
+          width: isSmallScreen ? "100%" : { xs: "100%", sm: "48vw" },
+          maxWidth: isSmallScreen ? "100%" : { xs: "100%", sm: "620px" },
           bgcolor: "background.paper",
           p: 0,
           display: "flex",
           flexDirection: "column",
+          // 手機／平板：採用底部抽屜高度，保留一部分主畫面背景
+          ...(isSmallScreen && {
+            maxHeight: "80vh",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }),
         },
       }}
     >

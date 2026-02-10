@@ -69,7 +69,7 @@ export const ExpenseCategoryList = () => {
           },
         ]}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
 
           <TextField source="accountCode" label="會計科目代碼" />
 

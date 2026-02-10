@@ -199,6 +199,10 @@ export const MonthPicker = memo(({
       error,
       helperText,
       sx: {
+        "& .MuiInputLabel-root": {
+          lineHeight: 1.5,
+          "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+        },
         "& .MuiInputBase-root": {
           ...(size === "small" && { height: 40 }),
           transition: "all 0.2s ease-in-out",

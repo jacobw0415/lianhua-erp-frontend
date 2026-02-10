@@ -33,7 +33,7 @@ interface Purchase {
   paidAmount?: number;
   balance?: number;
   // --- 同步 Drawer 的作廢欄位 ---
-  recordStatus?: "ACTIVE" | "VOIDED"; 
+  recordStatus?: "ACTIVE" | "VOIDED";
   voidedAt?: string;
   voidReason?: string;
   // ----------------------------
@@ -55,7 +55,7 @@ export const PurchaseEdit: React.FC = () => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
-  
+
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
 
@@ -107,14 +107,15 @@ const PurchaseFormFields: React.FC = () => {
 
   return (
     <Box>
-      {/* 🔹 Header（響應式：手機各區塊直立單列、電腦橫向排列） */}
+      {/* 🔹 Header（響應式：手機／平板直立單列、桌面橫向排列） */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
+          // 手機與平板保持直向，僅桌面 (lg 以上) 改為橫向排列
+          flexDirection: { xs: "column", lg: "row" },
           flexWrap: "wrap",
-          alignItems: { xs: "stretch", sm: "center" },
-          gap: { xs: 1.5, sm: 2 },
+          alignItems: { xs: "stretch", lg: "center" },
+          gap: { xs: 1.5, lg: 2 },
           mb: isVoided ? 2 : 1,
         }}
       >
@@ -125,10 +126,11 @@ const PurchaseFormFields: React.FC = () => {
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
+            // 手機與平板：資訊列改為直向堆疊；桌面才橫向排成單列
+            flexDirection: { xs: "column", lg: "row" },
             flexWrap: "wrap",
-            alignItems: { xs: "flex-start", sm: "center" },
-            gap: { xs: 0.75, sm: 1 },
+            alignItems: { xs: "flex-start", lg: "center" },
+            gap: { xs: 0.75, lg: 1 },
             fontSize: "0.8rem",
             flex: { sm: 1 },
             justifyContent: { xs: "flex-start", sm: "flex-end" },
@@ -175,8 +177,8 @@ const PurchaseFormFields: React.FC = () => {
               label={isVoided ? "已作廢" : record.status}
               color={
                 isVoided ? "error" :
-                record.status === "PAID" ? "success" :
-                record.status === "PARTIAL" ? "warning" : "default"
+                  record.status === "PAID" ? "success" :
+                    record.status === "PARTIAL" ? "warning" : "default"
               }
             />
           </Box>
@@ -206,7 +208,7 @@ const PurchaseFormFields: React.FC = () => {
             mb: 3,
             p: 2,
             borderRadius: "8px",
-            bgcolor: "rgba(33, 22, 10, 0.8)", 
+            bgcolor: "rgba(33, 22, 10, 0.8)",
             border: "1px solid rgba(255, 165, 0, 0.4)",
           }}
         >
@@ -225,14 +227,15 @@ const PurchaseFormFields: React.FC = () => {
         </Box>
       )}
 
-      {/* 🔹 主要內容區 (響應式：手機單欄、電腦雙欄) */}
+      {/* 🔹 主要內容區 (響應式：手機／平板單欄，桌面雙欄) */}
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "400px 1fr" },
+          // 手機與平板：單欄；桌面 (lg 以上) 才切成左側紀錄／右側表單雙欄
+          gridTemplateColumns: { xs: "1fr", lg: "400px 1fr" },
           gap: 4,
           alignItems: "start",
-          minHeight: { xs: "auto", md: "370px" },
+          minHeight: { xs: "auto", lg: "370px" },
         }}
       >
         {/* 左側：歷史付款紀錄（手機時直立單列） */}
@@ -334,7 +337,7 @@ const PaymentArrayInput: React.FC = () => {
   const hasPayment = Array.isArray(payments) && payments.length > 0;
 
   return (
-        <ArrayInput source="newPayments" label="">
+    <ArrayInput source="newPayments" label="">
       <SimpleFormIterator
         disableAdd={hasPayment}
         disableRemove

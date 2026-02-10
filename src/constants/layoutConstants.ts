@@ -1,13 +1,30 @@
 import type { SxProps, Theme } from "@mui/material";
 
 /**
- * RWD 斷點語意（與報表模組一致，列表／儀表板以此為基準）
- * - 手機 (mobile): theme.breakpoints.down("sm") → < 600px
- *   用於：AppBar 高度與搜尋位置、Sidebar 全幅、列表外殼樣式、表格 cell／操作欄 sticky
- * - 小螢幕 (smallScreen): theme.breakpoints.down("md") → < 900px
- *   用於：列表「表格 vs 卡片」切換、篩選列進階用 Drawer、AppBar 更多選單收合
- * 請統一使用 @/hooks/useIsMobile 的 useIsMobile() / useIsSmallScreen()
+ * RWD 斷點語意（三層：手機／平板／桌面）
+ * - 手機 (mobile): < 600px → useIsMobile() / useBreakpoint() === 'mobile'
+ * - 平板 (tablet): 600–900px → useIsTablet() / useBreakpoint() === 'tablet'
+ * - 桌面 (desktop): >= 900px → useBreakpoint() === 'desktop'
+ * - 小螢幕 (smallScreen): < 900px → useIsSmallScreen()（平板+手機）
+ * 請統一使用 @/hooks/useIsMobile
  */
+
+/** RWD 斷點（px），與 MUI 預設一致 */
+export const BREAKPOINTS = {
+  xs: 0,
+  sm: 600,
+  md: 900,
+  lg: 1200,
+  xl: 1536,
+} as const;
+
+/** 平板 (600–900px) 專用常數，供 useBreakpoint() === 'tablet' 時選用 */
+export const TABLET_CONSTANTS = {
+  /** 列表建議最小高度 */
+  listMinHeight: 520,
+  /** Drawer 建議寬度 (vw) */
+  drawerWidthVw: 52,
+} as const;
 
 /**
  * 與報表／儀表板一致的內容區響應式寬度／間距（基準）
@@ -120,12 +137,17 @@ export const FORM_CONTAINER_SX: SxProps<Theme> = {
   py: { xs: 1.5, sm: 2, md: 2.5 },
 };
 
-/**
- * 表單內「雙欄列」共用樣式：手機單欄、sm 以上雙欄
- */
 export const FORM_FIELD_ROW_SX: SxProps<Theme> = {
   display: "grid",
-  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+  /**
+   * 表單內「雙欄列」共用樣式
+   * - mobile / tablet (< 1200px): 單欄直立
+   * - desktop (>= 1200px, lg 以上): 雙欄橫向
+   *
+   * 說明：
+   * - 新增／編輯頁在手機與平板上統一保持單欄，避免 600–1199px 時被撐成兩欄難以閱讀
+   */
+  gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
   gap: 2,
   alignItems: "start",
   "& .RaInput-input, & .MuiFormControl-root": { marginTop: 0, marginBottom: 0 },

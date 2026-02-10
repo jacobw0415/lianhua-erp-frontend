@@ -77,7 +77,7 @@ export const EmployeeList = () => (
         ],
       }}
     >
-      <ResponsiveListDatagrid rowClick={false}>
+      <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
         <TextField source="fullName" label="員工姓名" />
         <TextField source="position" label="職位" />
         <CurrencyField source="salary" label="薪資" />

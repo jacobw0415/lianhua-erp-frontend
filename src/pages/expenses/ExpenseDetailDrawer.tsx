@@ -14,7 +14,7 @@ import { RecordContextProvider } from "react-admin";
 
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { ExpenseStatusField } from "@/components/common/ExpenseStatusField";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 import { useTheme } from "@mui/material";
 
 /* =========================================================
@@ -50,6 +50,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useIsMobile();
+  const isSmallScreen = useIsSmallScreen();
 
   if (!expense) return null;
 
@@ -67,13 +68,18 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 
   return (
     <Drawer
-      anchor="right"
+      anchor={isSmallScreen ? "bottom" : "right"}
       open={open}
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", sm: 560 },
-          maxWidth: { xs: "100%", sm: 560 },
+          width: isSmallScreen ? "100%" : { xs: "100%", sm: 560 },
+          maxWidth: isSmallScreen ? "100%" : { xs: "100%", sm: 560 },
+          ...(isSmallScreen && {
+            maxHeight: "85vh",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }),
         },
       }}
     >

@@ -22,7 +22,7 @@ import dayjs from "dayjs";
 
 import { PlainCurrency } from "@/components/money/PlainCurrency";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 
 /* ================= 型別 ================= */
 
@@ -60,6 +60,7 @@ export const ARAgingDetailDrawer = ({
   const redirect = useRedirect();
   const theme = useTheme();
   const isMobile = useIsMobile();
+  const isSmallScreen = useIsSmallScreen();
 
   const [rows, setRows] = useState<ARAgingOrderRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,13 +79,18 @@ export const ARAgingDetailDrawer = ({
 
   return (
     <Drawer
-      anchor="right"
+      anchor={isSmallScreen ? "bottom" : "right"}
       open={open}
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", sm: 750 },
-          maxWidth: { xs: "100%", sm: 750 },
+          width: isSmallScreen ? "100%" : { xs: "100%", sm: 750 },
+          maxWidth: isSmallScreen ? "100%" : { xs: "100%", sm: 750 },
+          ...(isSmallScreen && {
+            maxHeight: "85vh",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }),
         },
       }}
     >

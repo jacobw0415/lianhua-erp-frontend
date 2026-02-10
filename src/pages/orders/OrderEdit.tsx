@@ -74,14 +74,15 @@ const OrderFormFields = () => {
 
   return (
     <Box>
-      {/* 🔹 Header（響應式：手機各區塊直立單列、電腦橫向排列） */}
+      {/* 🔹 Header（響應式：手機／平板直立單列、桌面橫向排列） */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
+          // 手機與平板：直向堆疊；桌面 (lg 以上) 才橫向排列
+          flexDirection: { xs: "column", lg: "row" },
           flexWrap: "wrap",
-          alignItems: { xs: "stretch", sm: "center" },
-          gap: { xs: 1.5, sm: 2 },
+          alignItems: { xs: "stretch", lg: "center" },
+          gap: { xs: 1.5, lg: 2 },
           mb: 2,
         }}
       >
@@ -121,13 +122,14 @@ const OrderFormFields = () => {
         </Box>
       </Box>
 
-      {/* 🔹 主要內容佈局 (響應式：手機單欄、電腦雙欄) */}
+      {/* 🔹 主要內容佈局 (響應式：手機/平板單欄，lg 以上雙欄，避免撐爆版面) */}
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 380px" },
-          gap: 4,
+          gridTemplateColumns: { xs: "1fr", lg: "1fr minmax(200px, 380px)" },
+          gap: { xs: 2, sm: 3, lg: 4 },
           alignItems: "start",
+          minWidth: 0,
         }}
       >
         
@@ -135,20 +137,20 @@ const OrderFormFields = () => {
         <Box 
           sx={(t) => ({ 
             border: `2px solid ${t.palette.divider}`, 
-            p: { xs: 2, sm: 3 }, 
+            p: { xs: 1.5, sm: 2, lg: 3 }, 
             borderRadius: 2,
             bgcolor: t.palette.background.paper,
+            width: "100%",
+            minWidth: 0,
             ...(!editable && { opacity: 0.6, pointerEvents: "none" })
           })}
         >
           <Typography fontWeight={600} mb={2}>📅 訂單基本資訊</Typography>
           <FormFieldRow sx={{ mb: 2 }}>
             <LhDateInput source="orderDate" label="訂單日期" fullWidth disabled={!editable} />
-          </FormFieldRow>
-          <FormFieldRow sx={{ mb: 2 }}>
             <LhDateInput source="deliveryDate" label="交貨日期" fullWidth disabled={!editable} />
           </FormFieldRow>
-          <FormFieldRow>
+          <FormFieldRow sx={{ "& > *": { gridColumn: "1 / -1" } }}>
             <TextInput
               source="note"
               label="備註"
@@ -165,7 +167,7 @@ const OrderFormFields = () => {
           <Box 
             sx={(t) => ({ 
               border: `2px solid ${t.palette.divider}`, 
-              p: { xs: 2, sm: 3 }, 
+              p: { xs: 1.5, sm: 2, lg: 3 }, 
               borderRadius: 2,
               bgcolor: t.palette.background.paper,
             })}
@@ -247,7 +249,7 @@ const OrderEditToolbar = (props: any) => {
 const OrderSkeleton = () => (
   <Box>
     <Skeleton variant="text" width="40%" height={40} sx={{ mb: 3 }} />
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 380px" }, gap: 4 }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 380px" }, gap: { xs: 2, sm: 3, lg: 4 } }}>
       <Skeleton variant="rounded" height={400} />
       <Box>
         <Skeleton variant="rounded" height={150} />

@@ -69,7 +69,7 @@ export const SaleList = () => {
           ],
         }}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
           <TextField source="productName" label="商品" />
           <NumberField source="qty" label="數量" />
           <TextField source="payMethod" label="付款方式" />

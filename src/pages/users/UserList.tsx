@@ -49,7 +49,7 @@ export const UserList = () => {
           },
         ]}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
           <TextField source="username" label="帳號" />
           <TextField source="fullName" label="姓名" />
           <TextField source="email" label="Email" />

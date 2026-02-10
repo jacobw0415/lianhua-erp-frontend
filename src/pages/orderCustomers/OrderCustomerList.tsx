@@ -61,7 +61,7 @@ export const OrderCustomerList = () => {
         ],
       }}
     >
-      <ResponsiveListDatagrid>
+      <ResponsiveListDatagrid tabletLayout="card">
         <TextField source="name" label="客戶名稱" />
         <TextField source="contactPerson" label="聯絡人" />
         <TextField source="phone" label="電話" />

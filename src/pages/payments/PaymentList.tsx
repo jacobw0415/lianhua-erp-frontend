@@ -147,7 +147,7 @@ export const PaymentList = () => {
           ],
         }}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
           {/* 進貨單號（可點擊） */}
           <FunctionField
             label="進貨單號"

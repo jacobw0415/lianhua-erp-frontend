@@ -38,7 +38,7 @@ import { useEffect } from "react";
           disableCreate
           disableButton
         >
-          <ResponsiveListDatagrid>
+          <ResponsiveListDatagrid tabletLayout="card">
             <TextField source="targetType" label="類別" />
             <TextField source="title" label="主旨" sortable={false}/>
             

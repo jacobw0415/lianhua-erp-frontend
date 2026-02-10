@@ -31,7 +31,7 @@ import { formatFilters } from "@/utils/formatFilters";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { MonthPicker } from "./MonthPicker";
-import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
+import { useIsMobile, useIsSmallScreen, useIsLargeScreen, useIsTablet } from "@/hooks/useIsMobile";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -71,6 +71,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   const theme = useTheme();
   const isMobile = useIsMobile();
   const isSmallScreen = useIsSmallScreen();
+  const isLargeScreen = useIsLargeScreen();
+  const isTablet = useIsTablet();
+  const useCompactFilterLayout = !isLargeScreen;
+  const useTabletSemiCompact = useCompactFilterLayout && isTablet;
 
   const [localInputValues, setLocalInputValues] = useState<
     Record<string, string>
@@ -156,6 +160,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           width: "100%",
           maxWidth: "100%",
           minWidth: 0,
+          "& .MuiInputLabel-root": {
+            lineHeight: 1.5,
+            "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+          },
           "& .MuiInputBase-root": {
             height: 40,
             fontSize: { xs: "0.8rem", sm: "0.85rem" },
@@ -204,6 +212,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           width: "100%",
           maxWidth: "100%",
           minWidth: 0,
+          "& .MuiInputLabel-root": {
+            lineHeight: 1.5,
+            "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+          },
           "& .MuiInputBase-root": { 
             height: 40,
             fontSize: { xs: "0.8rem", sm: "0.85rem" },
@@ -286,6 +298,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   width: "100%",
                   maxWidth: "100%",
                   minWidth: 0,
+                  "& .MuiInputLabel-root": {
+                    lineHeight: 1.5,
+                    "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+                  },
                   "& .MuiInputBase-root": { 
                     height: 40,
                     fontSize: { xs: "0.8rem", sm: "0.85rem" },
@@ -347,6 +363,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   width: "100%",
                   maxWidth: "100%",
                   minWidth: 0,
+                  "& .MuiInputLabel-root": {
+                    lineHeight: 1.5,
+                    "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+                  },
                   "& .MuiInputBase-root": { 
                     height: 40,
                     fontSize: { xs: "0.8rem", sm: "0.85rem" },
@@ -378,6 +398,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   width: "100%",
                   maxWidth: "100%",
                   minWidth: 0,
+                  "& .MuiInputLabel-root": {
+                    lineHeight: 1.5,
+                    "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+                  },
                   "& .MuiInputBase-root": { 
                     height: 40,
                     fontSize: { xs: "0.8rem", sm: "0.85rem" },
@@ -450,12 +474,20 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           maxWidth: "100%",
           minWidth: 0,
           boxSizing: "border-box",
-          overflow: "hidden",
+          overflow: "visible",
+          ...(useCompactFilterLayout && {
+            // 手機與平板統一採用直向排列，避免按鈕在平板寬度下溢出
+            flexDirection: "column",
+            flexWrap: "nowrap",
+            p: 1,
+            gap: 1.5,
+            alignItems: "stretch",
+          }),
         }}
       >
         {/* 左側快速搜尋區塊 */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          direction={useCompactFilterLayout ? "column" : { xs: "column", sm: "row" }}
           spacing={{ xs: 0.75, sm: 1.25, md: 1.5 }}
           flexWrap="wrap"
           alignItems={{ xs: "stretch", sm: "center" }}
@@ -464,7 +496,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             width: "100%",
             maxWidth: "100%",
             minWidth: 0,
-            overflow: "hidden",
+            overflow: "visible",
+            ...(useCompactFilterLayout && {
+              // 手機與平板統一直向堆疊搜尋欄位
+              direction: "column",
+              spacing: 1.5,
+            }),
           }}
         >
           {quickFilters.map((f, idx) => (
@@ -475,6 +512,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 minWidth: { xs: 0, sm: 200, md: 220 },
                 maxWidth: { xs: "100%", sm: "none" },
                 flex: { xs: "1 1 100%", sm: "0 1 auto" },
+                // 手機與平板：前幾個搜尋欄位統一全寬、上下保留間距
+                ...(useCompactFilterLayout && { width: "100%", minWidth: 0, flex: "1 1 100%" }),
               }}
             >
               {renderFilter(f)}
@@ -516,12 +555,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               <Button
                 variant="contained"
                 size="small"
-                startIcon={isMobile ? <SearchIcon /> : null}
+                startIcon={isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? <SearchIcon /> : null}
                 sx={{ 
                   height: 32, 
-                  flex: { xs: "1 1 0", sm: "none" },
-                  minWidth: { xs: 0, sm: "auto" },
-                  maxWidth: { xs: "100%", sm: "none" },
+                  flex: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "1 1 0" : "none",
+                  minWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? 0 : "auto",
+                  maxWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "100%" : "none",
                   fontSize: { xs: "0.75rem", sm: "0.875rem" },
                   padding: { xs: "4px 8px", sm: "6px 16px" },
                   whiteSpace: "nowrap",
@@ -537,12 +576,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 variant="outlined"
                 color="error"
                 size="small"
-                startIcon={isMobile ? <DeleteOutlineIcon /> : null}
+                startIcon={isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? <DeleteOutlineIcon /> : null}
                 sx={{ 
                   height: 32, 
-                  flex: { xs: "1 1 0", sm: "none" },
-                  minWidth: { xs: 0, sm: "auto" },
-                  maxWidth: { xs: "100%", sm: "none" },
+                  flex: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "1 1 0" : "none",
+                  minWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? 0 : "auto",
+                  maxWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "100%" : "none",
                   fontSize: { xs: "0.75rem", sm: "0.875rem" },
                   padding: { xs: "4px 8px", sm: "6px 16px" },
                   whiteSpace: "nowrap",
@@ -557,13 +596,21 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
         {/* 右側 Chips + 功能按鈕區塊 */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          // 手機／平板：Chips 與按鈕群組上下排列；桌面維持原本左右排列
+          direction={useCompactFilterLayout ? "column" : { xs: "column", sm: "row" }}
           spacing={{ xs: 1, sm: 1.25, md: 1.5 }}
           alignItems={{ xs: "stretch", sm: "center" }}
           justifyContent="flex-end"
           sx={{
             width: { xs: "100%", sm: "auto" },
             flexShrink: 0,
+            ...(useCompactFilterLayout && {
+              // 手機／平板：Chips + 功能按鈕統一直向、全寬，預留一整排給 Chips
+              direction: "column",
+              spacing: 1.5,
+              width: "100%",
+              alignItems: "stretch",
+            }),
           }}
         >
           {chips.length > 0 && (
@@ -571,22 +618,25 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               sx={{ 
                 overflowX: "auto", 
                 py: { xs: 0.5, md: 0 },
-                width: { xs: "100%", sm: "auto" },
-                maxWidth: { xs: "100%", sm: "none" },
+                // 手機／平板：Chips 佔滿一整行，與搜尋欄對齊
+                width: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "auto" },
+                maxWidth: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "none" },
               }}
             >
               <SearchChipsCompact chips={chips} onRemove={removeFilter} />
             </Box>
           )}
 
-          <Stack 
-            direction={{ xs: "column", sm: "row" }} 
+        <Stack 
+          direction={useCompactFilterLayout ? "column" : { xs: "column", sm: "row" }} 
             spacing={{ xs: 0.75, sm: 1 }} 
             justifyContent="flex-end"
             sx={{
               width: { xs: "100%", sm: "auto" },
               maxWidth: { xs: "100%", sm: "none" },
               minWidth: 0,
+            // 手機與平板：功能按鈕群組改為直向、全寬，避免平板寬度下超出表框
+            ...(useCompactFilterLayout && { direction: "column", width: "100%" }),
             }}
           >
             {enableCreate && !disableCreate && (
@@ -600,9 +650,10 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 }}
                 sx={{
                   height: 32,
-                  minWidth: { xs: 0, sm: 90 },
-                  width: { xs: "100%", sm: "auto" },
-                  maxWidth: { xs: "100%", sm: "none" },
+                  // 手機與平板：按鈕改為全寬堆疊，桌面維持原本尺寸
+                  minWidth: useCompactFilterLayout ? 0 : { xs: 0, sm: 90 },
+                  width: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "auto" },
+                  maxWidth: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "none" },
                   flex: { xs: "none", sm: "none" },
                   whiteSpace: "nowrap",
                   fontSize: { xs: "0.75rem", sm: "0.85rem" },
@@ -619,8 +670,9 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 startIcon={<DownloadIcon />}
                 sx={{
                   height: 32,
-                  width: { xs: "100%", sm: "auto" },
-                  maxWidth: { xs: "100%", sm: "none" },
+                  // 手機與平板：匯出按鈕也全寬，並排在新增資料下方
+                  width: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "auto" },
+                  maxWidth: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "none" },
                   flex: { xs: "none", sm: "none" },
                   whiteSpace: "nowrap",
                   fontSize: { xs: "0.75rem", sm: "0.875rem" },

@@ -52,7 +52,7 @@ export const ProductList = () => {
           },
         ]}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
 
           {/* ⭐ 顯示可以用 category.code，但搜尋不能 */}
           <TextField source="category.code" label="分類代碼" />

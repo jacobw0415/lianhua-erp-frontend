@@ -59,7 +59,7 @@ export const SupplierList = () => {
           ]
         }}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
 
           <TextField source="name" label="供應商名稱" />
           <TextField source="contact" label="聯絡人" />

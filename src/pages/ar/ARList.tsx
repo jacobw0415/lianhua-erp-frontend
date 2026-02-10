@@ -131,7 +131,7 @@ export const ARList = () => {
             ],
           }}
         >
-          <ResponsiveListDatagrid rowClick={false}>
+          <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
             <TextField source="customerName" label="客戶" />
 
             <CurrencyField source="aging0to30" label="0–30 天" />

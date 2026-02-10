@@ -37,7 +37,7 @@ import { ReceiptStatusField } from "@/components/common/ReceiptStatusField";
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 
 /* =========================================================
  * 型別定義
@@ -138,6 +138,7 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useIsMobile();
+   const isSmallScreen = useIsSmallScreen();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const refresh = useRefresh();
@@ -338,13 +339,18 @@ export const OrderDetailDrawer: React.FC<OrderDetailDrawerProps> = ({
 
   return (
     <Drawer
-      anchor="right"
+      anchor={isSmallScreen ? "bottom" : "right"}
       open={open}
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", sm: 560 },
-          maxWidth: { xs: "100%", sm: 560 },
+          width: isSmallScreen ? "100%" : { xs: "100%", sm: 560 },
+          maxWidth: isSmallScreen ? "100%" : { xs: "100%", sm: 560 },
+          ...(isSmallScreen && {
+            maxHeight: "85vh",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }),
         },
       }}
     >

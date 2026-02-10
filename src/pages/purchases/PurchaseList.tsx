@@ -202,7 +202,7 @@ export const PurchaseList = () => {
             ],
           }}
         >
-          <ResponsiveListDatagrid rowClick={false}>
+          <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
             <TextField source="purchaseNo" label="進貨單號" />
             <TextField source="supplierName" label="供應商名稱" />
             <DateField source="purchaseDate" label="進貨日期" />

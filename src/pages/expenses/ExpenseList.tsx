@@ -124,7 +124,7 @@ export const ExpenseList = () => {
           ],
         }}
       >
-        <ResponsiveListDatagrid rowClick={false}>
+        <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
           <DateField source="expenseDate" label="支出日期" />
           <TextField source="categoryName" label="費用類別" />
           <CurrencyField source="amount" label="金額" />

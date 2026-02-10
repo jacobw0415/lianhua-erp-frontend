@@ -7,7 +7,7 @@ import {
   type DatagridProps,
   type RaRecord,
 } from "react-admin";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useBreakpoint } from "@/hooks/useIsMobile";
 import { ListCard } from "./ListCard";
 import { EmptyPlaceholder } from "./EmptyPlaceholder";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
@@ -45,17 +45,39 @@ const renderFieldValue = (
 
 interface ResponsiveListDatagridProps extends DatagridProps {
   maxHeight?: string;
+  /**
+   * true（預設）：僅手機 (< 600px) 顯示卡片，平板/桌面顯示表格
+   * false：小螢幕 (< 900px) 含平板也顯示卡片
+   */
+  cardOnlyOnMobile?: boolean;
+  /**
+   * 平板 (600–900px) 布局，預設 'table' 與桌面一致
+   * 'card'：平板也顯示卡片
+   */
+  tabletLayout?: "card" | "table";
 }
 
 /**
- * 响应式列表组件
- * - 桌面端：显示表格（Datagrid）
- * - 移动端：显示卡片列表
+ * 響應式列表組件（三層：手機 / 平板 / 桌面）
+ * - 手機 (< 600px)：卡片列表
+ * - 平板 (600–1199px)：依 tabletLayout，預設「卡片」
+ * - 桌面 (>= 1200px)：表格
  */
 export const ResponsiveListDatagrid: React.FC<
   ResponsiveListDatagridProps
-> = ({ children, maxHeight = "500px", rowClick, ...rest }) => {
-  const isMobile = useIsMobile();
+> = ({
+  children,
+  maxHeight = "500px",
+  rowClick,
+  cardOnlyOnMobile = true,
+  // 平板預設也使用卡片布局，與目前 FilterBar 在平板的直立樣式一致
+  tabletLayout = "card",
+  ...rest
+}) => {
+  const breakpoint = useBreakpoint();
+  const useCardLayout =
+    breakpoint === "mobile" ||
+    (breakpoint === "tablet" && (tabletLayout === "card" || !cardOnlyOnMobile));
   const { data, isLoading } = useListContext();
   const theme = useTheme();
 
@@ -141,8 +163,8 @@ export const ResponsiveListDatagrid: React.FC<
       });
   }, [children]);
 
-  // 移动端：渲染卡片列表
-  if (isMobile) {
+  // 行動端／小螢幕：渲染卡片列表
+  if (useCardLayout) {
     if (isLoading && (!data || data.length === 0)) {
       return <LoadingPlaceholder />;
     }

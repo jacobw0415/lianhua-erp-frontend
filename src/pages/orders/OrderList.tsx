@@ -151,7 +151,7 @@ export const OrderList = () => {
             ],
           }}
         >
-          <ResponsiveListDatagrid rowClick={false}>
+          <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
             <TextField source="orderNo" label="訂單編號" />
             <TextField source="customerName" label="客戶" />
             <TextField source="orderStatus" label="訂單狀態" />

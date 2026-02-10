@@ -106,7 +106,7 @@ export const ReceiptList = () => {
           ],
         }}
       >
-        <ResponsiveListDatagrid>
+        <ResponsiveListDatagrid tabletLayout="card">
           {/* 訂單編號（可點擊） */}
           <FunctionField
             label="訂單編號"

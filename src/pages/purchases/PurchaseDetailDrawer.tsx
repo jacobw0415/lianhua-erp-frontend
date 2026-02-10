@@ -34,7 +34,7 @@ import { PaymentStatusField } from "@/components/common/PaymentStatusField";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { PurchaseItemDetailDrawer } from "./PurchaseItemDetailDrawer";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 
 /* =========================================================
  * 型別定義
@@ -97,6 +97,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useIsMobile();
+  const isSmallScreen = useIsSmallScreen();
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
   const [openItemDrawer, setOpenItemDrawer] = useState(false);
   const [update, { isLoading: isVoiding }] = useUpdate();
@@ -222,13 +223,18 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
 
   return (
     <Drawer
-      anchor="right"
+      anchor={isSmallScreen ? "bottom" : "right"}
       open={open}
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", sm: 560 },
-          maxWidth: { xs: "100%", sm: 560 },
+          width: isSmallScreen ? "100%" : { xs: "100%", sm: 560 },
+          maxWidth: isSmallScreen ? "100%" : { xs: "100%", sm: 560 },
+          ...(isSmallScreen && {
+            maxHeight: "85vh",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }),
         },
       }}
     >
