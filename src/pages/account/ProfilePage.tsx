@@ -16,22 +16,28 @@ import { Link as RouterLink } from "react-router-dom";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useDataProvider, useGetIdentity } from "react-admin";
+import { authProvider } from "@/providers/authProvider";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
-import { CONTENT_BOX_SX, FORM_CONTAINER_SX, FORM_MAX_WIDTH } from "@/constants/layoutConstants";
+import {
+  getProfileCache,
+  setProfileCache,
+  clearProfileCache,
+  type ProfileCacheRecord,
+} from "@/utils/profileCache";
+import {
+  CONTENT_BOX_SX,
+  FORM_CONTAINER_SX,
+  FORM_MAX_WIDTH,
+  DETAIL_CARD_MAX_WIDTH,
+  DETAIL_SIDEBAR_WIDTH,
+  DETAIL_MAIN_MAX_WIDTH,
+  DETAIL_LAYOUT_MAX_WIDTH,
+} from "@/constants/layoutConstants";
+import { getRoleDisplayName } from "@/constants/userRoles";
 
 /** 個人資料 API 回傳型別（含職稱；不含部門） */
-interface UserRecord {
-  id: number;
-  username: string;
-  fullName?: string;
-  email?: string;
-  jobTitle?: string;
-  position?: string;
-  roles?: string[];
-  lastLoginAt?: string;
-  createdAt?: string;
-}
+type UserRecord = ProfileCacheRecord;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -53,24 +59,6 @@ const SECTION_IDS = {
   security: "profile-section-security",
 } as const;
 
-/** 單一卡片最大寬度（平板/手機直立式） */
-const PROFILE_CARD_MAX_WIDTH = 640;
-
-/** 桌面版左側欄寬度（Google 帳戶風格） */
-const SIDEBAR_WIDTH = 280;
-
-/** 桌面版右側主內容最大寬度（業界常見 720–800px） */
-const MAIN_CONTENT_MAX_WIDTH = 720;
-
-/** 桌面版整體左右欄總寬上限（左欄 + gap + 右欄），用於大螢幕置中 */
-const PROFILE_LAYOUT_MAX_WIDTH = 1020;
-
-/**
- * 快取上次成功載入的個人資料，避免主題切換（深/亮）時因元件 remount
- * 短暫顯示骨架畫面造成閃爍。
- */
-let profileCache: UserRecord | null = null;
-
 function formatDisplayDate(iso?: string): string {
   if (!iso) return "—";
   try {
@@ -89,7 +77,7 @@ const ProfileSkeleton: React.FC = () => (
       flexDirection: { xs: "column", lg: "row" },
       gap: 2,
       width: "100%",
-      maxWidth: { xs: PROFILE_CARD_MAX_WIDTH, lg: "none" },
+      maxWidth: { xs: DETAIL_CARD_MAX_WIDTH, lg: "none" },
     }}
   >
     {/* 左側：身份摘要（桌面） */}
@@ -97,7 +85,7 @@ const ProfileSkeleton: React.FC = () => (
       elevation={0}
       sx={{
         display: { xs: "none", lg: "block" },
-        width: SIDEBAR_WIDTH,
+        width: DETAIL_SIDEBAR_WIDTH,
         flexShrink: 0,
         border: "1px solid",
         borderColor: "divider",
@@ -116,7 +104,7 @@ const ProfileSkeleton: React.FC = () => (
       sx={{
         flex: 1,
         minWidth: 0,
-        maxWidth: { lg: MAIN_CONTENT_MAX_WIDTH },
+        maxWidth: { lg: DETAIL_MAIN_MAX_WIDTH },
         border: "1px solid",
         borderColor: "divider",
       }}
@@ -153,13 +141,13 @@ const ProfilePage: React.FC = () => {
   const dataProvider = useDataProvider();
   const { showAlert } = useGlobalAlert();
 
-  const [record, setRecord] = useState<UserRecord | null>(() => profileCache);
-  const [fullName, setFullName] = useState(() => profileCache?.fullName ?? "");
-  const [email, setEmail] = useState(() => profileCache?.email ?? "");
+  const [record, setRecord] = useState<UserRecord | null>(() => getProfileCache());
+  const [fullName, setFullName] = useState(() => getProfileCache()?.fullName ?? "");
+  const [email, setEmail] = useState(() => getProfileCache()?.email ?? "");
   const [jobTitle, setJobTitle] = useState(
-    () => (profileCache as any)?.jobTitle ?? (profileCache as any)?.position ?? ""
+    () => getProfileCache()?.jobTitle ?? getProfileCache()?.position ?? ""
   );
-  const [loading, setLoading] = useState(() => !profileCache);
+  const [loading, setLoading] = useState(() => !getProfileCache());
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccessVisible, setSaveSuccessVisible] = useState(false);
@@ -168,18 +156,25 @@ const ProfilePage: React.FC = () => {
 
   const fetchProfile = useCallback(() => {
     setLoadError(false);
-    if (!profileCache) setLoading(true);
+    if (!getProfileCache()) setLoading(true);
     dataProvider
       .get("users/me")
       .then((response: { data: UserRecord }) => {
         const user = response.data;
-        profileCache = user;
+        setProfileCache(user);
         setRecord(user);
         setFullName(user.fullName ?? "");
         setEmail(user.email ?? "");
         setJobTitle((user as any).jobTitle ?? (user as any).position ?? "");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        clearProfileCache();
+        setRecord(null);
+        const status = (error as { status?: number })?.status;
+        if (status === 401) {
+          void authProvider.checkError(error);
+          return;
+        }
         setLoadError(true);
         showAlert({
           message: "載入個人資料失敗，請稍後再試。",
@@ -279,11 +274,16 @@ const ProfilePage: React.FC = () => {
     setEmailError("");
   };
 
-  const rolesDisplay = Array.isArray(record?.roles)
-    ? record!.roles.join("、")
-    : typeof (record as any)?.roles === "string"
-      ? (record as any).roles
-      : "—";
+  const rolesDisplay = (() => {
+    const raw = record?.roles;
+    if (Array.isArray(raw) && raw.length > 0) {
+      return raw.map((r: string) => getRoleDisplayName(String(r))).join("、");
+    }
+    if (typeof (record as any)?.roles === "string") {
+      return getRoleDisplayName((record as any).roles);
+    }
+    return "—";
+  })();
 
   const displayName = fullName?.trim() || record?.username || "";
   const subtitle = record?.email?.trim() || rolesDisplay;
@@ -291,9 +291,6 @@ const ProfilePage: React.FC = () => {
   if (loading) {
     return (
       <Box component="main" sx={{ ...CONTENT_BOX_SX, minHeight: 320 }} aria-label="個人資料頁面">
-        <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
-          個人資料
-        </Typography>
         <ProfileSkeleton />
       </Box>
     );
@@ -302,10 +299,7 @@ const ProfilePage: React.FC = () => {
   if (loadError || !record) {
     return (
       <Box component="main" sx={{ ...CONTENT_BOX_SX, minHeight: 320 }} aria-label="個人資料頁面">
-        <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
-          個人資料
-        </Typography>
-        <Card sx={{ maxWidth: FORM_MAX_WIDTH }}>
+        <Card sx={{ maxWidth: FORM_MAX_WIDTH, mx: "auto" }}>
           <CardContent sx={FORM_CONTAINER_SX}>
             <Alert
               severity="error"
@@ -326,20 +320,13 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Box component="main" sx={{ ...CONTENT_BOX_SX }} aria-label="個人資料頁面">
-      <Typography variant="h5" component="h1" sx={{ mb: 0.5 }} id="profile-page-title">
-        個人資料
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        管理您的帳號與基本資料
-      </Typography>
-
       <Box
         sx={{
           display: "flex",
           flexDirection: { xs: "column", lg: "row" },
           gap: 2,
           alignItems: "stretch",
-          maxWidth: { xs: PROFILE_CARD_MAX_WIDTH, lg: PROFILE_LAYOUT_MAX_WIDTH },
+          maxWidth: { xs: DETAIL_CARD_MAX_WIDTH, lg: DETAIL_LAYOUT_MAX_WIDTH },
           marginLeft: { lg: "auto" },
           marginRight: { lg: "auto" },
         }}
@@ -349,7 +336,7 @@ const ProfilePage: React.FC = () => {
           elevation={0}
           sx={{
             display: { xs: "none", lg: "flex" },
-            width: SIDEBAR_WIDTH,
+            width: DETAIL_SIDEBAR_WIDTH,
             flexShrink: 0,
             flexDirection: "column",
             overflow: "hidden",
@@ -405,7 +392,7 @@ const ProfilePage: React.FC = () => {
             flex: 1,
             minWidth: 0,
             overflow: "hidden",
-            maxWidth: { lg: MAIN_CONTENT_MAX_WIDTH },
+            maxWidth: { lg: DETAIL_MAIN_MAX_WIDTH },
             border: "1px solid",
             borderColor: "divider",
           }}
@@ -640,7 +627,7 @@ const ProfilePage: React.FC = () => {
             </Box>
         </CardContent>
       </Card>
-      </Box>
+        </Box>
     </Box>
   );
 };

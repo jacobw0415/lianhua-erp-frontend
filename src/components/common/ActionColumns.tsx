@@ -4,6 +4,8 @@ import {
   useDataProvider,
   useListContext,
   useRefresh,
+  useGetIdentity,
+  useLogout,
 } from "react-admin";
 import type { RaRecord } from "react-admin";
 import { useState } from "react";
@@ -12,6 +14,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
+import { clearProfileCache } from "@/utils/profileCache";
 
 /** --------------------------------------------------------
  *  🔐 安全錯誤訊息解析（無 any）
@@ -39,6 +42,8 @@ export const ActionColumns = () => {
   const { resource } = useListContext();
   const refresh = useRefresh();
   const dataProvider = useDataProvider();
+  const { data: identity } = useGetIdentity();
+  const logout = useLogout();
 
   /** ⭐ fallback record（避免 TS any） */
   const safeRecord = (record ?? { id: "placeholder" }) as RaRecord;
@@ -50,8 +55,10 @@ export const ActionColumns = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [buttonTarget, setButtonTarget] = useState<HTMLElement | null>(null);
 
-  /** ⭐ 統一顯示名稱（避免 undefined） */
+  /** ⭐ 統一顯示名稱（避免 undefined）；使用者資源優先顯示帳號或姓名 */
   const displayName =
+    (safeRecord as { username?: string }).username ||
+    (safeRecord as { fullName?: string }).fullName ||
     (safeRecord as { purchaseNo?: string }).purchaseNo ||
     (safeRecord as { orderNo?: string }).orderNo ||
     (safeRecord as { name?: string }).name ||
@@ -67,6 +74,17 @@ export const ActionColumns = () => {
     try {
       await dataProvider.delete(resource, { id: safeRecord.id });
 
+      const isCurrentUser =
+        resource === "users" &&
+        identity?.id != null &&
+        String((safeRecord as { username?: string }).username ?? "") === String(identity.id);
+      if (isCurrentUser) {
+        clearProfileCache();
+        setOpenSuccessDialog(false);
+        await logout();
+        return;
+      }
+
       setOpenSuccessDialog(true);
 
       setTimeout(() => {
@@ -80,6 +98,9 @@ export const ActionColumns = () => {
   };
 
   if (!record) return null;
+
+  /** 角色與權限為系統預定義，僅供檢視，不提供編輯/刪除 */
+  if (resource === "roles") return null;
 
   return (
     <>

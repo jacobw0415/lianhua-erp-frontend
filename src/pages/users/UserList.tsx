@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useTheme } from "@mui/material";
+import { useTheme, Box } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   List,
@@ -13,6 +13,7 @@ import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 import { ActionColumns } from "@/components/common/ActionColumns";
+import { getRoleDisplayName } from "@/constants/userRoles";
 
 /** 使用者列表（/api/users） */
 export const UserList = () => {
@@ -49,28 +50,47 @@ export const UserList = () => {
           },
         ]}
       >
-        <ResponsiveListDatagrid tabletLayout="card">
-          <TextField source="username" label="帳號" />
-          <TextField source="fullName" label="姓名" />
-          <TextField source="email" label="Email" />
+        <Box
+          sx={{
+            width: "100%",
+            "& .RaDatagrid-table th:nth-of-type(1), & .RaDatagrid-table td:nth-of-type(1)": {
+              width: 100,
+              minWidth: 100,
+              maxWidth: 100,
+              boxSizing: "border-box",
+            },
+            "& .RaDatagrid-table th:nth-of-type(2), & .RaDatagrid-table td:nth-of-type(2)": {
+              width: 112,
+              minWidth: 88,
+              maxWidth: 112,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <ResponsiveListDatagrid tabletLayout="card">
+            <TextField source="username" label="帳號" />
+            <TextField source="fullName" label="姓名" />
+            <TextField source="email" label="Email" />
 
           {/* 啟用狀態顯示（對應 enabled 欄位） */}
           <FunctionField
             label="狀態"
             className="cell-centered"
-            render={(record: RaRecord) => (
+            render={() => (
               <ActiveStatusField source="enabled" label="狀態" />
             )}
           />
 
-          {/* 角色清單（以逗號顯示） */}
+          {/* 角色清單（顯示中文名稱） */}
           <FunctionField
             label="角色"
             source="roles"
             render={(record: RaRecord) => {
               const roles = (record as any).roles as unknown;
-              if (Array.isArray(roles)) return roles.join(", ");
-              if (typeof roles === "string") return roles;
+              if (Array.isArray(roles) && roles.length > 0) {
+                return roles.map((r: string) => getRoleDisplayName(String(r))).join("、");
+              }
+              if (typeof roles === "string") return getRoleDisplayName(roles);
               return "-";
             }}
           />
@@ -82,7 +102,8 @@ export const UserList = () => {
             className="column-action"
             render={() => <ActionColumns />}
           />
-        </ResponsiveListDatagrid>
+          </ResponsiveListDatagrid>
+        </Box>
       </StyledListWrapper>
     </List>
   );

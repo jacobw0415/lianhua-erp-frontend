@@ -84,8 +84,6 @@ import { UserList } from "@/pages/users/UserList";
 import { UserCreate } from "@/pages/users/UserCreate";
 import { UserEdit } from "@/pages/users/UserEdit";
 import { RoleList } from "@/pages/roles/RoleList";
-import { RoleCreate } from "@/pages/roles/RoleCreate";
-import { RoleEdit } from "@/pages/roles/RoleEdit";
 import ProfilePage from "@/pages/account/ProfilePage";
 import ChangePasswordPage from "@/pages/account/ChangePasswordPage";
 
@@ -258,12 +256,8 @@ const App = () => {
         create={UserCreate}
         edit={UserEdit}
       />
-      <Resource
-        name="roles"
-        list={RoleList}
-        create={RoleCreate}
-        edit={RoleEdit}
-      />
+      {/* 角色由系統預定義，僅供檢視，不開放新增/編輯 */}
+      <Resource name="roles" list={RoleList} />
       <Resource
         name="reports/cashflow"
         list={CashFlowReport}

@@ -133,6 +133,18 @@ export const FORM_MAX_WIDTH = 700;
 export const FORM_WIDE_MAX_WIDTH = 970;
 
 /**
+ * 詳情頁／個人資料風格版面（左側欄 + 右側主內容）
+ * 與個人資料頁、角色詳情頁等唯讀檢視共用，符合 Google／業界 ERP 設定頁慣例
+ */
+export const DETAIL_SIDEBAR_WIDTH = 280;
+/** 右側主內容最大寬度（業界常見 720–800px） */
+export const DETAIL_MAIN_MAX_WIDTH = 720;
+/** 整體左右欄總寬上限，用於大螢幕置中 */
+export const DETAIL_LAYOUT_MAX_WIDTH = 1020;
+/** 單一卡片最大寬度（平板/手機直立式） */
+export const DETAIL_CARD_MAX_WIDTH = 640;
+
+/**
  * 表單固定高度設定（與 StyledListDatagrid 保持一致）
  * 桌面端：800px（考慮作廢資訊框約占用 150px，確保按鈕可見）
  * 移動端：600px（考慮作廢資訊框約占用 150px，確保按鈕可見）

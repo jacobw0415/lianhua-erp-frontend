@@ -1,12 +1,10 @@
 import React, { useEffect } from "react";
 import { useTheme, Box, Typography, Divider } from "@mui/material";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   TextInput,
   BooleanInput,
-  CheckboxGroupInput,
+  RadioButtonGroupInput,
   useRecordContext,
   useRedirect,
 } from "react-admin";
@@ -211,19 +209,20 @@ const UserFormFields: React.FC = () => {
               </Typography>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <CheckboxGroupInput
+              <RadioButtonGroupInput
                 source="roleNames"
-                label="角色（多選）"
-                helperText="請選擇此使用者在系統中的角色，可多選。"
+                label="角色"
+                helperText="請選擇此使用者在系統中的角色（單選）。"
                 row
-                options={{
-                  icon: <RadioButtonUncheckedIcon fontSize="small" />,
-                  checkedIcon: <RadioButtonCheckedIcon fontSize="small" />,
-                }}
                 choices={USER_ROLE_CHOICES}
-                validate={[(value?: string[]) =>
-                  !value || value.length === 0 ? "請至少選擇一個角色" : undefined
-                ]}
+                format={(value?: string[] | string) =>
+                  Array.isArray(value) ? value[0] : value
+                }
+                parse={(value?: string) => (value ? [value] : [])}
+                validate={[(value?: string | string[]) => {
+                  const v = Array.isArray(value) ? value[0] : value;
+                  return !v ? "請選擇一個角色" : undefined;
+                }]}
               />
             </Box>
           </FormFieldRow>
