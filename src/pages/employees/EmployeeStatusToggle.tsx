@@ -86,11 +86,19 @@ export const EmployeeStatusToggle = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", width: "100%", height: "100%" }}>
+    <Box
+      sx={{ display: "flex", width: "100%", height: "100%" }}
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+    >
       <Switch
         checked={isActive}
-        onChange={handleToggle}
         disabled={loading}
+        onClick={(event) => event.stopPropagation()}
+        onChange={(event) => {
+          event.stopPropagation();
+          handleToggle();
+        }}
       />
     </Box>
   );
