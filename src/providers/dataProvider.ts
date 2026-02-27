@@ -201,9 +201,60 @@ export const createDataProvider = ({
         "notification.createdAt",
         "read",
       ];
+      /**
+       * Resource 預設排序設定（未在 <List> 顯式指定 sort 時才會套用）
+       * - 一律使用 DESC，確保「新到舊」
+       * - 單一列表若在 <List> 傳入「非預設排序」時，會覆蓋此預設
+       */
+      const defaultSortByResource: Record<
+        string,
+        { field: string; order?: "ASC" | "DESC" }
+      > = {
+        // 業務/營收相關：依日期新到舊
+        orders: { field: "orderDate", order: "DESC" },
+        sales: { field: "saleDate", order: "DESC" },
+        receipts: { field: "receivedDate", order: "DESC" },
+        expenses: { field: "expenseDate", order: "DESC" },
+        payments: { field: "payDate", order: "DESC" },
 
-      if (field && allowedSortFields.includes(field)) {
-        query.set("sort", `${field},${(order || "ASC").toLowerCase()}`);
+        // 主檔類：依建立時間新到舊（若後端無 createdAt，會在 fallback 用 id）
+        suppliers: { field: "createdAt", order: "DESC" },
+        products: { field: "createdAt", order: "DESC" },
+        product_categories: { field: "createdAt", order: "DESC" },
+        expense_categories: { field: "createdAt", order: "DESC" },
+        employees: { field: "createdAt", order: "DESC" },
+        users: { field: "createdAt", order: "DESC" },
+        roles: { field: "createdAt", order: "DESC" },
+
+        // 通知：依建立時間新到舊
+        notifications: { field: "notification.createdAt", order: "DESC" },
+      };
+
+      // React-Admin 預設會帶入 sort: { field: 'id', order: 'ASC' }
+      // 這裡視為「尚未顯式指定排序」，讓我們可以套用預設「新到舊」規則
+      const isDefaultRaSort =
+        field === "id" && (order === "ASC" || order === undefined);
+
+      // 決定最終 sort 欄位與順序：
+      // 1. 若呼叫端有指定「非預設 RA 排序」（例如 ExpenseList / AP / AR 已在 <List> 上指定），則尊重該設定
+      // 2. 否則依 resource 使用預設設定（defaultSortByResource）
+      // 3. 若 resource 無預設，退回使用 id DESC
+      let sortField = isDefaultRaSort ? undefined : field;
+      let sortOrder = isDefaultRaSort ? undefined : order;
+
+      if (!sortField) {
+        const def = defaultSortByResource[resource as string];
+        if (def) {
+          sortField = def.field;
+          sortOrder = def.order ?? "DESC";
+        } else {
+          sortField = "id";
+          sortOrder = "DESC";
+        }
+      }
+
+      if (sortField && allowedSortFields.includes(sortField)) {
+        query.set("sort", `${sortField},${(sortOrder || "DESC").toLowerCase()}`);
       }
 
       const hasFilter = Object.values(filters).some(
