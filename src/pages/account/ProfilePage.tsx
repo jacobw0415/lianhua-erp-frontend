@@ -166,6 +166,11 @@ const ProfilePage: React.FC = () => {
         setFullName(user.fullName ?? "");
         setEmail(user.email ?? "");
         setJobTitle((user as any).jobTitle ?? (user as any).position ?? "");
+        // 若後端回傳 id 且登入時未帶入，補存供「編輯自己」等判斷使用（對齊後端報告書 §4.3）
+        const userId = (user as { id?: unknown }).id;
+        if (userId != null && typeof localStorage !== "undefined" && !localStorage.getItem("userId")) {
+          localStorage.setItem("userId", String(userId));
+        }
       })
       .catch((error: unknown) => {
         clearProfileCache();

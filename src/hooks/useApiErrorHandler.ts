@@ -41,13 +41,10 @@ export const useApiErrorHandler = (globalAlert: GlobalAlertApi) => {
           error?: string;
         };
       };
-
       // React-Admin / normalized error
       if (e.message) return e.message;
-
       // Spring Boot body.message
       if (e.body?.message) return e.body.message;
-
       // Spring Boot error
       if (e.body?.error) return e.body.error;
     }

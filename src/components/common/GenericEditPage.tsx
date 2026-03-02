@@ -250,9 +250,13 @@ const EditContent: React.FC<EditContentProps> = ({
     <>
       <SimpleForm
         onSubmit={onSubmit}
-        // 🚀 關鍵：如果外部有傳入 toolbar 則用外部的，否則使用內建 CustomToolbar
         toolbar={
-          toolbar || (
+          toolbar
+            ? React.cloneElement(toolbar as React.ReactElement<{ onBack: () => void; onDelete: () => void }>, {
+                onBack: () => redirect("list", resource),
+                onDelete: () => setOpenDeleteConfirm(true),
+              })
+            : (
             <CustomToolbar
               onBack={() => redirect("list", resource)}
               onDelete={() => setOpenDeleteConfirm(true)}

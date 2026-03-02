@@ -21,7 +21,8 @@ import { authProvider } from "@/providers/authProvider";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
 const apiUrl = getApiUrl();
-const MIN_PASSWORD_LENGTH = 8;
+/** 後端 PUT /users/me/password 要求 newPassword 至少 6 字元 */
+const MIN_PASSWORD_LENGTH = 6;
 
 const ChangePasswordPage: React.FC = () => {
   const theme = useTheme();
@@ -101,40 +102,45 @@ const ChangePasswordPage: React.FC = () => {
       const tokenType =
         typeof localStorage !== "undefined" ? localStorage.getItem("tokenType") || "Bearer" : "Bearer";
 
-      const res = await fetch(`${apiUrl}/auth/change-password`, {
-        method: "POST",
-        headers: new Headers({
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `${tokenType} ${token}` } : {}),
-        }),
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
-      });
-
-      if (res.status === 401) {
-        // token 無效或過期 → 交給 authProvider 統一處理
+      if (!token) {
         void authProvider.checkError({ status: 401 });
         return;
       }
 
+      const res = await fetch(`${apiUrl}/users/me/password`, {
+        method: "PUT",
+        headers: new Headers({
+          "Content-Type": "application/json",
+          Authorization: `${tokenType} ${token}`,
+        }),
+        body: JSON.stringify({
+          currentPassword,
+          newPassword: newPassword.trim(),
+        }),
+      });
+
       const text = await res.text();
-      let message = "密碼已更新，下次登入時請使用新密碼。";
+      let message = "";
+
       if (text) {
         try {
-          const json = JSON.parse(text) as { message?: string };
-          if (json.message) message = json.message;
+          const json = JSON.parse(text) as { message?: string; data?: string };
+          message = json.message ?? json.data ?? "";
         } catch {
-          // ignore parse error
+          message = text;
         }
       }
 
+      if (res.status === 401) {
+        void authProvider.checkError({ status: 401 });
+        return;
+      }
+
       if (!res.ok) {
-        // 常見情境：例如目前密碼錯誤
-        setCurrentPasswordError(message);
+        const errorMessage = message || "變更密碼失敗，請稍後再試。";
+        setCurrentPasswordError(errorMessage);
         showAlert({
-          message,
+          message: errorMessage,
           severity: "error",
           hideCancel: true,
         });
@@ -142,7 +148,7 @@ const ChangePasswordPage: React.FC = () => {
       }
 
       showAlert({
-        message,
+        message: message || "密碼已更新，下次登入時請使用新密碼。",
         severity: "success",
         hideCancel: true,
       });
@@ -268,7 +274,7 @@ const ChangePasswordPage: React.FC = () => {
             error={!!newPasswordError}
             helperText={
               newPasswordError ||
-              `至少 ${MIN_PASSWORD_LENGTH} 碼，並需同時包含英文字母與數字。`
+              `至少 ${MIN_PASSWORD_LENGTH} 字元，並需同時包含英文字母與數字。`
             }
             InputProps={{
               endAdornment: (

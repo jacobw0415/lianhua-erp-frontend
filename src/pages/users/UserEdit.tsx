@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { useTheme, Box, Typography, Divider } from "@mui/material";
+import { useTheme, Box, Typography, Divider, Alert, Button } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
   TextInput,
@@ -7,12 +8,16 @@ import {
   RadioButtonGroupInput,
   useRecordContext,
   useRedirect,
+  useGetIdentity,
+  Toolbar,
+  SaveButton,
 } from "react-admin";
+import { useFormContext } from "react-hook-form";
 
 import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { USER_ROLE_CHOICES } from "@/constants/userRoles";
+import { USER_ROLE_CHOICES, getRoleDisplayName } from "@/constants/userRoles";
 import {
   editNewPasswordValidators,
   emailValidators,
@@ -44,6 +49,7 @@ export const UserEdit: React.FC = () => {
     <GenericEditPage
       resource="users"
       title="編輯使用者"
+      toolbar={<UserEditToolbar />}
       onSuccess={(data) => {
         const user = data as User;
         showAlert({
@@ -70,8 +76,73 @@ export const UserEdit: React.FC = () => {
   );
 };
 
+/** 使用者編輯頁 Toolbar：編輯自己時不顯示「刪除」按鈕（與後端「不可刪除自己」對齊） */
+interface UserEditToolbarProps {
+  onBack?: () => void;
+  onDelete?: () => void;
+}
+
+const UserEditToolbar: React.FC<UserEditToolbarProps> = ({ onBack, onDelete }) => {
+  const record = useRecordContext<User>();
+  const { data: identity } = useGetIdentity();
+  const isEditingSelf =
+    identity?.id != null &&
+    record?.id != null &&
+    String(record.id) === String(identity.id);
+
+  return (
+    <Toolbar
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "0.8rem 1.5rem",
+        borderRadius: "0 0 12px 12px",
+      }}
+    >
+      <Button
+        variant="outlined"
+        startIcon={<ArrowBackIcon />}
+        color="success"
+        onClick={onBack}
+      >
+        返回
+      </Button>
+      <Box sx={{ display: "flex", gap: 2 }}>
+        {!isEditingSelf && onDelete && (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onDelete();
+            }}
+          >
+            刪除
+          </Button>
+        )}
+        <SaveButton label="儲存" color="success" />
+      </Box>
+    </Toolbar>
+  );
+};
+
 const UserFormFields: React.FC = () => {
   const record = useRecordContext<User>();
+  const { data: identity } = useGetIdentity();
+  const { setValue } = useFormContext();
+
+  /** 是否正在編輯自己（與後端「不可變更自己的角色/啟用」對齊） */
+  const isEditingSelf =
+    identity?.id != null &&
+    record?.id != null &&
+    String(record.id) === String(identity.id);
+
+  // 編輯自己時，表單仍須帶出 roleNames / enabled 供送出，以唯讀顯示並同步進 form state
+  useEffect(() => {
+    if (!record || !isEditingSelf) return;
+    setValue("roleNames", record.roleNames ?? []);
+    setValue("enabled", record.enabled ?? true);
+  }, [record, isEditingSelf, setValue]);
 
   if (!record) {
     return <Typography>載入中...</Typography>;
@@ -126,32 +197,38 @@ const UserFormFields: React.FC = () => {
               />
             </Box>
 
-            {/* 重設密碼（選填） */}
-            <FormFieldRow sx={{ mb: 0 }}>
-              <TextInput
-                source="newPassword"
-                type="password"
-                label="新密碼"
-                fullWidth
-                helperText="至少 8 碼包含英文字與數字。"
-                FormHelperTextProps={{ sx: { minHeight: 32 } }}
-                validate={editNewPasswordValidators}
-              />
-              <TextInput
-                source="confirmNewPassword"
-                type="password"
-                label="確認新密碼"
-                fullWidth
-                helperText="請再次輸入新密碼以確認。"
-                FormHelperTextProps={{ sx: { minHeight: 32 } }}
-                validate={[
-                  (value, allValues) =>
-                    value && allValues && value !== (allValues as any).newPassword
-                      ? "兩次輸入的密碼不一致"
-                      : undefined,
-                ]}
-              />
-            </FormFieldRow>
+            {/* 重設密碼（選填）；編輯自己時不顯示，改引導至「修改密碼」頁 */}
+            {!isEditingSelf ? (
+              <FormFieldRow sx={{ mb: 0 }}>
+                <TextInput
+                  source="newPassword"
+                  type="password"
+                  label="新密碼"
+                  fullWidth
+                  helperText="至少 8 碼包含英文字與數字。"
+                  FormHelperTextProps={{ sx: { minHeight: 32 } }}
+                  validate={editNewPasswordValidators}
+                />
+                <TextInput
+                  source="confirmNewPassword"
+                  type="password"
+                  label="確認新密碼"
+                  fullWidth
+                  helperText="請再次輸入新密碼以確認。"
+                  FormHelperTextProps={{ sx: { minHeight: 32 } }}
+                  validate={[
+                    (value, allValues) =>
+                      value && allValues && value !== (allValues as any).newPassword
+                        ? "兩次輸入的密碼不一致"
+                        : undefined,
+                  ]}
+                />
+              </FormFieldRow>
+            ) : (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                若要修改自己的密碼，請至修改密碼頁面輸入現有密碼做修改。
+              </Alert>
+            )}
           </Box>
 
           {/* 區塊二：個人資料 */}
@@ -192,7 +269,7 @@ const UserFormFields: React.FC = () => {
           </Box>
         </Box>
 
-        {/* 區塊三：權限與狀態（放在最下方） */}
+        {/* 區塊三：權限與狀態（編輯自己時為唯讀） */}
         <Box component="section">
           <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
             權限與狀態
@@ -201,35 +278,67 @@ const UserFormFields: React.FC = () => {
 
           <FormFieldRow sx={{ mb: 0 }}>
             <Box>
-              <BooleanInput
-                source="enabled"
-                label="啟用"
-                defaultValue={true}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                取消勾選時，此帳號將無法登入系統。
-              </Typography>
+              {isEditingSelf ? (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    啟用
+                  </Typography>
+                  <Typography variant="body2">
+                    {record.enabled ? "啟用" : "停用"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    不可在此頁變更自己的啟用狀態。
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <BooleanInput
+                    source="enabled"
+                    label="啟用"
+                    defaultValue={true}
+                  />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                  >
+                    取消勾選時，此帳號將無法登入系統。
+                  </Typography>
+                </>
+              )}
             </Box>
             <Box sx={{ flex: 1 }}>
-              <RadioButtonGroupInput
-                source="roleNames"
-                label="角色"
-                helperText="請選擇此使用者在系統中的角色（單選）。"
-                row
-                choices={USER_ROLE_CHOICES}
-                format={(value?: string[] | string) =>
-                  Array.isArray(value) ? value[0] : value
-                }
-                parse={(value?: string) => (value ? [value] : [])}
-                validate={[(value?: string | string[]) => {
-                  const v = Array.isArray(value) ? value[0] : value;
-                  return !v ? "請選擇一個角色" : undefined;
-                }]}
-              />
+              {isEditingSelf ? (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    角色
+                  </Typography>
+                  <Typography variant="body2">
+                    {getRoleDisplayName(
+                      Array.isArray(record.roleNames) ? record.roleNames[0] : String(record.roleNames ?? "")
+                    )}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    不可在此頁變更自己的角色，請聯絡其他管理員。
+                  </Typography>
+                </>
+              ) : (
+                <RadioButtonGroupInput
+                  source="roleNames"
+                  label="角色"
+                  helperText="請選擇此使用者在系統中的角色（單選）。"
+                  row
+                  choices={USER_ROLE_CHOICES}
+                  format={(value?: string[] | string) =>
+                    Array.isArray(value) ? value[0] : value
+                  }
+                  parse={(value?: string) => (value ? [value] : [])}
+                  validate={[(value?: string | string[]) => {
+                    const v = Array.isArray(value) ? value[0] : value;
+                    return !v ? "請選擇一個角色" : undefined;
+                  }]}
+                />
+              )}
             </Box>
           </FormFieldRow>
         </Box>

@@ -9,7 +9,7 @@ const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_U
 /* ========================================================
  * 常數與儲存鍵
  * ======================================================== */
-const AUTH_STORAGE_KEYS = ["token", "tokenType", "username", "role"] as const;
+const AUTH_STORAGE_KEYS = ["token", "tokenType", "username", "role", "userId"] as const;
 
 /** 集中清除前端登入狀態，供 logout 與 checkError(401) 共用 */
 function clearAuthStorage(): void {
@@ -150,6 +150,15 @@ function getRoleFromContainer(c: LoginResponseContainer): string | undefined {
   return undefined;
 }
 
+/** 從登入回應取出使用者 id（與後端 GET /users/:id 之 id 一致），供前端判斷是否為「編輯自己」 */
+function getUserIdFromContainer(c: LoginResponseContainer): string | undefined {
+  if (c.id !== undefined && c.id !== null) return String(c.id);
+  const nested = c.user ?? c.result ?? c.data;
+  if (nested && typeof nested === "object")
+    return getUserIdFromContainer(nested as LoginResponseContainer);
+  return undefined;
+}
+
 /* ========================================================
  * AuthProvider 實作
  * ======================================================== */
@@ -228,6 +237,7 @@ export const authProvider: AuthProvider = {
     const type = getTypeFromContainer(container);
     const usernameFromPayload = getUsernameFromContainer(container);
     const roleFromPayload = getRoleFromContainer(container);
+    const userIdFromPayload = getUserIdFromContainer(container);
     /** 後端未回傳使用者名稱時，以表單輸入的帳號為後備，確保 getIdentity 有值 */
     const displayName = usernameFromPayload || username;
 
@@ -235,6 +245,7 @@ export const authProvider: AuthProvider = {
     localStorage.setItem("tokenType", type);
     if (displayName) localStorage.setItem("username", displayName);
     if (roleFromPayload) localStorage.setItem("role", roleFromPayload);
+    if (userIdFromPayload) localStorage.setItem("userId", userIdFromPayload);
   },
 
   logout: async () => {
@@ -298,6 +309,8 @@ export const authProvider: AuthProvider = {
   getIdentity: () => {
     const username = localStorage.getItem("username");
     if (!username) return Promise.reject();
-    return Promise.resolve({ id: username, fullName: username });
+    /** 優先使用後端回傳的使用者 id，供使用者管理「是否編輯自己」等判斷；無則 fallback 為 username */
+    const id = localStorage.getItem("userId") || username;
+    return Promise.resolve({ id, fullName: username });
   },
 };
