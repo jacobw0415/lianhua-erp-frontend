@@ -116,7 +116,13 @@ const UserFormFields: React.FC = () => {
                 helperText="4–20 碼英數字，可包含 . - _，帳號建立後建議避免變更。"
                 FormHelperTextProps={{ sx: { minHeight: 24 } }}
                 validate={usernameValidators}
-                disabled
+                inputProps={{ readOnly: true }}
+                sx={{
+                  "& .MuiInputBase-input": {
+                    cursor: "not-allowed",
+                    backgroundColor: "action.hover",
+                  },
+                }}
               />
             </Box>
 

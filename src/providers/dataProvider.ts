@@ -286,9 +286,24 @@ export const createDataProvider = ({
 
     /* ===================== getOne ===================== */
     getOne: (resource, params) =>
-      httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-        data: json?.data ?? json,
-      })),
+      httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => {
+        const data = json?.data ?? json;
+        if (resource === "users" && data && typeof data === "object") {
+          const user = data as Record<string, unknown>;
+          if (
+            (user.roleNames === undefined || user.roleNames === null) &&
+            (user.roles !== undefined && user.roles !== null)
+          ) {
+            const roles = user.roles;
+            user.roleNames = Array.isArray(roles)
+              ? roles
+              : typeof roles === "string"
+                ? [roles]
+                : [];
+          }
+        }
+        return { data };
+      }),
 
     /* ===================== getMany ===================== */
     getMany: (resource, params) =>
