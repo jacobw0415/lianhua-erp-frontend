@@ -133,7 +133,7 @@ export const menuGroups: MenuGroup[] = [
       { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["role:view"] },
       { label: "個人資料", to: "/profile", icon: <AccountCircleIcon /> },
       { label: "修改密碼", to: "/change-password", icon: <PasswordIcon /> },
-      { label: "通知中心", to: "/notifications", icon: <NotificationIcon /> },
+      { label: "通知中心", to: "/notifications", icon: <NotificationIcon />, requiredAuthorities: ["notification:view"] },
     ],
   },
 ];

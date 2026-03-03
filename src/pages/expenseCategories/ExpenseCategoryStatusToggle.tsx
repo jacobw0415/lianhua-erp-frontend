@@ -52,11 +52,11 @@ export const ExpenseCategoryStatusToggle = () => {
   const refresh = useRefresh();
   const [loading, setLoading] = useState(false);
 
-  // RBAC：僅 ROLE_ADMIN 或具 expense_category:edit 權限時允許切換狀態
+  // RBAC：僅 ROLE_ADMIN 或具 expense:edit 權限時允許切換狀態
   const roles = getStoredAuthRoles();
   const canToggle =
     roles.some((r) => r === "ROLE_ADMIN") ||
-    hasStoredAuthority(roles, "expense_category:edit");
+    hasStoredAuthority(roles, "expense:edit");
 
   // ⛔ 早期 return 一定要放在 hooks 之後
   if (!record || !canToggle) return null;
