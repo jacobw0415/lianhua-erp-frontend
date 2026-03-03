@@ -14,6 +14,7 @@ interface GlobalAlertApi {
 
 type ApiError =
   | {
+    status?: number;
     message?: string;
     body?: {
       message?: string;
@@ -36,16 +37,10 @@ export const useApiErrorHandler = (globalAlert: GlobalAlertApi) => {
     if (typeof error === "object") {
       const e = error as {
         message?: string;
-        body?: {
-          message?: string;
-          error?: string;
-        };
+        body?: { message?: string; error?: string };
       };
-      // React-Admin / normalized error
       if (e.message) return e.message;
-      // Spring Boot body.message
       if (e.body?.message) return e.body.message;
-      // Spring Boot error
       if (e.body?.error) return e.body.error;
     }
 
@@ -53,16 +48,23 @@ export const useApiErrorHandler = (globalAlert: GlobalAlertApi) => {
   };
 
   /** --------------------------------------------------------
-   * ⭐ 主錯誤處理
+   * ⭐ 主錯誤處理（區分 401 / 403 / 400）
    * -------------------------------------------------------- */
   const handleApiError = (error: ApiError): void => {
     console.error("🔥 API ERROR:", error);
 
-    const resolvedMessage = extractMessage(error);
+    const status = typeof error === "object" && error !== null && "status" in error
+      ? Number((error as { status?: number }).status)
+      : undefined;
+
+    let message = extractMessage(error);
+    if (status === 403) {
+      message = message || "權限不足，請聯絡系統管理員";
+    }
 
     globalAlert.showAlert({
-      title: "操作失敗",
-      message: resolvedMessage,
+      title: status === 403 ? "權限不足" : "操作失敗",
+      message,
       severity: "error",
     });
   };

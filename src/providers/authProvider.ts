@@ -9,7 +9,7 @@ const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_U
 /* ========================================================
  * 常數與儲存鍵
  * ======================================================== */
-const AUTH_STORAGE_KEYS = ["token", "tokenType", "username", "role", "userId"] as const;
+const AUTH_STORAGE_KEYS = ["token", "tokenType", "username", "role", "userId", "authRoles"] as const;
 
 /** 集中清除前端登入狀態，供 logout 與 checkError(401) 共用 */
 function clearAuthStorage(): void {
@@ -159,6 +159,20 @@ function getUserIdFromContainer(c: LoginResponseContainer): string | undefined {
   return undefined;
 }
 
+/** 從登入回應取出 roles（完整 authorities：ROLE_ADMIN, user:view, product:edit …），供 RBAC 與 hasAuthority */
+function getRolesFromContainer(c: LoginResponseContainer): string[] {
+  const raw = c.roles ?? c.authorities ?? c.roleNames;
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw.map((r) => (r != null ? String(r).trim() : "")).filter(Boolean);
+  }
+  const role = getRoleFromContainer(c);
+  if (role) return [role];
+  const nested = c.user ?? c.result ?? c.data;
+  if (nested && typeof nested === "object")
+    return getRolesFromContainer(nested as LoginResponseContainer);
+  return [];
+}
+
 /* ========================================================
  * AuthProvider 實作
  * ======================================================== */
@@ -238,6 +252,7 @@ export const authProvider: AuthProvider = {
     const usernameFromPayload = getUsernameFromContainer(container);
     const roleFromPayload = getRoleFromContainer(container);
     const userIdFromPayload = getUserIdFromContainer(container);
+    const rolesFromPayload = getRolesFromContainer(container);
     /** 後端未回傳使用者名稱時，以表單輸入的帳號為後備，確保 getIdentity 有值 */
     const displayName = usernameFromPayload || username;
 
@@ -246,6 +261,14 @@ export const authProvider: AuthProvider = {
     if (displayName) localStorage.setItem("username", displayName);
     if (roleFromPayload) localStorage.setItem("role", roleFromPayload);
     if (userIdFromPayload) localStorage.setItem("userId", userIdFromPayload);
+    // 一律覆寫 authRoles，避免沿用上一使用者（如管理員）的權限導致 ROLE_USER 仍看到編輯/刪除按鈕
+    const rolesToStore =
+      rolesFromPayload.length > 0
+        ? rolesFromPayload
+        : roleFromPayload
+          ? [roleFromPayload]
+          : ["ROLE_USER"];
+    localStorage.setItem("authRoles", JSON.stringify(rolesToStore));
   },
 
   logout: async () => {
@@ -279,14 +302,24 @@ export const authProvider: AuthProvider = {
   checkAuth: () =>
     hasValidToken() ? Promise.resolve() : Promise.reject(),
 
-  /** RBAC：無 role 時回傳 ROLE_USER 作為安全預設，避免選單全部顯示 */
+  /** RBAC：回傳完整 roles 陣列（ROLE_* + 細部權限如 user:edit），供 hasAuthority / 選單過濾；無則 fallback 單一 role */
   getPermissions: () => {
+    try {
+      const stored = localStorage.getItem("authRoles");
+      if (stored) {
+        const parsed = JSON.parse(stored) as unknown;
+        if (Array.isArray(parsed) && parsed.length > 0)
+          return Promise.resolve(parsed as string[]);
+      }
+    } catch {
+      // ignore
+    }
     const role = localStorage.getItem("role");
-    return Promise.resolve(role || "ROLE_USER");
+    return Promise.resolve(role ? [role] : ["ROLE_USER"]);
   },
 
   /**
-   * 401：未授權／token 無效 → 清除會話並導向登入。
+   * 401：未授權／token 無效 → 清除會話並導向登入，並設標記供登入頁顯示「登入逾期或已登出」。
    * 403：已登入但無此資源權限 → 僅 reject，不清 token、不導向登入。
    */
   checkError: (error: unknown) => {
@@ -294,6 +327,11 @@ export const authProvider: AuthProvider = {
     if (status === 401) {
       clearAppCache();
       clearAuthStorage();
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem("login_expired", "1");
+        // 清除可能被用來「登入後導向」的儲存，避免下一位使用者（如 ROLE_USER）被導到無權限頁
+        sessionStorage.removeItem("redirectPath");
+      }
       redirectToLogin();
       return Promise.reject();
     }

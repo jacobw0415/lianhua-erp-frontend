@@ -6,6 +6,8 @@ import {
   email as emailValidator,
 } from "react-admin";
 
+import { PASSWORD_MIN_LENGTH, PASSWORD_STRENGTH_REGEX, PASSWORD_POLICY_HELPER } from "@/constants/passwordPolicy";
+
 export const usernameValidators = [
   required("請輸入帳號"),
   minLength(4, "帳號長度至少需 4 碼"),
@@ -15,8 +17,8 @@ export const usernameValidators = [
 
 export const createPasswordValidators = [
   required("請輸入登入密碼"),
-  minLength(8, "密碼長度至少需 8 碼"),
-  regex(/^(?=.*[A-Za-z])(?=.*\d).+$/u, "密碼需同時包含英文字母與數字"),
+  minLength(PASSWORD_MIN_LENGTH, `密碼長度至少需 ${PASSWORD_MIN_LENGTH} 碼`),
+  regex(PASSWORD_STRENGTH_REGEX, PASSWORD_POLICY_HELPER),
 ];
 
 export const createConfirmPasswordValidator = (
@@ -29,12 +31,12 @@ export const createConfirmPasswordValidator = (
 
 export const editNewPasswordValidators = [
   (value?: string) =>
-    value && value.length < 8 ? "密碼長度至少需 8 碼" : undefined,
+    value && value.length < PASSWORD_MIN_LENGTH ? `密碼長度至少需 ${PASSWORD_MIN_LENGTH} 碼` : undefined,
   (value?: string) =>
-    value && !/^(?=.*[A-Za-z])(?=.*\d).+$/u.test(value)
-      ? "密碼需同時包含英文字母與數字"
-      : undefined,
+    value && !PASSWORD_STRENGTH_REGEX.test(value) ? PASSWORD_POLICY_HELPER : undefined,
 ];
+
+export { PASSWORD_POLICY_HELPER };
 
 export const emailValidators = [emailValidator("請輸入有效的 Email 格式")];
 

@@ -23,18 +23,39 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 const TITLE = "蓮華 ERP";
 const SUBTITLE = "請登入以繼續使用系統";
 
+const LOGIN_COOLDOWN_SEC = 30;
+
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginCooldown, setLoginCooldown] = useState(0);
 
   const login = useLogin();
   const location = useLocation();
   const navigate = useNavigate();
   const { mode } = useColorMode();
   const isDark = mode === "dark";
+
+  // 登入逾期／401 後導回登入頁時顯示提示
+  useEffect(() => {
+    if (typeof sessionStorage === "undefined") return;
+    if (sessionStorage.getItem("login_expired") === "1") {
+      sessionStorage.removeItem("login_expired");
+      setError("登入逾期或已登出，請重新登入");
+    }
+  }, []);
+
+  // 登入按鈕冷卻倒數（防暴力鎖定後）
+  useEffect(() => {
+    if (loginCooldown <= 0) return;
+    const t = setInterval(() => {
+      setLoginCooldown((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [loginCooldown]);
 
   // 與忘記密碼頁同步：鎖定 body/html 不捲動，背景與頁面一致（亮/暗主題）
   useEffect(() => {
@@ -73,11 +94,16 @@ export const LoginPage = () => {
     setIsSubmitting(true);
     login({ username: trimmedUsername, password: trimmedPassword })
       .then(() => {
-        // 成功時 react-admin 會自動導向首頁
+        // 一律導向儀表板，避免沿用上一位使用者的路徑（如 /users）導致 ROLE_USER 一進入就 401 被登出
+        navigate("/", { replace: true });
       })
       .catch((err: Error) => {
-        // 後端 ApiResponseDto.message（如「帳號已停用」）由 authProvider 拋出，直接顯示
-        setError(err?.message ?? "登入失敗，請稍後再試");
+        const msg = err?.message ?? "登入失敗，請稍後再試";
+        setError(msg);
+        // 登入嘗試過多時暫停按鈕，避免重複點擊
+        if (/嘗試過多|登入嘗試過多|稍後再試/i.test(msg)) {
+          setLoginCooldown(LOGIN_COOLDOWN_SEC);
+        }
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -173,7 +199,7 @@ export const LoginPage = () => {
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
             autoFocus
-            disabled={isSubmitting}
+            disabled={isSubmitting || loginCooldown > 0}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -191,7 +217,7 @@ export const LoginPage = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loginCooldown > 0}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -222,7 +248,7 @@ export const LoginPage = () => {
             fullWidth
             variant="contained"
             size="large"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loginCooldown > 0}
             sx={{
               py: 1.5,
               fontWeight: 700,
@@ -233,7 +259,7 @@ export const LoginPage = () => {
               },
             }}
           >
-            {isSubmitting ? "登入中…" : "登入"}
+            {isSubmitting ? "登入中…" : loginCooldown > 0 ? `請 ${loginCooldown} 秒後再試` : "登入"}
           </Button>
           <Box sx={{ mt: 2, textAlign: "center" }}>
             <Link

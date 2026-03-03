@@ -20,18 +20,22 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useLocation } from "react-router-dom";
 
 import { menuGroups, type MenuItem } from "./menuConfig";
+import { useAuthAuthority } from "@/hooks/useAuthAuthority";
 
-/** RBAC：依 getPermissions() 過濾選單項目（支援單一字串或多角色陣列） */
+/** RBAC：依 getPermissions() 與 requiredAuthorities 過濾選單項目 */
 function filterItemsByRole(
     items: MenuItem[],
     permissions: string | string[] | undefined,
+    hasAnyAuthority: (authorities: string[]) => boolean,
 ): MenuItem[] {
     if (!permissions) return items;
 
     const roles = Array.isArray(permissions) ? permissions : [permissions];
     return items.filter((item) => {
-        if (!item.requiredRole) return true;
-        return roles.includes(item.requiredRole);
+        if (!item.requiredRole && !(item.requiredAuthorities?.length)) return true;
+        if (item.requiredRole && roles.includes(item.requiredRole)) return true;
+        if (item.requiredAuthorities?.length && hasAnyAuthority(item.requiredAuthorities)) return true;
+        return false;
     });
 }
 
@@ -39,6 +43,7 @@ export const CustomMenu = () => {
     const [open] = useSidebarState();
     const location = useLocation();
     const { permissions } = usePermissions();
+    const { hasAnyAuthority } = useAuthAuthority();
 
     /**  控制每組選單的開關 */
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
@@ -194,7 +199,7 @@ export const CustomMenu = () => {
                         timeout={250}
                         unmountOnExit
                     >
-                        {filterItemsByRole(group.items, permissions).map((item) => (
+                        {filterItemsByRole(group.items, permissions, hasAnyAuthority).map((item) => (
                             <MenuItemLink
                                 key={item.to}
                                 to={item.to}

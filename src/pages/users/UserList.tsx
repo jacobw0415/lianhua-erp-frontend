@@ -5,6 +5,7 @@ import {
   List,
   TextField,
   FunctionField,
+  CreateButton,
   type RaRecord,
 } from "react-admin";
 
@@ -14,6 +15,16 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { getRoleDisplayName } from "@/constants/userRoles";
+import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+
+/** 使用者列表頂部操作：僅 ROLE_ADMIN 或具 user:create 時顯示新增（依 localStorage.authRoles，不依賴 usePermissions 快取） */
+const UserListActions = () => {
+  const roles = getStoredAuthRoles();
+  const canCreate =
+    roles.some((r) => r === "ROLE_ADMIN") || hasStoredAuthority(roles, "user:create");
+  if (!canCreate) return null;
+  return <CreateButton />;
+};
 
 /** 使用者列表（/api/users） */
 export const UserList = () => {
@@ -27,7 +38,7 @@ export const UserList = () => {
   return (
     <List
       title="使用者管理"
-      actions={false}
+      actions={<UserListActions />}
       empty={false}
       pagination={<CustomPaginationBar showPerPage={true} />}
       perPage={10}
@@ -67,41 +78,41 @@ export const UserList = () => {
             },
           }}
         >
-          <ResponsiveListDatagrid tabletLayout="card">
+          <ResponsiveListDatagrid tabletLayout="card" rowClick={false}>
             <TextField source="username" label="帳號" />
             <TextField source="fullName" label="姓名" />
             <TextField source="email" label="Email" />
 
-          {/* 啟用狀態顯示（對應 enabled 欄位） */}
-          <FunctionField
-            label="狀態"
-            className="cell-centered"
-            render={() => (
-              <ActiveStatusField source="enabled" label="狀態" />
-            )}
-          />
+            {/* 啟用狀態顯示（對應 enabled 欄位） */}
+            <FunctionField
+              label="狀態"
+              className="cell-centered"
+              render={() => (
+                <ActiveStatusField source="enabled" label="狀態" />
+              )}
+            />
 
-          {/* 角色清單（顯示中文名稱） */}
-          <FunctionField
-            label="角色"
-            source="roles"
-            render={(record: RaRecord) => {
-              const roles = (record as any).roles as unknown;
-              if (Array.isArray(roles) && roles.length > 0) {
-                return roles.map((r: string) => getRoleDisplayName(String(r))).join("、");
-              }
-              if (typeof roles === "string") return getRoleDisplayName(roles);
-              return "-";
-            }}
-          />
+            {/* 角色清單（顯示中文名稱） */}
+            <FunctionField
+              label="角色"
+              source="roles"
+              render={(record: RaRecord) => {
+                const roles = (record as any).roles as unknown;
+                if (Array.isArray(roles) && roles.length > 0) {
+                  return roles.map((r: string) => getRoleDisplayName(String(r))).join("、");
+                }
+                if (typeof roles === "string") return getRoleDisplayName(roles);
+                return "-";
+              }}
+            />
 
-          {/* 操作欄：沿用共用 ActionColumns */}
-          <FunctionField
-            label="操作"
-            source="action"
-            className="column-action"
-            render={() => <ActionColumns />}
-          />
+            {/* 操作欄：沿用共用 ActionColumns */}
+            <FunctionField
+              label="操作"
+              source="action"
+              className="column-action"
+              render={() => <ActionColumns />}
+            />
           </ResponsiveListDatagrid>
         </Box>
       </StyledListWrapper>

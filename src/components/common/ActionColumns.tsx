@@ -15,6 +15,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { clearProfileCache } from "@/utils/profileCache";
+import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import {
+  EDIT_PERMISSION_BY_RESOURCE,
+  DELETE_PERMISSION_BY_RESOURCE,
+} from "@/constants/permissionConfig";
 
 /** --------------------------------------------------------
  *  🔐 安全錯誤訊息解析（無 any）
@@ -44,6 +49,31 @@ export const ActionColumns = () => {
   const dataProvider = useDataProvider();
   const { data: identity } = useGetIdentity();
   const logout = useLogout();
+
+  // 一律從 localStorage 讀取 authRoles（登入時寫入），避免 React Admin usePermissions 快取導致按鈕未依角色隱藏
+  const storedRoles = getStoredAuthRoles();
+  const hasRoleAdmin = (storedRoles ?? []).some((r) => r === "ROLE_ADMIN");
+  const isUsersResource =
+    resource === "users" || resource === "user" || resource == null;
+
+  const canEdit = isUsersResource
+    ? hasRoleAdmin
+    : hasRoleAdmin ||
+      (EDIT_PERMISSION_BY_RESOURCE[resource]
+        ? hasStoredAuthority(
+            storedRoles ?? [],
+            EDIT_PERMISSION_BY_RESOURCE[resource]
+          )
+        : false);
+  const canDelete = isUsersResource
+    ? hasRoleAdmin
+    : hasRoleAdmin ||
+      (DELETE_PERMISSION_BY_RESOURCE[resource]
+        ? hasStoredAuthority(
+            storedRoles ?? [],
+            DELETE_PERMISSION_BY_RESOURCE[resource]
+          )
+        : false);
 
   /** ⭐ fallback record（避免 TS any） */
   const safeRecord = (record ?? { id: "placeholder" }) as RaRecord;
@@ -75,7 +105,7 @@ export const ActionColumns = () => {
       await dataProvider.delete(resource, { id: safeRecord.id });
 
       const isCurrentUser =
-        resource === "users" &&
+        (resource === "users" || resource === "user") &&
         identity?.id != null &&
         String((safeRecord as { username?: string }).username ?? "") === String(identity.id);
       if (isCurrentUser) {
@@ -105,38 +135,39 @@ export const ActionColumns = () => {
   return (
     <>
       <Stack direction="row" spacing={1} alignItems="center">
-        {/* 編輯 */}
-        <Button
-          size="small"
-          color="primary"
-          variant="text"
-          startIcon={<EditIcon fontSize="small" />}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.currentTarget.blur();
-            window.location.href = `#/${resource}/${safeRecord.id}`;
-          }}
-          sx={{ minWidth: "60px", textTransform: "none" }}
-        >
-          編輯
-        </Button>
-
-        {/* 刪除 */}
-        <Button
-          size="small"
-          color="error"
-          variant="text"
-          startIcon={<DeleteIcon fontSize="small" />}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.currentTarget.blur();
-            setButtonTarget(e.currentTarget);
-            setOpenConfirm(true);
-          }}
-          sx={{ minWidth: "60px", textTransform: "none" }}
-        >
-          刪除
-        </Button>
+        {canEdit && (
+          <Button
+            size="small"
+            color="primary"
+            variant="text"
+            startIcon={<EditIcon fontSize="small" />}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.currentTarget.blur();
+              window.location.href = `#/${resource}/${safeRecord.id}`;
+            }}
+            sx={{ minWidth: "60px", textTransform: "none" }}
+          >
+            編輯
+          </Button>
+        )}
+        {canDelete && (
+          <Button
+            size="small"
+            color="error"
+            variant="text"
+            startIcon={<DeleteIcon fontSize="small" />}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.currentTarget.blur();
+              setButtonTarget(e.currentTarget);
+              setOpenConfirm(true);
+            }}
+            sx={{ minWidth: "60px", textTransform: "none" }}
+          >
+            刪除
+          </Button>
+        )}
       </Stack>
 
       {/* 🟥 刪除確認 */}

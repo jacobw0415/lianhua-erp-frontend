@@ -38,6 +38,11 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import dayjs from "dayjs";
+import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import {
+  CREATE_PERMISSION_BY_RESOURCE,
+  EXPORT_PERMISSION_BY_RESOURCE,
+} from "@/constants/permissionConfig";
 
 interface FilterOption {
   type: "text" | "select" | "dateRange" | "date" | "autocomplete" | "month";
@@ -83,11 +88,34 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
-  const resource = useResourceContext();
+  const resource = useResourceContext() ?? "";
   const createPath = useCreatePath();
   const redirect = useRedirect();
 
   const alert = useGlobalAlert();
+
+  /** RBAC：新增 / 匯出按鈕權限 */
+  const storedRoles = getStoredAuthRoles();
+  const isAdmin = storedRoles.some((r) => r === "ROLE_ADMIN");
+  const requiredCreateAuth =
+    resource && CREATE_PERMISSION_BY_RESOURCE[resource]
+      ? CREATE_PERMISSION_BY_RESOURCE[resource]
+      : "";
+  const canCreate =
+    isAdmin ||
+    (requiredCreateAuth
+      ? hasStoredAuthority(storedRoles, requiredCreateAuth)
+      : false);
+
+  const requiredExportAuth =
+    resource && EXPORT_PERMISSION_BY_RESOURCE[resource]
+      ? EXPORT_PERMISSION_BY_RESOURCE[resource]
+      : "";
+  const canExport =
+    isAdmin ||
+    (requiredExportAuth
+      ? hasStoredAuthority(storedRoles, requiredExportAuth)
+      : false);
 
   // 當 isSmallScreen 改變時，清除 anchor 以避免 anchorEl 無效錯誤
   useEffect(() => {
@@ -639,7 +667,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             ...(useCompactFilterLayout && { direction: "column", width: "100%" }),
             }}
           >
-            {enableCreate && !disableCreate && (
+            {enableCreate && !disableCreate && canCreate && (
               <Button
                 variant="contained"
                 color="success"
@@ -664,7 +692,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               </Button>
             )}
 
-            {enableExport && onExport && (
+            {enableExport && onExport && canExport && (
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}

@@ -11,6 +11,8 @@ export interface MenuItem {
   icon?: React.ReactElement;
   /** 僅具此角色以上可見；未設則所有人可見 */
   requiredRole?: MenuRole;
+  /** 細部權限：具任一即可見（與後端 @PreAuthorize 對齊，如 user:view、role:view） */
+  requiredAuthorities?: string[];
 }
 
 export interface MenuGroup {
@@ -127,8 +129,8 @@ export const menuGroups: MenuGroup[] = [
     label: "系統管理",
     icon: <SecurityIcon />,
     items: [
-      { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN" },
-      { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN" },
+      { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["user:view"] },
+      { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["role:view"] },
       { label: "個人資料", to: "/profile", icon: <AccountCircleIcon /> },
       { label: "修改密碼", to: "/change-password", icon: <PasswordIcon /> },
       { label: "通知中心", to: "/notifications", icon: <NotificationIcon /> },

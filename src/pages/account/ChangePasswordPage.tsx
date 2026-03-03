@@ -19,10 +19,13 @@ import { getApiUrl } from "@/config/apiUrl";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { authProvider } from "@/providers/authProvider";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_STRENGTH_REGEX,
+  PASSWORD_POLICY_HELPER,
+} from "@/constants/passwordPolicy";
 
 const apiUrl = getApiUrl();
-/** 後端 PUT /users/me/password 要求 newPassword 至少 6 字元 */
-const MIN_PASSWORD_LENGTH = 6;
 
 const ChangePasswordPage: React.FC = () => {
   const theme = useTheme();
@@ -62,11 +65,11 @@ const ChangePasswordPage: React.FC = () => {
     if (!trimmedNew) {
       setNewPasswordError("請輸入新密碼");
       ok = false;
-    } else if (trimmedNew.length < MIN_PASSWORD_LENGTH) {
-      setNewPasswordError(`密碼長度至少需 ${MIN_PASSWORD_LENGTH} 碼`);
+    } else if (trimmedNew.length < PASSWORD_MIN_LENGTH) {
+      setNewPasswordError(`密碼長度至少需 ${PASSWORD_MIN_LENGTH} 碼`);
       ok = false;
-    } else if (!/[A-Za-z]/.test(trimmedNew) || !/[0-9]/.test(trimmedNew)) {
-      setNewPasswordError("密碼需同時包含英文字母與數字");
+    } else if (!PASSWORD_STRENGTH_REGEX.test(trimmedNew)) {
+      setNewPasswordError(PASSWORD_POLICY_HELPER);
       ok = false;
     } else if (currentPassword && trimmedNew === currentPassword) {
       setNewPasswordError("新密碼不可與目前密碼相同");
@@ -272,10 +275,7 @@ const ChangePasswordPage: React.FC = () => {
             autoComplete="new-password"
             required
             error={!!newPasswordError}
-            helperText={
-              newPasswordError ||
-              `至少 ${MIN_PASSWORD_LENGTH} 字元，並需同時包含英文字母與數字。`
-            }
+            helperText={newPasswordError || PASSWORD_POLICY_HELPER}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">

@@ -13,6 +13,7 @@ import BlockIcon from "@mui/icons-material/Block";
 
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
+import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
 
 /* -------------------------------------------------------
  * 🔐 型別定義
@@ -38,6 +39,14 @@ export const ExpenseActionColumns = () => {
 
   /** ⭐ fallback record（避免 TS any） */
   const safeRecord = (record ?? { id: "placeholder" }) as ExpenseRecord;
+
+  /** RBAC：僅 ROLE_ADMIN 或具 expense:edit / expense:void 權限時顯示操作按鈕 */
+  const storedRoles = getStoredAuthRoles();
+  const isAdmin = storedRoles.some((r) => r === "ROLE_ADMIN");
+  const canManageExpense =
+    isAdmin ||
+    hasStoredAuthority(storedRoles, "expense:edit") ||
+    hasStoredAuthority(storedRoles, "expense:void");
 
   /** ⭐ 統一顯示名稱 */
   const displayName =
@@ -98,6 +107,7 @@ export const ExpenseActionColumns = () => {
   };
 
   if (!record) return null;
+  if (!canManageExpense) return null;
 
   const isVoided = record.status === 'VOIDED';
 

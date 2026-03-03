@@ -4,10 +4,13 @@ import {
   Datagrid,
   useListContext,
   RecordContextProvider,
+  useResourceContext,
   type DatagridProps,
   type RaRecord,
+  type Identifier,
 } from "react-admin";
 import { useBreakpoint } from "@/hooks/useIsMobile";
+import { canEditResource } from "@/utils/authStorage";
 import { ListCard } from "./ListCard";
 import { EmptyPlaceholder } from "./EmptyPlaceholder";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
@@ -99,7 +102,12 @@ export const ResponsiveListDatagrid: React.FC<
     breakpoint === "mobile" ||
     (breakpoint === "tablet" && (tabletLayout === "card" || !cardOnlyOnMobile));
   const { data, isLoading } = useListContext();
+  const resource = useResourceContext();
   const theme = useTheme();
+
+  // 無編輯權限時不讓點擊列進入編輯頁（與 ActionColumns 權限一致）
+  const canEdit = canEditResource(resource);
+  const effectiveRowClick = canEdit && rowClick ? rowClick : false;
 
   // 检测字段类型
   const detectFieldType = (element: React.ReactElement, label: string, source?: string): "currency" | "date" | "text" => {
@@ -220,7 +228,7 @@ export const ResponsiveListDatagrid: React.FC<
         >
           {data.map((record: RaRecord) => (
             <RecordContextProvider key={record.id} value={record}>
-              <ListCard
+                      <ListCard
                 fields={fieldConfigs.map((config) => ({
                   label: config.label,
                   value: renderFieldValue(record, config.element),
@@ -230,11 +238,20 @@ export const ResponsiveListDatagrid: React.FC<
                   fieldType: config.fieldType,
                 }))}
                 onClick={
-                  rowClick
+                  effectiveRowClick
                     ? () => {
-                        if (typeof rowClick === "function") {
-                          rowClick(record.id, rest.resource || "", record);
-                        } else if (rowClick === "edit" || rowClick === "show") {
+                        if (typeof effectiveRowClick === "function") {
+                          (
+                            effectiveRowClick as (
+                              id: Identifier,
+                              resource: string,
+                              record: RaRecord
+                            ) => void
+                          )(record.id, rest.resource || "", record);
+                        } else if (
+                          effectiveRowClick === "edit" ||
+                          effectiveRowClick === "show"
+                        ) {
                           window.location.href = `#/${rest.resource || ""}/${record.id}`;
                         }
                       }
@@ -271,7 +288,7 @@ export const ResponsiveListDatagrid: React.FC<
           empty={<EmptyPlaceholder />}
           bulkActionButtons={false}
           size="small"
-          rowClick={rowClick}
+          rowClick={effectiveRowClick}
           sx={{
             display: "flex",
             flexDirection: "column",
