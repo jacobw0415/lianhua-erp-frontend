@@ -113,7 +113,11 @@ export const PurchaseStructureSection: React.FC<PurchaseStructureSectionProps> =
                       />
                     ))}
                   </Pie>
-                  <Tooltip content={renderPurchaseTooltip} offset={12} />
+                  <Tooltip
+                    content={(props) => renderPurchaseTooltip(props as any)}
+                    offset={12}
+                    wrapperStyle={{ zIndex: 10 }}
+                  />
                   <Legend
                     verticalAlign="bottom"
                     align="center"
@@ -132,10 +136,14 @@ export const PurchaseStructureSection: React.FC<PurchaseStructureSectionProps> =
               sx={{
                 position: 'absolute',
                 left: '50%',
-                top: '50%',
+                top: '45%', // 稍微往上移，避免遮住下方扇形的 Tooltip
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
                 textAlign: 'center',
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 999,
+                zIndex: 1,
               }}
             >
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>

@@ -292,7 +292,11 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
                         />
                       ))}
                     </Pie>
-                    <Tooltip content={renderExpenseTooltip} offset={12} />
+                    <Tooltip
+                      content={renderExpenseTooltip}
+                      offset={12}
+                      wrapperStyle={{ zIndex: 10 }}
+                    />
                     <Legend
                       verticalAlign="bottom"
                       align="center"
@@ -305,15 +309,20 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              {/* 圓心總額標籤（絕對定位，不干擾 Recharts SVG） */}
+              {/* 圓心總額標籤（絕對定位，不干擾 Recharts SVG），使用膠囊背景避免底層文字透出。
+                  位置略微往上調整，盡量避免遮住下方扇形的 Tooltip。 */}
               <Box
                 sx={{
                   position: 'absolute',
                   left: '50%',
-                  top: '50%',
+                  top: '45%',
                   transform: 'translate(-50%, -50%)',
                   pointerEvents: 'none',
                   textAlign: 'center',
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 999,
+                  zIndex: 1,
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>

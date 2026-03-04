@@ -106,7 +106,11 @@ export const SupplierConcentrationSection: React.FC<SupplierConcentrationSection
               width={80}
               tick={{ fontSize: 10 }}
             />
-            <Tooltip content={renderSupplierConcentrationTooltip} />
+            <Tooltip
+              content={(props) => renderSupplierConcentrationTooltip(props as any)}
+              offset={12}
+              wrapperStyle={{ zIndex: 10 }}
+            />
             <Bar
               dataKey="totalAmount"
               name="採購金額"
