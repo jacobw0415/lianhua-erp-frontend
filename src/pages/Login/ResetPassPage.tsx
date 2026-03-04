@@ -40,6 +40,7 @@ export const ResetPassPage = () => {
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tokenError, setTokenError] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const { mode } = useColorMode();
   const isDark = mode === "dark";
@@ -71,9 +72,17 @@ export const ResetPassPage = () => {
       html.style.height = prevHtmlHeight;
       body.style.overflow = prevBodyOverflow;
       body.style.height = prevBodyHeight;
-      body.style.background = prevBodyBackground;
+    body.style.background = prevBodyBackground;
     };
   }, [isDark]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setInterval(() => {
+      setCooldown((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [cooldown]);
 
   const handleGoLogin = () => {
     // 為了確保從 Email 重設流程結束後能回到「完整的」登入頁與 React-Admin 流程，
@@ -125,6 +134,22 @@ export const ResetPassPage = () => {
 
       if (res.ok) {
         setSuccess(true);
+        return;
+      }
+      if (res.status === 400) {
+        const friendly =
+          /頻繁|稍後再試/i.test(message || "") ||
+          /嘗試過多/i.test(message || "")
+            ? "操作過於頻繁，請稍後再試。"
+            : "";
+        setError(
+          friendly || "操作過於頻繁，請稍後再試。"
+        );
+        setCooldown(60);
+        return;
+      }
+      if (res.status >= 500) {
+        setError("系統發生錯誤，請稍後再試或聯絡系統管理員");
         return;
       }
       setError(message || "重設失敗，連結可能已過期，請重新申請");
@@ -343,7 +368,7 @@ export const ResetPassPage = () => {
               fullWidth
               variant="contained"
               size="large"
-              disabled={isSubmitting}
+              disabled={isSubmitting || cooldown > 0}
               sx={{
                 py: 1.5,
                 fontWeight: 700,
@@ -354,7 +379,11 @@ export const ResetPassPage = () => {
                 },
               }}
             >
-              {isSubmitting ? "提交中…" : "提交新密碼"}
+              {isSubmitting
+                ? "提交中…"
+                : cooldown > 0
+                  ? `請 ${cooldown} 秒後再試`
+                  : "提交新密碼"}
             </Button>
             <Button
               onClick={handleGoLogin}

@@ -34,6 +34,8 @@ import {
   DETAIL_MAIN_MAX_WIDTH,
   DETAIL_LAYOUT_MAX_WIDTH,
 } from "@/constants/layoutConstants";
+import { getApiUrl } from "@/config/apiUrl";
+import { QRCodeSVG } from "qrcode.react";
 import { getRoleDisplayName } from "@/constants/userRoles";
 
 /** 個人資料 API 回傳型別（含職稱；不含部門） */
@@ -135,6 +137,8 @@ const ProfileSkeleton: React.FC = () => (
   </Box>
 );
 
+const apiUrl = getApiUrl();
+
 const ProfilePage: React.FC = () => {
   const theme = useTheme();
   const { data: identity } = useGetIdentity();
@@ -151,6 +155,12 @@ const ProfilePage: React.FC = () => {
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccessVisible, setSaveSuccessVisible] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [mfaSuccess, setMfaSuccess] = useState<string | null>(null);
+  const [mfaSetupSecret, setMfaSetupSecret] = useState<string | null>(null);
+  const [mfaSetupQrUrl, setMfaSetupQrUrl] = useState<string | null>(null);
+  const [mfaSetupCode, setMfaSetupCode] = useState("");
   const [fullNameError, setFullNameError] = useState("");
   const [emailError, setEmailError] = useState("");
 
@@ -161,8 +171,15 @@ const ProfilePage: React.FC = () => {
       .get("users/me")
       .then((response: { data: UserRecord }) => {
         const user = response.data;
-        setProfileCache(user);
-        setRecord(user);
+        // 若後端 GET users/me 未回傳 mfaEnabled，用登入時寫入的提示補上（例如剛以 MFA 驗證登入）
+        const mfaHint =
+          typeof localStorage !== "undefined" && localStorage.getItem("mfaEnabled") === "true";
+        const userWithMfa = {
+          ...user,
+          mfaEnabled: (user as { mfaEnabled?: boolean }).mfaEnabled ?? mfaHint,
+        } as UserRecord;
+        setProfileCache(userWithMfa);
+        setRecord(userWithMfa);
         setFullName(user.fullName ?? "");
         setEmail(user.email ?? "");
         setJobTitle((user as any).jobTitle ?? (user as any).position ?? "");
@@ -277,6 +294,211 @@ const ProfilePage: React.FC = () => {
     setJobTitle((record as any).jobTitle ?? (record as any).position ?? "");
     setFullNameError("");
     setEmailError("");
+  };
+
+  const handleStartMfaSetup = async () => {
+    if (!record) return;
+    setMfaError(null);
+    setMfaSuccess(null);
+    setMfaLoading(true);
+    setMfaSetupSecret(null);
+    setMfaSetupQrUrl(null);
+    setMfaSetupCode("");
+    try {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem("token")
+          : null;
+      const tokenType =
+        (typeof localStorage !== "undefined" &&
+          localStorage.getItem("tokenType")) ||
+        "Bearer";
+      if (token) {
+        headers.set("Authorization", `${tokenType} ${token}`);
+      }
+
+      const res = await fetch(`${apiUrl}/auth/mfa/setup`, {
+        method: "POST",
+        headers,
+      });
+
+      const text = await res.text();
+      let message = "";
+      let data: { secret?: string; qrCodeUrl?: string } = {};
+      if (text) {
+        try {
+          const json = JSON.parse(text) as {
+            status?: number;
+            message?: string;
+            data?: { secret?: string; qrCodeUrl?: string };
+          };
+          if (json.message) message = json.message ?? "";
+          if (json.data) data = json.data;
+        } catch {
+          // ignore JSON parse error
+        }
+      }
+
+      if (!res.ok) {
+        if (res.status === 400) {
+          setMfaError("操作過於頻繁，請稍後再試。");
+          return;
+        }
+        if (res.status >= 500) {
+          setMfaError("系統發生錯誤，請稍後再試或聯絡系統管理員");
+          return;
+        }
+        setMfaError(message || "啟用 MFA 失敗，請稍後再試。");
+        return;
+      }
+
+      const secret = data.secret ?? "";
+      const qr = data.qrCodeUrl ?? "";
+      if (!secret && !qr) {
+        setMfaError("無法取得 MFA 設定資訊，請稍後再試或聯絡系統管理員。");
+        return;
+      }
+      setMfaSetupSecret(secret || null);
+      setMfaSetupQrUrl(qr || null);
+      setMfaSuccess("請使用驗證器掃描 QR Code 或輸入密鑰，並在下方輸入 6 碼驗證碼以完成啟用。");
+    } catch {
+      setMfaError("啟用 MFA 失敗，請稍後再試。");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleConfirmMfaSetup = async () => {
+    if (!record) return;
+    const trimmed = mfaSetupCode.trim();
+    if (!trimmed || trimmed.length !== 6) {
+      setMfaError("請輸入 6 碼驗證碼。");
+      return;
+    }
+    setMfaError(null);
+    setMfaSuccess(null);
+    setMfaLoading(true);
+    try {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
+      const tokenType = (typeof localStorage !== "undefined" && localStorage.getItem("tokenType")) || "Bearer";
+      if (token) {
+        headers.set("Authorization", `${tokenType} ${token}`);
+      }
+
+      const res = await fetch(`${apiUrl}/auth/mfa/verify`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ code: trimmed }),
+      });
+
+      const text = await res.text();
+      let message = "";
+      if (text) {
+        try {
+          const json = JSON.parse(text) as { message?: string };
+          if (json.message) message = json.message;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!res.ok) {
+        if (res.status === 400) {
+          setMfaError("驗證碼錯誤或已過期，請確認驗證器時間與輸入內容後再試一次。");
+          return;
+        }
+        if (res.status >= 500) {
+          setMfaError("系統發生錯誤，請稍後再試或聯絡系統管理員");
+          return;
+        }
+        setMfaError(
+          message || "啟用 MFA 失敗，請稍後再試。"
+        );
+        return;
+      }
+
+      const updated = {
+        ...(record as any),
+        mfaEnabled: true,
+      } as UserRecord & { mfaEnabled?: boolean };
+      setRecord(updated);
+      setProfileCache(updated);
+      setMfaSuccess("MFA 已啟用。下次登入時將需要輸入 6 碼驗證碼。");
+      setMfaSetupCode("");
+    } catch {
+      setMfaError("啟用 MFA 失敗，請稍後再試。");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleDisableMfa = async () => {
+    if (!record) return;
+    if (!window.confirm("確定要關閉 MFA 嗎？關閉後登入時將不再要求輸入 6 碼驗證碼。")) return;
+    setMfaError(null);
+    setMfaSuccess(null);
+    setMfaLoading(true);
+    try {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
+      const tokenType = (typeof localStorage !== "undefined" && localStorage.getItem("tokenType")) || "Bearer";
+      if (token) {
+        headers.set("Authorization", `${tokenType} ${token}`);
+      }
+
+      const res = await fetch(`${apiUrl}/auth/mfa/disable`, {
+        method: "POST",
+        headers,
+      });
+
+      const text = await res.text();
+      let message = "";
+      if (text) {
+        try {
+          const json = JSON.parse(text) as { message?: string };
+          if (json.message) message = json.message;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!res.ok) {
+        if (res.status === 400) {
+          setMfaError(
+            message || "關閉 MFA 失敗，請稍後再試或聯絡系統管理員。"
+          );
+          return;
+        }
+        if (res.status >= 500) {
+          setMfaError("系統發生錯誤，請稍後再試或聯絡系統管理員");
+          return;
+        }
+        setMfaError(
+          message || "關閉 MFA 失敗，請稍後再試或聯絡系統管理員。"
+        );
+        return;
+      }
+
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem("mfaEnabled");
+      }
+      const updated = {
+        ...(record as any),
+        mfaEnabled: false,
+      } as UserRecord & { mfaEnabled?: boolean };
+      setRecord(updated);
+      setProfileCache(updated);
+      setMfaSuccess("MFA 已關閉。之後登入將不再需要輸入 6 碼驗證碼。");
+      setMfaSetupSecret(null);
+      setMfaSetupQrUrl(null);
+      setMfaSetupCode("");
+    } catch {
+      setMfaError("關閉 MFA 失敗，請稍後再試或聯絡系統管理員。");
+    } finally {
+      setMfaLoading(false);
+    }
   };
 
   const rolesDisplay = (() => {
@@ -617,6 +839,135 @@ const ProfilePage: React.FC = () => {
                 {formatDisplayDate(record.createdAt)}
               </Typography>
             </Box>
+            <Box className="profile-row">
+              <Typography className="profile-label" component="span">
+                MFA
+              </Typography>
+              <Box className="profile-value" component="span">
+                <Typography variant="body2" component="span">
+                  {(record as any).mfaEnabled ? "已啟用" : "未啟用"}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          {mfaError && (
+            <Alert severity="error" sx={{ mt: 2 }} aria-live="assertive">
+              {mfaError}
+            </Alert>
+          )}
+          {mfaSuccess && (
+            <Alert severity="success" sx={{ mt: 2 }} aria-live="polite">
+              {mfaSuccess}
+            </Alert>
+          )}
+          <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+              {!(record as any).mfaEnabled && (
+                <Button
+                  variant="outlined"
+                  disabled={mfaLoading}
+                  onClick={handleStartMfaSetup}
+                  sx={{ minHeight: 40 }}
+                >
+                  啟用 MFA
+                </Button>
+              )}
+              {(record as any).mfaEnabled && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  disabled={mfaLoading}
+                  onClick={handleDisableMfa}
+                  sx={{ minHeight: 40 }}
+                >
+                  關閉 MFA
+                </Button>
+              )}
+            </Box>
+            {(mfaSetupSecret || mfaSetupQrUrl) && (
+              <Box
+                sx={{
+                  mt: 1,
+                  p: 2,
+                  borderRadius: 1,
+                  border: "1px dashed",
+                  borderColor: "divider",
+                  bgcolor: "action.hover",
+                }}
+              >
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  使用驗證器 App 掃描下方 QR Code，或輸入密鑰後，在下方輸入產生的 6 碼驗證碼以完成啟用。
+                </Typography>
+                {mfaSetupQrUrl && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      mb: 1.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 180,
+                        height: 180,
+                        borderRadius: 1,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        bgcolor: "background.paper",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        p: 1,
+                      }}
+                    >
+                      <QRCodeSVG value={mfaSetupQrUrl} size={150} />
+                    </Box>
+                  </Box>
+                )}
+                {mfaSetupSecret && (
+                  <Typography
+                    variant="body2"
+                    sx={{ wordBreak: "break-all", mb: 1 }}
+                  >
+                    密鑰：{mfaSetupSecret}
+                  </Typography>
+                )}
+                <Box
+                  sx={{
+                    mt: 1,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    alignItems: "center",
+                  }}
+                >
+                  <TextField
+                    label="6 碼驗證碼"
+                    size="small"
+                    value={mfaSetupCode}
+                    onChange={(e) =>
+                      setMfaSetupCode(
+                        e.target.value.replace(/[^0-9]/g, "").slice(0, 6)
+                      )
+                    }
+                    inputProps={{
+                      inputMode: "numeric",
+                      pattern: "[0-9]*",
+                    }}
+                    sx={{ width: 180 }}
+                    disabled={mfaLoading}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleConfirmMfaSetup}
+                    disabled={mfaLoading}
+                    sx={{ minHeight: 40 }}
+                  >
+                    確認啟用
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </Box>
           <Button
             component={RouterLink}

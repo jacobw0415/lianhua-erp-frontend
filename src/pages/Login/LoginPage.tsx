@@ -23,7 +23,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 const TITLE = "蓮華 ERP";
 const SUBTITLE = "請登入以繼續使用系統";
 
-const LOGIN_COOLDOWN_SEC = 30;
+const LOGIN_COOLDOWN_SEC = 60;
 
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -97,11 +97,21 @@ export const LoginPage = () => {
         // 一律導向儀表板，避免沿用上一位使用者的路徑（如 /users）導致 ROLE_USER 一進入就 401 被登出
         navigate("/", { replace: true });
       })
-      .catch((err: Error) => {
-        const msg = err?.message ?? "登入失敗，請稍後再試";
+      .catch((err: unknown) => {
+        const anyErr = err as { message?: string; code?: string };
+        const code = anyErr?.code;
+        const msgRaw = anyErr?.message;
+
+        // MFA 登入第二階段：authProvider.login 以 MFA_REQUIRED 拋錯 → 導向 /mfa，不顯示為「登入失敗」
+        if (code === "MFA_REQUIRED" || msgRaw === "MFA_REQUIRED") {
+          navigate("/mfa", { replace: true });
+          return;
+        }
+
+        const msg = msgRaw ?? "登入失敗，請稍後再試";
         setError(msg);
-        // 登入嘗試過多時暫停按鈕，避免重複點擊
-        if (/嘗試過多|登入嘗試過多|稍後再試/i.test(msg)) {
+        // 登入嘗試過多／操作過於頻繁時暫停按鈕，避免重複點擊
+        if (/嘗試過多|登入嘗試過多|操作過於頻繁|過於頻繁|稍後再試/i.test(msg)) {
           setLoginCooldown(LOGIN_COOLDOWN_SEC);
         }
       })

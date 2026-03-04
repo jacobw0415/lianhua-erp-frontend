@@ -4,6 +4,7 @@ import type { AuthProvider } from "react-admin";
 import { getApiUrl } from "@/config/apiUrl";
 import { apiRules } from "@/config/apiRules";
 import { filterMapping } from "@/config/filterMapping";
+import { applyLoginSuccessFromContainer } from "@/providers/authProvider";
 
 /* ========================================================
  * 🔐 與 ErrorHandlerContext 對齊的最小 ApiError
@@ -76,9 +77,65 @@ export const createDataProvider = ({
           : undefined;
 
       /* --------------------------------------------
-       * 401 被動登出：觸發 authProvider.checkError，清除會話並重導向 /login
+       * 401：優先嘗試使用 refreshToken 換發，再重試原本請求
        * -------------------------------------------- */
       if (status === 401) {
+        const meta = (options as { meta?: Record<string, unknown> }).meta;
+        const alreadyRetried = Boolean(
+          meta && (meta as { _retryWithRefresh?: boolean })._retryWithRefresh
+        );
+
+        const refreshToken =
+          typeof localStorage !== "undefined"
+            ? localStorage.getItem("refreshToken")
+            : null;
+
+        if (!alreadyRetried && refreshToken) {
+          try {
+            const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
+              method: "POST",
+              headers: new Headers({ "Content-Type": "application/json" }),
+              body: JSON.stringify({ refreshToken }),
+            });
+
+            const refreshJson = await refreshResponse.json().catch(() => null);
+
+            if (refreshResponse.ok && refreshJson) {
+              // 使用 refresh 成功回應更新 token 與 refreshToken
+              try {
+                applyLoginSuccessFromContainer(
+                  refreshJson as unknown as Record<string, unknown>
+                );
+              } catch {
+                // 解析失敗時，仍嘗試使用原 token；實際會在後續請求被 401 擋下
+              }
+
+              const retryOptions: fetchUtils.Options & {
+                meta?: Record<string, unknown>;
+              } = {
+                ...options,
+                meta: {
+                  ...(meta || {}),
+                  _retryWithRefresh: true,
+                },
+              };
+              return await httpClient(url, retryOptions);
+            }
+
+            // refresh 401/400：視為 refresh 失敗 → 登出
+            if (
+              refreshResponse.status === 400 ||
+              refreshResponse.status === 401
+            ) {
+              void authProvider.checkError({ status: 401 } as ApiError);
+              throw error;
+            }
+          } catch {
+            // 換發過程本身失敗（網路等）：落到下方被動登出邏輯
+          }
+        }
+
+        // 無 refreshToken 或已嘗試換發仍失敗 → 被動登出
         void authProvider.checkError(apiError);
         throw error;
       }

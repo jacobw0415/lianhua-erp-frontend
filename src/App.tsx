@@ -79,6 +79,7 @@ import { authProvider } from "@/providers/authProvider";
 import { LoginPage } from "@/pages/Login/LoginPage";
 import { ForgotPassPage } from "@/pages/Login/ForgotPassPage";
 import { ResetPassPage } from "@/pages/Login/ResetPassPage";
+import { MfaVerifyPage } from "@/pages/Login/MfaVerifyPage";
 import { ForbiddenPage } from "@/pages/ForbiddenPage";
 import { UserList } from "@/pages/users/UserList";
 import { UserCreate } from "@/pages/users/UserCreate";
@@ -122,6 +123,7 @@ export const AppWithProvider = () => {
                 <Route path="/reset-password" element={<ResetPassPage />} />
                 <Route path="/forgot-password" element={<ForgotPassPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/mfa" element={<MfaVerifyPage />} />
                 {/* 若路徑不符，預設仍顯示重設密碼頁，避免使用者卡住 */}
                 <Route path="*" element={<ResetPassPage />} />
               </Routes>
@@ -173,6 +175,7 @@ const App = () => {
       <CustomRoutes noLayout>
         <Route path="/forgot-password" element={<ForgotPassPage />} />
         <Route path="/reset-password" element={<ResetPassPage />} />
+        <Route path="/mfa" element={<MfaVerifyPage />} />
       </CustomRoutes>
 
       {/* 一般佈局頁面 */}

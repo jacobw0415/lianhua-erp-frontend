@@ -2,6 +2,7 @@ import type { AuthProvider } from "react-admin";
 
 import { getApiUrl } from "@/config/apiUrl";
 import { clearAppCache } from "@/utils/appCache";
+import { clearProfileCache } from "@/utils/profileCache";
 
 /** 應用基底路徑（Vite 的 import.meta.env.BASE_URL，部署子路徑時為 /erp 等） */
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
@@ -9,11 +10,21 @@ const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_U
 /* ========================================================
  * 常數與儲存鍵
  * ======================================================== */
-const AUTH_STORAGE_KEYS = ["token", "tokenType", "username", "role", "userId", "authRoles"] as const;
+const AUTH_STORAGE_KEYS = [
+  "token",
+  "tokenType",
+  "refreshToken",
+  "tokenExpiresAt",
+  "username",
+  "role",
+  "userId",
+  "authRoles",
+] as const;
 
 /** 集中清除前端登入狀態，供 logout 與 checkError(401) 共用 */
 function clearAuthStorage(): void {
   AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  localStorage.removeItem("mfaEnabled"); // 登出時清除 MFA 提示，避免下一使用者看到錯誤狀態
 }
 
 /**
@@ -33,11 +44,24 @@ function getJwtExp(token: string): number | undefined {
   }
 }
 
-/** 是否有有效 token（供 checkAuth / check 共用）；JWT 過期則視為無效並清除，先導向登入頁 */
+/** 是否有有效 token（供 checkAuth / check 共用）；若已過期則視為無效並清除。 */
 function hasValidToken(): boolean {
   if (typeof localStorage === "undefined") return false;
   const token = localStorage.getItem("token");
   if (!token) return false;
+
+  // 優先依據後端回傳的 expiresIn（tokenExpiresAt）判斷過期時間
+  const expiresAtRaw = localStorage.getItem("tokenExpiresAt");
+  if (expiresAtRaw) {
+    const expiresAtMs = Number(expiresAtRaw);
+    if (Number.isFinite(expiresAtMs) && expiresAtMs > 0) {
+      // 留 10 秒緩衝
+      if (Date.now() >= expiresAtMs - 10_000) {
+        clearAuthStorage();
+        return false;
+      }
+    }
+  }
 
   const exp = getJwtExp(token);
   if (exp === undefined) return true; // 非 JWT 或無 exp，交給後端判斷
@@ -101,6 +125,26 @@ interface LoginResponseContainer {
   result?: LoginResponseContainer;
   data?: LoginResponseContainer;
 }
+
+/** 後端標準 JwtResponse（登入成功或 refresh 成功時） */
+interface JwtResponse {
+  token: string;
+  refreshToken: string;
+  expiresIn: number; // 秒
+  type?: string;
+  id?: number | string;
+  username?: string;
+  roles?: unknown[];
+  roleNames?: unknown[];
+}
+
+/** 後端標準 MFA 待驗證回應（登入第一階段） */
+interface MfaPendingResponse {
+  mfaRequired: true;
+  pendingToken: string;
+}
+
+type LoginSuccess = JwtResponse | MfaPendingResponse;
 
 function getString(value: unknown | undefined): string | undefined {
   if (value === undefined || value === null) return undefined;
@@ -173,6 +217,107 @@ function getRolesFromContainer(c: LoginResponseContainer): string[] {
   return [];
 }
 
+/**
+ * 從多種後端格式取出含 token 的物件（data / result / user / 頂層），
+ * 亦支援直接回傳 JwtResponse。
+ */
+function getEffectiveContainer(
+  raw:
+    | LoginSuccessResponseWrapped
+    | LoginSuccessResponseFlat
+    | (Record<string, unknown> & { data?: Record<string, unknown> })
+    | LoginSuccess
+    | null
+): LoginResponseContainer | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  const candidates: LoginResponseContainer[] = [
+    raw as LoginResponseContainer,
+    obj.data as LoginResponseContainer,
+    obj.result as LoginResponseContainer,
+    obj.user as LoginResponseContainer,
+    (obj.data as Record<string, unknown>)?.user as LoginResponseContainer,
+    (obj.data as Record<string, unknown>)?.result as LoginResponseContainer,
+  ].filter(
+    (c): c is LoginResponseContainer => c != null && typeof c === "object"
+  );
+  for (const c of candidates) {
+    if (getTokenFromContainer(c)) return c;
+  }
+  return raw as LoginResponseContainer;
+}
+
+/**
+ * 將登入／refresh／MFA 第二階段成功回應寫入 localStorage，集中維護：
+ * - token / tokenType
+ * - refreshToken / tokenExpiresAt
+ * - username / role / userId / authRoles
+ * @param mfaEnabled - 若為 true（例如剛完成 MFA 驗證登入），會寫入提示供個人資料頁顯示「MFA 已啟用」
+ */
+export function applyLoginSuccessFromContainer(
+  container: LoginResponseContainer,
+  usernameForDisplay?: string,
+  mfaEnabled?: boolean
+): void {
+  clearProfileCache(); // 登入成功後清除個人資料快取，避免沿用上一帳號或舊的 mfaEnabled 狀態
+  const token = getTokenFromContainer(container);
+  if (!token) {
+    throw new Error(
+      "登入回應格式錯誤：後端未回傳 token / accessToken，請確認 API 回傳格式（開發時請看主控台 🔐 Login response raw）"
+    );
+  }
+
+  const type = getTypeFromContainer(container);
+  const usernameFromPayload = getUsernameFromContainer(container);
+  const roleFromPayload = getRoleFromContainer(container);
+  const userIdFromPayload = getUserIdFromContainer(container);
+  const rolesFromPayload = getRolesFromContainer(container);
+
+  /** 後端未回傳使用者名稱時，以表單輸入的帳號為後備，確保 getIdentity 有值 */
+  const displayName = usernameFromPayload || usernameForDisplay || "";
+
+  localStorage.setItem("token", token);
+  localStorage.setItem("tokenType", type);
+  if (displayName) localStorage.setItem("username", displayName);
+  if (roleFromPayload) localStorage.setItem("role", roleFromPayload);
+  if (userIdFromPayload) localStorage.setItem("userId", userIdFromPayload);
+
+  // 一律覆寫 authRoles，避免沿用上一使用者（如管理員）的權限導致 ROLE_USER 仍看到編輯/刪除按鈕
+  const rolesToStore =
+    rolesFromPayload.length > 0
+      ? rolesFromPayload
+      : roleFromPayload
+        ? [roleFromPayload]
+        : ["ROLE_USER"];
+  localStorage.setItem("authRoles", JSON.stringify(rolesToStore));
+
+  // Refresh Token 與過期時間（秒數 → 絕對時間戳，留 10 秒緩衝）
+  const refreshToken = getString(
+    (container as { refreshToken?: unknown }).refreshToken
+  );
+  if (refreshToken) {
+    localStorage.setItem("refreshToken", refreshToken);
+  } else {
+    localStorage.removeItem("refreshToken");
+  }
+
+  const expiresInRaw = (container as { expiresIn?: unknown }).expiresIn;
+  if (
+    typeof expiresInRaw === "number" &&
+    Number.isFinite(expiresInRaw) &&
+    expiresInRaw > 0
+  ) {
+    const expiresAt = Date.now() + expiresInRaw * 1000;
+    localStorage.setItem("tokenExpiresAt", String(expiresAt));
+  } else {
+    localStorage.removeItem("tokenExpiresAt");
+  }
+
+  if (mfaEnabled) {
+    localStorage.setItem("mfaEnabled", "true");
+  }
+}
+
 /* ========================================================
  * AuthProvider 實作
  * ======================================================== */
@@ -193,6 +338,11 @@ export const authProvider: AuthProvider = {
     }
 
     if (response.status < 200 || response.status >= 300) {
+      // 500 系列錯誤：統一顯示泛用訊息，不依賴後端 message
+      if (response.status >= 500) {
+        throw new Error("系統發生錯誤，請稍後再試或聯絡系統管理員");
+      }
+
       let message = "帳號或密碼錯誤";
       try {
         const body = (await response.json()) as LoginErrorResponse;
@@ -207,6 +357,7 @@ export const authProvider: AuthProvider = {
       | LoginSuccessResponseWrapped
       | LoginSuccessResponseFlat
       | (Record<string, unknown> & { data?: Record<string, unknown> })
+      | LoginSuccess
       | null;
 
     if (import.meta.env.DEV) {
@@ -214,26 +365,56 @@ export const authProvider: AuthProvider = {
       console.log("🔐 Login response raw:", json);
     }
 
-    /** 從多種後端格式取出含 token 的物件（data / result / user / 頂層） */
-    function getEffectiveContainer(
-      raw: typeof json
-    ): LoginResponseContainer | null {
-      if (!raw || typeof raw !== "object") return null;
-      const obj = raw as Record<string, unknown>;
-      const candidates: LoginResponseContainer[] = [
-        raw,
-        obj.data,
-        obj.result,
-        obj.user,
-        (obj.data as Record<string, unknown>)?.user,
-        (obj.data as Record<string, unknown>)?.result,
-      ].filter(
-        (c): c is LoginResponseContainer => c != null && typeof c === "object"
-      ) as LoginResponseContainer[];
-      for (const c of candidates) {
-        if (getTokenFromContainer(c)) return c;
+    // 先處理後端新登入流程：若 mfaRequired === true，代表需進入 MFA 第二階段（不寫入 token）。
+    const topLevel = json as
+      | (LoginSuccess & Record<string, unknown>)
+      | (Record<string, unknown> & { data?: unknown })
+      | null;
+
+    const dataLevel =
+      topLevel &&
+      typeof topLevel === "object" &&
+      "data" in topLevel &&
+      (topLevel as { data?: unknown }).data &&
+      typeof (topLevel as { data?: unknown }).data === "object"
+        ? ((topLevel as { data?: unknown }).data as LoginSuccess &
+            Record<string, unknown>)
+        : null;
+
+    const mfaContainer =
+      (dataLevel &&
+        (dataLevel as { mfaRequired?: unknown }).mfaRequired === true &&
+        dataLevel) ||
+      (topLevel &&
+        (topLevel as { mfaRequired?: unknown }).mfaRequired === true &&
+        (topLevel as LoginSuccess & Record<string, unknown>)) ||
+      null;
+
+    if (mfaContainer && (mfaContainer as { mfaRequired: true }).mfaRequired) {
+      const pendingToken = getString(
+        (mfaContainer as { pendingToken?: unknown }).pendingToken
+      );
+      if (!pendingToken) {
+        throw new Error(
+          "登入回應格式錯誤：缺少 MFA pendingToken，請聯絡系統管理員"
+        );
       }
-      return raw as LoginResponseContainer;
+
+      // MFA 登入第一階段：不寫入 token，僅暫存 pendingToken 供 MFA 驗證頁使用
+      clearAuthStorage();
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem("mfa_pending_token", pendingToken);
+        if (username) {
+          // 供 MFA 頁面顯示「正在為誰驗證」等提示
+          sessionStorage.setItem("mfa_username", username);
+        }
+      }
+
+      const mfaError = new Error("MFA_REQUIRED") as Error & {
+        code?: string;
+      };
+      mfaError.code = "MFA_REQUIRED";
+      throw mfaError;
     }
 
     const container = getEffectiveContainer(json);
@@ -241,34 +422,7 @@ export const authProvider: AuthProvider = {
       throw new Error("登入回應格式錯誤，請聯絡系統管理員");
     }
 
-    const token = getTokenFromContainer(container);
-    if (!token) {
-      throw new Error(
-        "登入回應格式錯誤：後端未回傳 token / accessToken，請確認 API 回傳格式（開發時請看主控台 🔐 Login response raw）"
-      );
-    }
-
-    const type = getTypeFromContainer(container);
-    const usernameFromPayload = getUsernameFromContainer(container);
-    const roleFromPayload = getRoleFromContainer(container);
-    const userIdFromPayload = getUserIdFromContainer(container);
-    const rolesFromPayload = getRolesFromContainer(container);
-    /** 後端未回傳使用者名稱時，以表單輸入的帳號為後備，確保 getIdentity 有值 */
-    const displayName = usernameFromPayload || username;
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("tokenType", type);
-    if (displayName) localStorage.setItem("username", displayName);
-    if (roleFromPayload) localStorage.setItem("role", roleFromPayload);
-    if (userIdFromPayload) localStorage.setItem("userId", userIdFromPayload);
-    // 一律覆寫 authRoles，避免沿用上一使用者（如管理員）的權限導致 ROLE_USER 仍看到編輯/刪除按鈕
-    const rolesToStore =
-      rolesFromPayload.length > 0
-        ? rolesFromPayload
-        : roleFromPayload
-          ? [roleFromPayload]
-          : ["ROLE_USER"];
-    localStorage.setItem("authRoles", JSON.stringify(rolesToStore));
+    applyLoginSuccessFromContainer(container, username);
   },
 
   logout: async () => {

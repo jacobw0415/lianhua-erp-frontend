@@ -11,6 +11,7 @@ export type ProfileCacheRecord = {
   roles?: string[];
   lastLoginAt?: string;
   createdAt?: string;
+  mfaEnabled?: boolean;
 };
 
 let profileCache: ProfileCacheRecord | null = null;

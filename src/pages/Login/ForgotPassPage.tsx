@@ -30,6 +30,7 @@ export const ForgotPassPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const { mode } = useColorMode();
   const isDark = mode === "dark";
@@ -59,6 +60,14 @@ export const ForgotPassPage = () => {
       body.style.background = prevBodyBackground;
     };
   }, [isDark]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setInterval(() => {
+      setCooldown((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [cooldown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +126,22 @@ export const ForgotPassPage = () => {
         setError(
           "此 Email 已有重設密碼請求，請至信箱（含垃圾郵件）查收先前寄出的連結；若未收到請稍後再試或聯絡管理員。"
         );
+        return;
+      }
+      // 400 過於頻繁 / Rate Limit
+      if (res.status === 400) {
+        const friendly =
+          /頻繁|稍後再試/i.test(message || "") ||
+          /嘗試過多/i.test(message || "")
+            ? "操作過於頻繁，請稍後再試。"
+            : "";
+        setError(friendly || "操作過於頻繁，請稍後再試。");
+        setCooldown(60);
+        return;
+      }
+      // 500：統一泛用錯誤訊息
+      if (res.status >= 500) {
+        setError("系統發生錯誤，請稍後再試或聯絡系統管理員");
         return;
       }
       setError(message || "發送失敗，請稍後再試或聯絡管理員");
@@ -256,7 +281,7 @@ export const ForgotPassPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               autoFocus
-              disabled={isSubmitting}
+              disabled={isSubmitting || cooldown > 0}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -282,7 +307,11 @@ export const ForgotPassPage = () => {
                 },
               }}
             >
-              {isSubmitting ? "發送中…" : "發送重設連結"}
+              {isSubmitting
+                ? "發送中…"
+                : cooldown > 0
+                  ? `請 ${cooldown} 秒後再試`
+                  : "發送重設連結"}
             </Button>
             <Box sx={{ mt: 2, textAlign: "center" }}>
               <Link

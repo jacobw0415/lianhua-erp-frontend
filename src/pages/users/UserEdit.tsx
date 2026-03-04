@@ -329,8 +329,9 @@ const UserFormFields: React.FC = () => {
                   helperText="請選擇此使用者在系統中的角色（單選）。"
                   row
                   choices={USER_ROLE_CHOICES}
+                  defaultValue=""
                   format={(value?: string[] | string) =>
-                    Array.isArray(value) ? value[0] : value
+                    Array.isArray(value) ? (value[0] ?? "") : (value ?? "")
                   }
                   parse={(value?: string) => (value ? [value] : [])}
                   validate={[(value?: string | string[]) => {
