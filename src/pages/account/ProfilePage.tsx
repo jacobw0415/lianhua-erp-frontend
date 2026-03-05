@@ -37,6 +37,7 @@ import {
 import { getApiUrl } from "@/config/apiUrl";
 import { QRCodeSVG } from "qrcode.react";
 import { getRoleDisplayName } from "@/constants/userRoles";
+import { DisableMfaVerifyDialog } from "@/components/common/DisableMfaVerifyDialog";
 
 /** 個人資料 API 回傳型別（含職稱；不含部門） */
 type UserRecord = ProfileCacheRecord;
@@ -161,6 +162,8 @@ const ProfilePage: React.FC = () => {
   const [mfaSetupSecret, setMfaSetupSecret] = useState<string | null>(null);
   const [mfaSetupQrUrl, setMfaSetupQrUrl] = useState<string | null>(null);
   const [mfaSetupCode, setMfaSetupCode] = useState("");
+  const [disableMfaDialogOpen, setDisableMfaDialogOpen] = useState(false);
+  const [disableMfaVerifyError, setDisableMfaVerifyError] = useState<string | null>(null);
   const [fullNameError, setFullNameError] = useState("");
   const [emailError, setEmailError] = useState("");
 
@@ -451,10 +454,17 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleDisableMfa = async () => {
+  /** 關閉 MFA：需帶 6 碼驗證碼，後端驗證通過後才關閉 */
+  const handleDisableMfa = async (verifyCode: string) => {
     if (!record) return;
+    const trimmed = verifyCode.trim();
+    if (!trimmed || trimmed.length !== 6) {
+      setDisableMfaVerifyError("請輸入 6 碼驗證碼。");
+      return;
+    }
     setMfaError(null);
     setMfaSuccess(null);
+    setDisableMfaVerifyError(null);
     setMfaLoading(true);
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
@@ -467,6 +477,7 @@ const ProfilePage: React.FC = () => {
       const res = await fetch(`${apiUrl}/auth/mfa/disable`, {
         method: "POST",
         headers,
+        body: JSON.stringify({ code: trimmed }),
       });
 
       const text = await res.text();
@@ -486,21 +497,22 @@ const ProfilePage: React.FC = () => {
           return;
         }
         if (res.status === 400) {
-          setMfaError(
-            message || "關閉 MFA 失敗，請稍後再試或聯絡系統管理員。"
+          setDisableMfaVerifyError(
+            message || "驗證碼錯誤，請再試一次。"
           );
           return;
         }
         if (res.status >= 500) {
-          setMfaError("系統發生錯誤，請稍後再試或聯絡系統管理員");
+          setDisableMfaVerifyError("系統發生錯誤，請稍後再試或聯絡系統管理員");
           return;
         }
-        setMfaError(
+        setDisableMfaVerifyError(
           message || "關閉 MFA 失敗，請稍後再試或聯絡系統管理員。"
         );
         return;
       }
 
+      setDisableMfaDialogOpen(false);
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem("mfaEnabled");
       }
@@ -519,26 +531,17 @@ const ProfilePage: React.FC = () => {
         showCheckIcon: true,
       });
     } catch {
-      setMfaError("關閉 MFA 失敗，請稍後再試或聯絡系統管理員。");
+      setDisableMfaVerifyError("關閉 MFA 失敗，請稍後再試或聯絡系統管理員。");
     } finally {
       setMfaLoading(false);
     }
   };
 
-  /** 點擊「關閉 MFA」時以專案通用 GlobalAlert 彈出確認視窗，確定後再執行關閉 */
+  /** 點擊「關閉 MFA」時開啟驗證彈窗，輸入 6 碼後送出 */
   const handleDisableMfaClick = () => {
     if (!record) return;
-    showAlert({
-      title: "關閉 MFA",
-      message: "確定要關閉 MFA 嗎？關閉後登入時將不再要求輸入 6 碼驗證碼。",
-      severity: "warning",
-      hideCancel: false,
-      confirmLabel: "確定關閉",
-      cancelLabel: "取消",
-      onConfirm: () => {
-        void handleDisableMfa();
-      },
-    });
+    setDisableMfaVerifyError(null);
+    setDisableMfaDialogOpen(true);
   };
 
   const rolesDisplay = (() => {
@@ -1019,6 +1022,19 @@ const ProfilePage: React.FC = () => {
           >
             修改密碼
           </Button>
+
+          <DisableMfaVerifyDialog
+            open={disableMfaDialogOpen}
+            onClose={() => {
+              setDisableMfaDialogOpen(false);
+              setDisableMfaVerifyError(null);
+            }}
+            onConfirm={(code) => {
+              void handleDisableMfa(code);
+            }}
+            error={disableMfaVerifyError}
+            loading={mfaLoading}
+          />
             </Box>
             </Box>
         </CardContent>
