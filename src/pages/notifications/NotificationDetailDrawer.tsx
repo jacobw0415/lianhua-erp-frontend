@@ -10,6 +10,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
 import { useTheme } from "@mui/material";
+import { getNotificationTargetTypeLabel } from "@/constants/notificationLabels";
 
 export interface NotificationDetail {
   id: number | string;
@@ -167,7 +168,7 @@ export const NotificationDetailDrawer: React.FC<NotificationDetailDrawerProps> =
                 sx={{ fontSize: { xs: "0.85rem", sm: "0.9rem" } }}
                 color="text.primary"
               >
-                {targetType || "-"} {targetId != null ? `#${targetId}` : ""}
+                {getNotificationTargetTypeLabel(targetType)}
               </Typography>
             </Box>
           )}

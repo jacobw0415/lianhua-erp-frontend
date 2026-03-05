@@ -1,13 +1,13 @@
-import { useEffect } from "react"; 
-import { useTheme } from "@mui/material"; 
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
+import { useEffect } from "react";
+import { useTheme } from "@mui/material";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   FunctionField,
+  type RaRecord,
 } from "react-admin";
 
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
@@ -15,6 +15,7 @@ import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { CurrencyField } from "@/components/money/CurrencyField";
+import { getEnumLabel } from "@/utils/enumValueMap";
 
 /**
  * 銷售紀錄列表
@@ -71,8 +72,14 @@ export const SaleList = () => {
       >
         <ResponsiveListDatagrid tabletLayout="card">
           <TextField source="productName" label="商品" />
-          <NumberField source="qty" label="數量" />
-          <TextField source="payMethod" label="付款方式" />
+          {/* 數量改用 TextField，與其他欄位一致靠左顯示 */}
+          <TextField source="qty" label="數量" />
+          <FunctionField
+            label="付款方式"
+            render={(record: RaRecord) =>
+              getEnumLabel("method", (record as any).payMethod)
+            }
+          />
           <CurrencyField source="amount" label="總金額" />
           <DateField source="saleDate" label="銷售日期" />
 

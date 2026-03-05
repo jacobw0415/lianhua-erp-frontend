@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
-import { List, TextField, DateField, FunctionField } from "react-admin";
+import { List, TextField, DateField, FunctionField, type RaRecord } from "react-admin";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
@@ -11,6 +11,7 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { OrderPaymentStatusField } from "@/components/common/OrderPaymentStatusField";
+import { getEnumLabel } from "@/utils/enumValueMap";
 
 import { OrderDetailDrawer } from "./OrderDetailDrawer";
 
@@ -154,7 +155,12 @@ export const OrderList = () => {
           <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
             <TextField source="orderNo" label="訂單編號" />
             <TextField source="customerName" label="客戶" />
-            <TextField source="orderStatus" label="訂單狀態" />
+            <FunctionField
+              label="訂單狀態"
+              render={(record: RaRecord) =>
+                getEnumLabel("orderStatus", (record as any).orderStatus)
+              }
+            />
             <OrderPaymentStatusField source="paymentStatus" label="收款狀態" />
             <CurrencyField source="totalAmount" label="訂單金額" />
             <DateField source="orderDate" label="訂單日期" />

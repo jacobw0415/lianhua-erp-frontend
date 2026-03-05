@@ -35,6 +35,7 @@ import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { PurchaseItemDetailDrawer } from "./PurchaseItemDetailDrawer";
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
+import { getEnumLabel } from "@/utils/enumValueMap";
 
 /* =========================================================
  * 型別定義
@@ -643,7 +644,12 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
                 >
                   <DateField source="payDate" label="付款日期" />
                   <CurrencyField source="amount" label="金額" />
-                  <TextField source="method" label="方式" />
+                  <FunctionField
+                    label="付款方式"
+                    render={(record: PaymentRow) =>
+                      getEnumLabel("method", record.method)
+                    }
+                  />
                   <FunctionField
                     label="狀態"
                     render={(record: PaymentRow) => (

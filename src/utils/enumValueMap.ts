@@ -20,6 +20,13 @@ export const enumValueMap: Record<string, Record<string, string>> = {
     PARTIAL: "部分付款",
     PAID: "已付款",
   },
+  // 訂單狀態
+  orderStatus: {
+    PENDING: "待確認",
+    CONFIRMED: "已確認",
+    DELIVERED: "已交付",
+    CANCELLED: "已取消",
+  },
   // 帳齡區間
   agingBucket: {
     ALL: "全部",
@@ -28,3 +35,13 @@ export const enumValueMap: Record<string, Record<string, string>> = {
     DAYS_60_PLUS: "60 天以上",
   },
 };
+
+export const getEnumLabel = (
+  key: keyof typeof enumValueMap,
+  value?: string | null,
+): string => {
+  if (!value) return "-";
+  const map = enumValueMap[key];
+  return map?.[value] ?? value;
+};
+

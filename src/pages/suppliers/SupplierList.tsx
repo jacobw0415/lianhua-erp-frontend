@@ -5,6 +5,7 @@ import {
   List,
   TextField,
   FunctionField,
+  type RaRecord,
 } from "react-admin";
 
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
@@ -13,6 +14,7 @@ import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { SupplierStatusToggle } from "./SupplierStatusToggle";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+import { getEnumLabel } from "@/utils/enumValueMap";
 
 export const SupplierList = () => {
   const theme = useTheme();
@@ -64,7 +66,12 @@ export const SupplierList = () => {
           <TextField source="name" label="供應商名稱" />
           <TextField source="contact" label="聯絡人" />
           <TextField source="phone" label="電話" />
-          <TextField source="billingCycle" label="結帳週期" />
+          <FunctionField
+            label="結帳週期"
+            render={(record: RaRecord) =>
+              getEnumLabel("billingCycle", (record as any).billingCycle)
+            }
+          />
           <TextField source="note" label="備註" />
 
           {/* 統一高度 + 置中 */}

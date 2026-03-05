@@ -13,6 +13,7 @@ import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+import { getNotificationTargetTypeLabel } from "@/constants/notificationLabels";
 import {
   NotificationDetailDrawer,
   type NotificationDetail,
@@ -59,11 +60,13 @@ export const NotificationList = () => {
       >
         <StyledListWrapper disableCreate disableButton>
           <ResponsiveListDatagrid tabletLayout="card">
-            <TextField source="targetType" label="類別" />
+            <FunctionField
+              label="類別"
+              render={(record: RaRecord) =>
+                getNotificationTargetTypeLabel((record as any).targetType)
+              }
+            />
             <TextField source="title" label="主旨" sortable={false} />
-
-            {/* 🚀 修正 2：內容摘要不可排序，避免觸發 No property 'content' 錯誤 */}
-            <TextField source="content" label="內容摘要" sortable={false} />
 
             <DateField
               source="createdAt"

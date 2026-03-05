@@ -2,6 +2,7 @@ import {
   List,
   TextField,
   FunctionField,
+  type RaRecord,
 } from "react-admin";
 import { useTheme } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
@@ -10,6 +11,7 @@ import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagr
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActionColumns } from "@/components/common/ActionColumns";
+import { getEnumLabel } from "@/utils/enumValueMap";
 import { useEffect } from "react";
 
 /**
@@ -66,7 +68,12 @@ export const OrderCustomerList = () => {
         <TextField source="contactPerson" label="聯絡人" />
         <TextField source="phone" label="電話" />
         <TextField source="address" label="地址" />
-        <TextField source="billingCycle" label="結帳週期" />
+        <FunctionField
+          label="結帳週期"
+          render={(record: RaRecord) =>
+            getEnumLabel("billingCycle", (record as any).billingCycle)
+          }
+        />
         <TextField source="note" label="備註" />
 
         {/* 操作欄（查看 / 編輯 / 刪除） */}

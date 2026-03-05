@@ -19,6 +19,7 @@ import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { CurrencyField } from "@/components/money/CurrencyField";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { getEnumLabel } from "@/utils/enumValueMap";
 
 /* -------------------------------------------------------
  * 🔐 Purchase 型別定義 (同步 Drawer 的欄位)
@@ -100,9 +101,17 @@ const PurchaseFormFields: React.FC = () => {
   // 修改判斷邏輯：同步 Drawer 使用 recordStatus
   const isVoided = record.recordStatus === "VOIDED";
 
+  const purchaseStatusLabelMap: Record<NonNullable<Purchase["status"]>, string> = {
+    PENDING: "未付款",
+    PARTIAL: "部分付款",
+    PAID: "已付款",
+  };
+
   const payments = (record.payments || []).map((p, index) => ({
     id: index + 1,
     ...p,
+    // 將付款方式代碼轉為中文，供「歷史付款紀錄」使用
+    method: p.method ? getEnumLabel("method", p.method) : undefined,
   }));
 
   return (
@@ -287,7 +296,12 @@ const PurchaseFormFields: React.FC = () => {
               severity={isVoided ? "error" : record.status === "PAID" ? "success" : "info"}
               sx={{ mt: 0.3 }}
             >
-              狀態：{isVoided ? "已作廢" : record.status}
+              狀態：
+              {isVoided
+                ? "已作廢"
+                : record.status
+                  ? purchaseStatusLabelMap[record.status] ?? record.status
+                  : "-"}
             </Alert>
           </Box>
         </Box>

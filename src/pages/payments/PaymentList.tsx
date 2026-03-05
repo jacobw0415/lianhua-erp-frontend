@@ -10,6 +10,7 @@ import {
   useNotify,
   useRefresh,
   useRedirect,
+  type RaRecord,
 } from "react-admin";
 import { Button } from "@mui/material";
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
@@ -18,6 +19,7 @@ import { CurrencyField } from "@/components/money/CurrencyField";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { PaymentStatusField } from "@/components/common/PaymentStatusField";
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
+import { getEnumLabel } from "@/utils/enumValueMap";
 
 /* =========================================================
  * 型別定義（Payment List Row）
@@ -163,7 +165,12 @@ export const PaymentList = () => {
           <TextField source="supplierName" label="供應商" />
           <DateField source="payDate" label="付款日期" />
           <CurrencyField source="amount" label="金額" />
-          <TextField source="method" label="付款方式" />
+          <FunctionField
+            label="付款方式"
+            render={(record: RaRecord) =>
+              getEnumLabel("method", (record as any).method)
+            }
+          />
           {/* 狀態欄位 */}
           <FunctionField
             label="狀態"
