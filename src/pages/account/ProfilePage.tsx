@@ -141,7 +141,7 @@ const apiUrl = getApiUrl();
 
 const ProfilePage: React.FC = () => {
   const theme = useTheme();
-  const { data: identity } = useGetIdentity();
+  useGetIdentity(); // 保持 auth 上下文；個人資料每次進入頁面由 useEffect 呼叫 fetchProfile 取得最新資料
   const dataProvider = useDataProvider();
   const { showAlert } = useGlobalAlert();
 
@@ -212,9 +212,11 @@ const ProfilePage: React.FC = () => {
     return cleanup;
   }, [theme]);
 
+  // 每次進入個人資料頁都重新請求 GET /api/users/me，不依賴登入時快取；
+  // 這樣在啟用 MFA 後再進此頁即可取得 mfaEnabled: true 並顯示「已啟用」，無需重新登入。
   useEffect(() => {
     fetchProfile();
-  }, [identity, fetchProfile]);
+  }, [fetchProfile]);
 
   const isDirty = useMemo(() => {
     if (!record) return false;
@@ -405,6 +407,10 @@ const ProfilePage: React.FC = () => {
       }
 
       if (!res.ok) {
+        if (res.status === 401) {
+          void authProvider.checkError({ message: "Unauthorized", status: 401 } as unknown as Error);
+          return;
+        }
         if (res.status === 400) {
           setMfaError("驗證碼錯誤或已過期，請確認驗證器時間與輸入內容後再試一次。");
           return;
@@ -425,8 +431,19 @@ const ProfilePage: React.FC = () => {
       } as UserRecord & { mfaEnabled?: boolean };
       setRecord(updated);
       setProfileCache(updated);
-      setMfaSuccess("MFA 已啟用。下次登入時將需要輸入 6 碼驗證碼。");
       setMfaSetupCode("");
+      // 驗證成功後立即收合 QR code／密鑰區，不再暴露；畫面會顯示「已啟用」且按鈕改為「關閉 MFA」
+      setMfaSetupSecret(null);
+      setMfaSetupQrUrl(null);
+      // 與其他頁面一致：以彈跳視窗顯示成功訊息，打勾 icon 強化主視覺，按確認後關閉並停留在個人資料頁
+      showAlert({
+        title: "MFA 已啟用",
+        message: "下次登入時將需要輸入 6 碼驗證碼。",
+        severity: "success",
+        hideCancel: true,
+        confirmLabel: "確定",
+        showCheckIcon: true,
+      });
     } catch {
       setMfaError("啟用 MFA 失敗，請稍後再試。");
     } finally {
@@ -436,7 +453,6 @@ const ProfilePage: React.FC = () => {
 
   const handleDisableMfa = async () => {
     if (!record) return;
-    if (!window.confirm("確定要關閉 MFA 嗎？關閉後登入時將不再要求輸入 6 碼驗證碼。")) return;
     setMfaError(null);
     setMfaSuccess(null);
     setMfaLoading(true);
@@ -465,6 +481,10 @@ const ProfilePage: React.FC = () => {
       }
 
       if (!res.ok) {
+        if (res.status === 401) {
+          void authProvider.checkError({ message: "Unauthorized", status: 401 } as unknown as Error);
+          return;
+        }
         if (res.status === 400) {
           setMfaError(
             message || "關閉 MFA 失敗，請稍後再試或聯絡系統管理員。"
@@ -484,21 +504,41 @@ const ProfilePage: React.FC = () => {
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem("mfaEnabled");
       }
-      const updated = {
-        ...(record as any),
-        mfaEnabled: false,
-      } as UserRecord & { mfaEnabled?: boolean };
-      setRecord(updated);
-      setProfileCache(updated);
-      setMfaSuccess("MFA 已關閉。之後登入將不再需要輸入 6 碼驗證碼。");
       setMfaSetupSecret(null);
       setMfaSetupQrUrl(null);
       setMfaSetupCode("");
+      // 成功後呼叫 GET /api/users/me 取得更新後的個人資料（含 mfaEnabled: false），以更新畫面狀態
+      fetchProfile();
+      // 與啟用 MFA 一致：以彈跳視窗顯示成功訊息，打勾 icon 強化主視覺，按確認後關閉並停留在個人資料頁
+      showAlert({
+        title: "MFA 已關閉",
+        message: "之後登入將不再需要輸入 6 碼驗證碼。",
+        severity: "success",
+        hideCancel: true,
+        confirmLabel: "確定",
+        showCheckIcon: true,
+      });
     } catch {
       setMfaError("關閉 MFA 失敗，請稍後再試或聯絡系統管理員。");
     } finally {
       setMfaLoading(false);
     }
+  };
+
+  /** 點擊「關閉 MFA」時以專案通用 GlobalAlert 彈出確認視窗，確定後再執行關閉 */
+  const handleDisableMfaClick = () => {
+    if (!record) return;
+    showAlert({
+      title: "關閉 MFA",
+      message: "確定要關閉 MFA 嗎？關閉後登入時將不再要求輸入 6 碼驗證碼。",
+      severity: "warning",
+      hideCancel: false,
+      confirmLabel: "確定關閉",
+      cancelLabel: "取消",
+      onConfirm: () => {
+        void handleDisableMfa();
+      },
+    });
   };
 
   const rolesDisplay = (() => {
@@ -877,7 +917,7 @@ const ProfilePage: React.FC = () => {
                   variant="outlined"
                   color="error"
                   disabled={mfaLoading}
-                  onClick={handleDisableMfa}
+                  onClick={handleDisableMfaClick}
                   sx={{ minHeight: 40 }}
                 >
                   關閉 MFA

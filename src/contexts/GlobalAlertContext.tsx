@@ -28,6 +28,8 @@ export interface AlertPayload {
   cancelLabel?: string;
   hideCancel?: boolean;
   hideButtons?: boolean;
+  /** 是否顯示打勾確認 icon（主視覺強化，適用成功類彈窗） */
+  showCheckIcon?: boolean;
   onConfirm?: () => void;
 }
 
@@ -72,6 +74,7 @@ export const GlobalAlertProvider = ({
     cancelLabel: "取消",
     hideCancel: true,
     hideButtons: false,
+    showCheckIcon: false,
     onConfirm: undefined,
   });
 
@@ -89,6 +92,7 @@ export const GlobalAlertProvider = ({
       cancelLabel: payload.cancelLabel ?? "取消",
       hideCancel: payload.hideCancel ?? true,
       hideButtons: payload.hideButtons ?? false,
+      showCheckIcon: payload.showCheckIcon ?? false,
       onConfirm: payload.onConfirm,
     });
   }, []);
@@ -123,6 +127,7 @@ export const GlobalAlertProvider = ({
         cancelLabel={state.cancelLabel}
         hideCancel={state.hideCancel}
         hideButtons={state.hideButtons}
+        showCheckIcon={state.showCheckIcon}
         onClose={hideAlert}
         onConfirm={() => {
           state.onConfirm?.();

@@ -6,6 +6,7 @@ import {
   Button,
   Typography,
 } from "@mui/material";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 interface GlobalAlertDialogProps {
   open: boolean;
@@ -17,6 +18,8 @@ interface GlobalAlertDialogProps {
   cancelLabel?: string;
   hideCancel?: boolean;
   hideButtons?: boolean;
+  /** 顯示打勾確認 icon，強化主視覺（適用成功類彈窗） */
+  showCheckIcon?: boolean;
   onClose: () => void;
   onConfirm?: () => void;
 }
@@ -31,6 +34,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   cancelLabel = "取消",
   hideCancel,
   hideButtons,
+  showCheckIcon,
   onClose,
   onConfirm,
 }) => {
@@ -115,6 +119,18 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
       }}
     >
       <DialogContent sx={{ textAlign: "center" }}>
+        {showCheckIcon && (
+          <CheckCircleOutlineIcon
+            sx={{
+              display: "block",
+              mx: "auto",
+              mb: 1.5,
+              fontSize: 56,
+              color: severity === "success" ? "#4CAF50" : "primary.main",
+            }}
+            aria-hidden
+          />
+        )}
         <Typography
           variant="h6"
           sx={{ mb: 1.5, fontWeight: 700, color: "white" }}

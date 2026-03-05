@@ -253,6 +253,7 @@ const App = () => {
         create={EmployeeCreate}
         edit={EmployeeEdit}
       />
+      {/* 使用者管理：僅隱藏列表頂端預設 + Create，仍保留共用「新增資料」按鈕與 create 路由 */}
       <Resource
         name="users"
         list={UserList}

@@ -5,7 +5,6 @@ import {
   List,
   TextField,
   FunctionField,
-  CreateButton,
   type RaRecord,
 } from "react-admin";
 
@@ -15,18 +14,8 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { getRoleDisplayName } from "@/constants/userRoles";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
 
-/** 使用者列表頂部操作：僅 ROLE_ADMIN 或具 user:create 時顯示新增（依 localStorage.authRoles，不依賴 usePermissions 快取） */
-const UserListActions = () => {
-  const roles = getStoredAuthRoles();
-  const canCreate =
-    roles.some((r) => r === "ROLE_ADMIN") || hasStoredAuthority(roles, "user:create");
-  if (!canCreate) return null;
-  return <CreateButton />;
-};
-
-/** 使用者列表（/api/users） */
+/** 使用者列表（/api/users）；頂端不顯示預設 + Create，改由共用「新增資料」按鈕新增 */
 export const UserList = () => {
   const theme = useTheme();
 
@@ -38,7 +27,7 @@ export const UserList = () => {
   return (
     <List
       title="使用者管理"
-      actions={<UserListActions />}
+      actions={false}
       empty={false}
       pagination={<CustomPaginationBar showPerPage={true} />}
       perPage={10}
