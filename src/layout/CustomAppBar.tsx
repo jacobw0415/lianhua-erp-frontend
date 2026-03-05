@@ -431,6 +431,17 @@ export const CustomAppBar = (props: AppBarProps) => {
                         ) : (
                             notifications.map((n) => {
                                 const isUnread = !n.read;
+
+                                // 單號 / 金額 / 原因 各自一行，移除多餘空白行
+                                const rawContent = (n.content || "")
+                                    .replace(/(金額)/g, "\n$1")
+                                    .replace(/(原因)/g, "\n$1");
+                                const formattedContent = rawContent
+                                    .split(/\r?\n/)
+                                    .map((line) => line.trim())
+                                    .filter((line) => line.length > 0)
+                                    .join("\n");
+
                                 return (
                                     <MenuItem
                                         key={n.id || n.userNotificationId}
@@ -457,7 +468,13 @@ export const CustomAppBar = (props: AppBarProps) => {
                                                 <Typography variant="body1" sx={{ fontWeight: 800 }}>{n.title}</Typography>
                                                 {isUnread && <FiberManualRecordIcon sx={{ color: 'success.main', fontSize: 12 }} />}
                                             </Box>
-                                            <Typography variant="body2" color="text.secondary">{n.content}</Typography>
+                                            <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                                sx={{ whiteSpace: 'pre-line' }}
+                                            >
+                                                {formattedContent}
+                                            </Typography>
                                             <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.disabled' }}>
                                                 {dayjs(n.createdAt).format("YYYY-MM-DD HH:mm")}
                                             </Typography>

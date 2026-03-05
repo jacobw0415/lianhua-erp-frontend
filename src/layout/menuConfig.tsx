@@ -133,7 +133,8 @@ export const menuGroups: MenuGroup[] = [
       { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["role:view"] },
       { label: "個人資料", to: "/profile", icon: <AccountCircleIcon /> },
       { label: "修改密碼", to: "/change-password", icon: <PasswordIcon /> },
-      { label: "通知中心", to: "/notifications", icon: <NotificationIcon />, requiredAuthorities: ["notification:view"] },
+      // 系統管理員一律可見通知中心；一般使用者依 notification:view 權限控制
+      { label: "通知中心", to: "/notifications", icon: <NotificationIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["notification:view"] },
     ],
   },
 ];

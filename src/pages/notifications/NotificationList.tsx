@@ -1,30 +1,53 @@
-import { useEffect } from "react";
-  import { useTheme, Box } from "@mui/material";
-  import {
-    List,
-    TextField,
-    DateField,
-    FunctionField,
-    type RaRecord
-  } from "react-admin";
-  import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { useEffect, useState } from "react";
+import { useTheme, Box, IconButton } from "@mui/material";
+import {
+  List,
+  TextField,
+  DateField,
+  FunctionField,
+  type RaRecord,
+} from "react-admin";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-  import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
-  import { StyledListWrapper } from "@/components/common/StyledListWrapper";
-  import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
+import { StyledListWrapper } from "@/components/common/StyledListWrapper";
+import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+import {
+  NotificationDetailDrawer,
+  type NotificationDetail,
+} from "./NotificationDetailDrawer";
 
-  /**
-   * 通知中心列表 - 純資訊顯示 (優化狀態欄對齊)
-   */
-  export const NotificationList = () => {
-    const theme = useTheme();
+/**
+ * 通知中心列表 - 純資訊顯示 + 詳細 Drawer
+ */
+export const NotificationList = () => {
+  const theme = useTheme();
+  const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
+  const [selectedNotification, setSelectedNotification] =
+    useState<NotificationDetail | null>(null);
 
-    useEffect(() => {
-      const cleanup = applyBodyScrollbarStyles(theme);
-      return cleanup;
-    }, [theme]);
+  useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
 
-    return (
+  const openDetails = (record: RaRecord) => {
+    const row = record as any;
+    setSelectedNotification({
+      id: row.id,
+      title: row.title ?? "",
+      content: row.content ?? "",
+      targetType: row.targetType ?? "",
+      targetId: row.targetId,
+      createdAt: row.createdAt ?? "",
+      read: Boolean(row.read),
+    });
+    setOpenDetailDrawer(true);
+  };
+
+  return (
+    <>
       <List
         title="通知中心"
         actions={false}
@@ -34,14 +57,11 @@ import { useEffect } from "react";
         pagination={<CustomPaginationBar showPerPage={true} />}
         perPage={10}
       >
-        <StyledListWrapper
-          disableCreate
-          disableButton
-        >
+        <StyledListWrapper disableCreate disableButton>
           <ResponsiveListDatagrid tabletLayout="card">
             <TextField source="targetType" label="類別" />
-            <TextField source="title" label="主旨" sortable={false}/>
-            
+            <TextField source="title" label="主旨" sortable={false} />
+
             {/* 🚀 修正 2：內容摘要不可排序，避免觸發 No property 'content' 錯誤 */}
             <TextField source="content" label="內容摘要" sortable={false} />
 
@@ -53,7 +73,23 @@ import { useEffect } from "react";
               showTime
               options={{ hour12: false }}
             />
-            
+
+            <FunctionField
+              label="詳情"
+              render={(record: RaRecord) => (
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDetails(record);
+                  }}
+                  title="查看完整內容"
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              )}
+            />
+
             <FunctionField
               label="狀態"
               // 🚀 修正 4：狀態建議也關閉排序，除非後端有實作 read 的排序邏輯
@@ -61,7 +97,7 @@ import { useEffect } from "react";
               render={(record: RaRecord) => {
                 const row = record as any;
                 const isRead = row.read;
-                const activeGreen = "#00DD00";  
+                const activeGreen = "#00DD00";
 
                 return (
                   <Box
@@ -116,5 +152,12 @@ import { useEffect } from "react";
           </ResponsiveListDatagrid>
         </StyledListWrapper>
       </List>
-    );
-  };
+
+      <NotificationDetailDrawer
+        open={openDetailDrawer}
+        onClose={() => setOpenDetailDrawer(false)}
+        notification={selectedNotification ?? undefined}
+      />
+    </>
+  );
+};

@@ -203,12 +203,20 @@ function getUserIdFromContainer(c: LoginResponseContainer): string | undefined {
   return undefined;
 }
 
-/** 從登入回應取出 roles（完整 authorities：ROLE_ADMIN, user:view, product:edit …），供 RBAC 與 hasAuthority */
+/** 從登入回應取出 roles + authorities + roleNames（完整權限：ROLE_ADMIN, user:view, product:edit …），供 RBAC 與 hasAuthority */
 function getRolesFromContainer(c: LoginResponseContainer): string[] {
-  const raw = c.roles ?? c.authorities ?? c.roleNames;
-  if (Array.isArray(raw) && raw.length > 0) {
-    return raw.map((r) => (r != null ? String(r).trim() : "")).filter(Boolean);
+  // 後端可能同時回傳 roles、authorities、roleNames，這裡一律合併處理，避免只取其一導致細部權限遺失
+  const rolesPart = Array.isArray(c.roles) ? c.roles : [];
+  const authPart = Array.isArray(c.authorities) ? c.authorities : [];
+  const roleNamesPart = Array.isArray(c.roleNames) ? c.roleNames : [];
+
+  const raw = [...rolesPart, ...authPart, ...roleNamesPart];
+  if (raw.length > 0) {
+    return raw
+      .map((r) => (r != null ? String(r).trim() : ""))
+      .filter(Boolean);
   }
+
   const role = getRoleFromContainer(c);
   if (role) return [role];
   const nested = c.user ?? c.result ?? c.data;
