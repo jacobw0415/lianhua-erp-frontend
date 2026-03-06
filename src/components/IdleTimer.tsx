@@ -90,7 +90,13 @@ export const IdleTimer: React.FC<{ children: React.ReactNode }> = ({ children })
 
   const broadcast = useCallback(
     (msg: AuthBroadcastMessage) => {
-      channel?.postMessage(msg);
+      if (!channel) return;
+      try {
+        // 若 channel 已被關閉，postMessage 會丟出 InvalidStateError；此時直接忽略即可
+        channel.postMessage(msg);
+      } catch {
+        // ignore InvalidStateError or other BroadcastChannel errors
+      }
     },
     [channel]
   );
