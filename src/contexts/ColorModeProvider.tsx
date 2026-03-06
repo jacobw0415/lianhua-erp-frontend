@@ -1,14 +1,17 @@
 import { useState, type PropsWithChildren } from "react";
 import { ColorModeContext } from "./ColorModeContext";
 
+const getInitialMode = (): "light" | "dark" => {
+    if (typeof localStorage === "undefined") return "light";
+    return localStorage.getItem("themeMode") === "dark" ? "dark" : "light";
+};
+
 export const ColorModeProvider = ({ children }: PropsWithChildren) => {
-    const [mode, setModeState] = useState<"light" | "dark">(
-        localStorage.getItem("themeMode") === "dark" ? "dark" : "light"
-    );
+    const [mode, setModeState] = useState<"light" | "dark">(getInitialMode);
 
     const setMode = (m: "light" | "dark") => {
         setModeState(m);
-        localStorage.setItem("themeMode", m);
+        if (typeof localStorage !== "undefined") localStorage.setItem("themeMode", m);
     };
 
     return (

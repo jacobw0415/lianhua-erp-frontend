@@ -38,7 +38,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import dayjs from "dayjs";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
 import {
   CREATE_PERMISSION_BY_RESOURCE,
   EXPORT_PERMISSION_BY_RESOURCE,
@@ -96,7 +96,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   /** RBAC：新增 / 匯出按鈕權限 */
   const storedRoles = getStoredAuthRoles();
-  const isAdmin = storedRoles.some((r) => r === "ROLE_ADMIN");
+  const isAdmin = hasRoleAdmin(storedRoles);
   const requiredCreateAuth =
     resource && CREATE_PERMISSION_BY_RESOURCE[resource]
       ? CREATE_PERMISSION_BY_RESOURCE[resource]

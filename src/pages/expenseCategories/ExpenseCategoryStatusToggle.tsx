@@ -6,7 +6,7 @@ import {
   useRefresh,
 } from "react-admin";
 import { useState } from "react";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
 
 /* =========================================================
  * 型別定義
@@ -52,11 +52,9 @@ export const ExpenseCategoryStatusToggle = () => {
   const refresh = useRefresh();
   const [loading, setLoading] = useState(false);
 
-  // RBAC：僅 ROLE_ADMIN 或具 expense:edit 權限時允許切換狀態
+  // RBAC：ROLE_ADMIN / ROLE_SUPER_ADMIN 或具 expense:edit 權限時允許切換狀態
   const roles = getStoredAuthRoles();
-  const canToggle =
-    roles.some((r) => r === "ROLE_ADMIN") ||
-    hasStoredAuthority(roles, "expense:edit");
+  const canToggle = hasRoleAdmin(roles) || hasStoredAuthority(roles, "expense:edit");
 
   // ⛔ 早期 return 一定要放在 hooks 之後
   if (!record || !canToggle) return null;

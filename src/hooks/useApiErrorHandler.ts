@@ -59,7 +59,8 @@ export const useApiErrorHandler = (globalAlert: GlobalAlertApi) => {
 
     let message = extractMessage(error);
     if (status === 403) {
-      message = message || "權限不足，請聯絡系統管理員";
+      message = message || "您沒有權限執行此操作。";
+      message += " 請返回列表或聯絡系統管理員。";
     }
 
     globalAlert.showAlert({

@@ -184,10 +184,14 @@ function getUsernameFromContainer(c: LoginResponseContainer): string {
 function getRoleFromContainer(c: LoginResponseContainer): string | undefined {
   const role = getString(c.role);
   if (role) return role;
-  if (Array.isArray(c.roles) && c.roles[0] != null)
-    return getString(c.roles[0]);
-  if (Array.isArray(c.authorities) && c.authorities[0] != null)
-    return getString(c.authorities[0]);
+  if (Array.isArray(c.roles) && c.roles[0] != null) {
+    const r = normalizeRoleItem(c.roles[0]);
+    if (r) return r;
+  }
+  if (Array.isArray(c.authorities) && c.authorities[0] != null) {
+    const r = normalizeRoleItem(c.authorities[0]);
+    if (r) return r;
+  }
   const nested = c.user ?? c.result ?? c.data;
   if (nested && typeof nested === "object")
     return getRoleFromContainer(nested as LoginResponseContainer);
@@ -203,18 +207,44 @@ function getUserIdFromContainer(c: LoginResponseContainer): string | undefined {
   return undefined;
 }
 
-/** 從登入回應取出 roles + authorities + roleNames（完整權限：ROLE_ADMIN, user:view, product:edit …），供 RBAC 與 hasAuthority */
-function getRolesFromContainer(c: LoginResponseContainer): string[] {
-  // 後端可能同時回傳 roles、authorities、roleNames，這裡一律合併處理，避免只取其一導致細部權限遺失
-  const rolesPart = Array.isArray(c.roles) ? c.roles : [];
-  const authPart = Array.isArray(c.authorities) ? c.authorities : [];
-  const roleNamesPart = Array.isArray(c.roleNames) ? c.roleNames : [];
+/**
+ * 將單一權限項目轉成字串（支援後端回傳字串或 { authority: "ROLE_xxx" } 物件，常見於 Spring Security）
+ */
+function normalizeRoleItem(r: unknown): string {
+  if (r == null) return "";
+  if (typeof r === "string") return r.trim();
+  if (typeof r === "object" && r !== null && "authority" in r) {
+    const a = (r as { authority?: unknown }).authority;
+    return a != null ? String(a).trim() : "";
+  }
+  return String(r).trim();
+}
 
-  const raw = [...rolesPart, ...authPart, ...roleNamesPart];
+/** 從登入回應取出 roles + authorities + roleNames（完整權限：ROLE_ADMIN, ROLE_SUPER_ADMIN, admin:manage …），供 RBAC 與 hasAuthority */
+function getRolesFromContainer(c: LoginResponseContainer): string[] {
+  // 從當前層與巢狀層收集所有可能的 roles/authorities/roleNames，避免因後端放在 data.user.roles 等而漏讀
+  const collect = (obj: LoginResponseContainer | null | undefined): unknown[] => {
+    if (!obj || typeof obj !== "object") return [];
+    const roles = Array.isArray(obj.roles) ? obj.roles : [];
+    const auth = Array.isArray(obj.authorities) ? obj.authorities : [];
+    const names = Array.isArray(obj.roleNames) ? obj.roleNames : [];
+    const fromNested = [
+      (obj as { user?: LoginResponseContainer }).user,
+      (obj as { result?: LoginResponseContainer }).result,
+      (obj as { data?: LoginResponseContainer }).data,
+    ]
+      .filter((n): n is LoginResponseContainer => n != null && typeof n === "object")
+      .flatMap(collect);
+    return [...roles, ...auth, ...names, ...fromNested];
+  };
+
+  const raw = collect(c);
   if (raw.length > 0) {
-    return raw
-      .map((r) => (r != null ? String(r).trim() : ""))
-      .filter(Boolean);
+    const normalized = raw.map(normalizeRoleItem).filter(Boolean);
+    if (normalized.length > 0) {
+      // 去重，避免巢狀收集導致重複（且 hasStoredAuthority 等判斷更一致）
+      return [...new Set(normalized)];
+    }
   }
 
   const role = getRoleFromContainer(c);

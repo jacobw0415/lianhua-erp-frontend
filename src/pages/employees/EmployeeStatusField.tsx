@@ -6,7 +6,7 @@ import {
   useRefresh,
 } from "react-admin";
 import { useState } from "react";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
 
 /* =========================================================
  * 型別定義
@@ -51,11 +51,9 @@ export const EmployeeStatusField = () => {
   const refresh = useRefresh();
   const [loading, setLoading] = useState(false);
 
-  // RBAC：僅 ROLE_ADMIN 或具 user:edit 權限時允許切換啟用狀態
+  // RBAC：ROLE_ADMIN / ROLE_SUPER_ADMIN 或具 user:edit 權限時允許切換啟用狀態
   const roles = getStoredAuthRoles();
-  const canToggle =
-    roles.some((r) => r === "ROLE_ADMIN") ||
-    hasStoredAuthority(roles, "user:edit");
+  const canToggle = hasRoleAdmin(roles) || hasStoredAuthority(roles, "user:edit");
 
   // ⛔ early return 一定在 hooks 之後
   if (!record || !canToggle) return null;

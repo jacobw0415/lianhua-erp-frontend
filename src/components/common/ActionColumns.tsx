@@ -15,7 +15,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { clearProfileCache } from "@/utils/profileCache";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import {
+  getStoredAuthRoles,
+  hasStoredAuthority,
+  hasRoleAdmin,
+  canManageAdmin,
+  isUserRecordAdmin,
+} from "@/utils/authStorage";
 import {
   EDIT_PERMISSION_BY_RESOURCE,
   DELETE_PERMISSION_BY_RESOURCE,
@@ -52,13 +58,19 @@ export const ActionColumns = () => {
 
   // 一律從 localStorage 讀取 authRoles（登入時寫入），避免 React Admin usePermissions 快取導致按鈕未依角色隱藏
   const storedRoles = getStoredAuthRoles();
-  const hasRoleAdmin = (storedRoles ?? []).some((r) => r === "ROLE_ADMIN");
   const isUsersResource =
     resource === "users" || resource === "user" || resource == null;
 
+  // 使用者資源：該列為管理員時僅超級管理員（admin:manage / ROLE_SUPER_ADMIN）可編輯/刪除；一般使用者則有 user:edit 即可
+  const superCanManageAdmin = canManageAdmin();
+  const targetIsAdmin = isUsersResource ? isUserRecordAdmin(record ?? null) : false;
+
   const canEdit = isUsersResource
-    ? hasRoleAdmin
-    : hasRoleAdmin ||
+    ? targetIsAdmin
+      ? superCanManageAdmin
+      : hasRoleAdmin(storedRoles) ||
+        hasStoredAuthority(storedRoles ?? [], "user:edit")
+    : hasRoleAdmin(storedRoles) ||
       (EDIT_PERMISSION_BY_RESOURCE[resource]
         ? hasStoredAuthority(
             storedRoles ?? [],
@@ -66,8 +78,11 @@ export const ActionColumns = () => {
           )
         : false);
   const canDelete = isUsersResource
-    ? hasRoleAdmin
-    : hasRoleAdmin ||
+    ? targetIsAdmin
+      ? superCanManageAdmin
+      : hasRoleAdmin(storedRoles) ||
+        hasStoredAuthority(storedRoles ?? [], "user:edit")
+    : hasRoleAdmin(storedRoles) ||
       (DELETE_PERMISSION_BY_RESOURCE[resource]
         ? hasStoredAuthority(
             storedRoles ?? [],

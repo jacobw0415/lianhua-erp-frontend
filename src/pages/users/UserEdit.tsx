@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useTheme, Box, Typography, Divider, Alert, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
@@ -17,7 +17,8 @@ import { useFormContext } from "react-hook-form";
 import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { USER_ROLE_CHOICES, getRoleDisplayName } from "@/constants/userRoles";
+import { getRoleChoicesForUserForm, getRoleDisplayName } from "@/constants/userRoles";
+import { canManageAdmin } from "@/utils/authStorage";
 import {
   editNewPasswordValidators,
   emailValidators,
@@ -130,6 +131,12 @@ const UserFormFields: React.FC = () => {
   const record = useRecordContext<User>();
   const { data: identity } = useGetIdentity();
   const { setValue } = useFormContext();
+
+  /** 編輯他人時，僅超級管理員可看到/選擇管理員角色選項 */
+  const roleChoices = useMemo(
+    () => getRoleChoicesForUserForm(canManageAdmin()),
+    []
+  );
 
   /** 是否正在編輯自己（與後端「不可變更自己的角色/啟用」對齊） */
   const isEditingSelf =
@@ -328,7 +335,7 @@ const UserFormFields: React.FC = () => {
                   label="角色"
                   helperText="請選擇此使用者在系統中的角色（單選）。"
                   row
-                  choices={USER_ROLE_CHOICES}
+                  choices={roleChoices}
                   defaultValue=""
                   format={(value?: string[] | string) =>
                     Array.isArray(value) ? (value[0] ?? "") : (value ?? "")

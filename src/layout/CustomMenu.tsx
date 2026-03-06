@@ -33,7 +33,11 @@ function filterItemsByRole(
     const roles = Array.isArray(permissions) ? permissions : [permissions];
     return items.filter((item) => {
         if (!item.requiredRole && !(item.requiredAuthorities?.length)) return true;
-        if (item.requiredRole && roles.includes(item.requiredRole)) return true;
+        // ROLE_SUPER_ADMIN 視同具備 ROLE_ADMIN，可看到所有管理員選單
+        if (item.requiredRole) {
+            if (roles.includes(item.requiredRole)) return true;
+            if (item.requiredRole === "ROLE_ADMIN" && roles.includes("ROLE_SUPER_ADMIN")) return true;
+        }
         if (item.requiredAuthorities?.length && hasAnyAuthority(item.requiredAuthorities)) return true;
         return false;
     });

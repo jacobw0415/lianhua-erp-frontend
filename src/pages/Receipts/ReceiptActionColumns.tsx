@@ -12,7 +12,7 @@ import BlockIcon from "@mui/icons-material/Block";
 
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
 import type { ReceiptListRow } from "./ReceiptList"; // 確保引用正確的型別定義
 
 /* -------------------------------------------------------
@@ -27,9 +27,9 @@ export const ReceiptActionColumns = () => {
 
   const [openVoidDialog, setOpenVoidDialog] = useState(false);
 
-   /** RBAC：僅 ROLE_ADMIN 或具 receipt:edit / receipt:void 權限時顯示操作按鈕 */
+   /** RBAC：ROLE_ADMIN / ROLE_SUPER_ADMIN 或具 receipt:edit / receipt:void 權限時顯示操作按鈕 */
   const roles = getStoredAuthRoles();
-  const isAdmin = roles.some((r) => r === "ROLE_ADMIN");
+  const isAdmin = hasRoleAdmin(roles);
   const canManageReceipt =
     isAdmin ||
     hasStoredAuthority(roles, "receipt:edit") ||

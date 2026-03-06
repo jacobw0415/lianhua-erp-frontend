@@ -13,7 +13,7 @@ import BlockIcon from "@mui/icons-material/Block";
 
 import { VoidReasonDialog } from "@/components/common/VoidReasonDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { getStoredAuthRoles, hasStoredAuthority } from "@/utils/authStorage";
+import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
 
 /* -------------------------------------------------------
  * 🔐 型別定義
@@ -40,9 +40,9 @@ export const ExpenseActionColumns = () => {
   /** ⭐ fallback record（避免 TS any） */
   const safeRecord = (record ?? { id: "placeholder" }) as ExpenseRecord;
 
-  /** RBAC：僅 ROLE_ADMIN 或具 expense:edit / expense:void 權限時顯示操作按鈕 */
+  /** RBAC：ROLE_ADMIN / ROLE_SUPER_ADMIN 或具 expense:edit / expense:void 權限時顯示操作按鈕 */
   const storedRoles = getStoredAuthRoles();
-  const isAdmin = storedRoles.some((r) => r === "ROLE_ADMIN");
+  const isAdmin = hasRoleAdmin(storedRoles);
   const canManageExpense =
     isAdmin ||
     hasStoredAuthority(storedRoles, "expense:edit") ||

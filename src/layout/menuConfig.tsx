@@ -3,7 +3,7 @@ import React from "react";
 // ---------------------
 // Type Definitions (RBAC: requiredRole 用於動態隱藏選單)
 // ---------------------
-export type MenuRole = "ROLE_ADMIN" | "ROLE_USER";
+export type MenuRole = "ROLE_SUPER_ADMIN" | "ROLE_ADMIN" | "ROLE_USER";
 
 export interface MenuItem {
   label: string;

@@ -1,12 +1,12 @@
 import * as React from "react";
 import { usePermissions } from "react-admin";
 
-export type RoleName = "ROLE_ADMIN" | "ROLE_USER";
+export type RoleName = "ROLE_SUPER_ADMIN" | "ROLE_ADMIN" | "ROLE_USER";
 
 export interface PermissionsWrapperProps {
   /** 允許看到此區塊的角色（任一符合即顯示） */
   allowedRoles?: RoleName[];
-  /** 若未傳 allowedRoles，僅 ROLE_ADMIN 可見 */
+  /** 若未傳 allowedRoles，ROLE_ADMIN 與 ROLE_SUPER_ADMIN 皆可見（超級管理員視同管理員） */
   children: React.ReactNode;
 }
 
@@ -15,7 +15,7 @@ export interface PermissionsWrapperProps {
  * 用於選單或頁面區塊：例如 ROLE_USER 不顯示「使用者管理」。
  */
 export const PermissionsWrapper: React.FC<PermissionsWrapperProps> = ({
-  allowedRoles = ["ROLE_ADMIN"],
+  allowedRoles = ["ROLE_ADMIN", "ROLE_SUPER_ADMIN"],
   children,
 }) => {
   const { permissions, isLoading } = usePermissions();

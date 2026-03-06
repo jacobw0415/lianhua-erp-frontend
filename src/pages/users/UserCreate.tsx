@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useMemo } from "react";
 import { useTheme, Box, Typography, Divider } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { TextInput, BooleanInput, RadioButtonGroupInput, useRedirect } from "react-admin";
@@ -6,7 +6,8 @@ import { TextInput, BooleanInput, RadioButtonGroupInput, useRedirect } from "rea
 import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericCreatePage } from "@/components/common/GenericCreatePage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
-import { USER_ROLE_CHOICES } from "@/constants/userRoles";
+import { getRoleChoicesForUserForm } from "@/constants/userRoles";
+import { canManageAdmin } from "@/utils/authStorage";
 import {
   createConfirmPasswordValidator,
   createPasswordValidators,
@@ -36,13 +37,19 @@ interface UserFormValues {
 export const UserCreate: React.FC = () => {
   const theme = useTheme();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
 
   const { showAlert } = useGlobalAlert();
   const redirect = useRedirect();
+
+  /** 無 admin:manage 時角色選項只顯示一般使用者，避免一般管理員指派管理員角色 */
+  const roleChoices = useMemo(
+    () => getRoleChoicesForUserForm(canManageAdmin()),
+    []
+  );
 
   return (
     <GenericCreatePage
@@ -203,7 +210,7 @@ export const UserCreate: React.FC = () => {
                 label="角色"
                 helperText="請選擇此使用者在系統中的角色（單選）。"
                 row
-                choices={USER_ROLE_CHOICES}
+                choices={roleChoices}
                 format={(value?: string[] | string) =>
                   Array.isArray(value) ? value[0] : value
                 }

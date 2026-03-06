@@ -80,6 +80,7 @@ import { LoginPage } from "@/pages/Login/LoginPage";
 import { ForgotPassPage } from "@/pages/Login/ForgotPassPage";
 import { ResetPassPage } from "@/pages/Login/ResetPassPage";
 import { MfaVerifyPage } from "@/pages/Login/MfaVerifyPage";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ForbiddenPage } from "@/pages/ForbiddenPage";
 import { UserList } from "@/pages/users/UserList";
 import { UserCreate } from "@/pages/users/UserCreate";
@@ -138,7 +139,9 @@ export const AppWithProvider = () => {
     <ErrorHandlerProvider>
       <GlobalAlertProvider>
         <ColorModeProvider>
-          <App />
+          <AppErrorBoundary>
+            <App />
+          </AppErrorBoundary>
         </ColorModeProvider>
       </GlobalAlertProvider>
     </ErrorHandlerProvider>

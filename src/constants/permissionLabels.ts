@@ -4,8 +4,12 @@
  */
 export const permissionLabels: Record<string, string> = {
   // 角色本身
+  ROLE_SUPER_ADMIN: "超級管理員",
   ROLE_ADMIN: "系統管理員",
   ROLE_USER: "一般使用者",
+
+  // 管理員管理（僅超級管理員）
+  "admin:manage": "管理其他管理員",
 
   // 採購 (purchase)
   "purchase:view": "採購檢視",
