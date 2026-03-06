@@ -54,11 +54,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
   const gridStroke = getChartGridStroke(theme);
 
   /** 損益趨勢：自訂 Tooltip，各指標名稱與金額使用對應線條色 */
-  const renderProfitLossTooltip = (props: {
-    active?: boolean;
-    payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>;
-    label?: string;
-  }) => {
+  const renderProfitLossTooltip = (props: any) => {
     const { active, payload, label } = props;
     if (!active || !payload?.length || label == null) return null;
     return (
@@ -74,7 +70,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
           {label}
         </Typography>
-        {payload.map((item, index) => (
+        {payload.map((item: { name: string; value: number; color?: string; dataKey?: string }, index: number) => (
           <Typography
             key={item.dataKey ?? item.name ?? index}
             variant="body2"

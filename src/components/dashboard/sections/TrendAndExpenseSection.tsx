@@ -74,8 +74,12 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
   const gridStroke = getChartGridStroke(theme);
 
   /** 營收與現金回收趨勢：自訂 Tooltip，顯示日期、金額、收現率% */
-  const renderTrendTooltip = (props: { active?: boolean; payload?: Array<{ dataKey?: string; value?: number }>; label?: string }) => {
-    const { active, payload, label } = props;
+  const renderTrendTooltip = (props: any) => {
+    const { active, payload, label } = props as {
+      active?: boolean;
+      payload?: Array<{ dataKey?: string; value?: number }>;
+      label?: string;
+    };
     if (!active || !payload?.length || label == null) return null;
     const sale = Number(payload.find((p) => p.dataKey === 'saleAmount')?.value ?? 0);
     const receipt = Number(payload.find((p) => p.dataKey === 'receiptAmount')?.value ?? 0);
@@ -228,8 +232,11 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
   );
 
   /** 營運支出結構：自訂 Tooltip，字卡顯示類別與金額（對應扇形顏色），依 Recharts 預設位置顯示 */
-  const renderExpenseTooltip = (props: { active?: boolean; payload?: Array<{ name?: string; value?: number }> }) => {
-    const { active, payload } = props;
+  const renderExpenseTooltip = (props: any) => {
+    const { active, payload } = props as {
+      active?: boolean;
+      payload?: Array<{ name?: string; value?: number }>;
+    };
     if (!active || !payload?.length) return null;
     const name = payload[0].name ?? '';
     const value = Number(payload[0].value ?? 0);

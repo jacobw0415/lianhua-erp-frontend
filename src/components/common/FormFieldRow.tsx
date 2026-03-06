@@ -13,6 +13,10 @@ interface FormFieldRowProps {
   sx?: SxProps<Theme>;
 }
 
-export const FormFieldRow: React.FC<FormFieldRowProps> = ({ children, sx }) => (
-  <Box sx={sx ? [FORM_FIELD_ROW_SX, sx] : FORM_FIELD_ROW_SX}>{children}</Box>
-);
+export const FormFieldRow: React.FC<FormFieldRowProps> = ({ children, sx }) => {
+  const mergedSx: SxProps<Theme> = sx
+    ? ([FORM_FIELD_ROW_SX, sx] as SxProps<Theme>)
+    : FORM_FIELD_ROW_SX;
+
+  return <Box sx={mergedSx}>{children}</Box>;
+};

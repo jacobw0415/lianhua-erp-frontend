@@ -124,4 +124,11 @@ export const filterMapping: Record<string, Record<string, string>> = {
         createdAt: "createdAt",
         read: "read",
     },
+
+    users: {
+        username: "username",
+        fullName: "fullName",
+        email: "email",
+        active: "active",
+    },
 };

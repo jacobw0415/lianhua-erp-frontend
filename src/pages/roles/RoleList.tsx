@@ -38,6 +38,18 @@ const RoleOverviewCards = () => {
 
   const records: RaRecord[] = data ? Object.values(data) : [];
 
+  const ROLE_DISPLAY_ORDER = ["ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_USER"];
+  const sortedRecords = [...records].sort((a, b) => {
+    const nameA = (a as { name?: string }).name ?? "";
+    const nameB = (b as { name?: string }).name ?? "";
+    const iA = ROLE_DISPLAY_ORDER.indexOf(nameA);
+    const iB = ROLE_DISPLAY_ORDER.indexOf(nameB);
+    if (iA === -1 && iB === -1) return nameA.localeCompare(nameB);
+    if (iA === -1) return 1;
+    if (iB === -1) return -1;
+    return iA - iB;
+  });
+
   const chipBg =
     theme.palette.mode === "dark"
       ? "rgba(255,255,255,0.15)"
@@ -46,6 +58,66 @@ const RoleOverviewCards = () => {
     theme.palette.mode === "dark"
       ? theme.palette.common.white
       : theme.palette.text.primary;
+
+  const getPermissionChipStyle = (code: string) => {
+    const normalized = (code || "").trim();
+
+    let variant: "view" | "edit" | "manage" = "edit";
+
+    if (normalized.startsWith("ROLE_") || normalized.startsWith("admin:")) {
+      variant = "manage";
+    } else if (normalized.includes(":view") || normalized.endsWith("_READ")) {
+      variant = "view";
+    } else {
+      variant = "edit";
+    }
+
+    if (variant === "view") {
+      return {
+        bgcolor: chipBg,
+        color: chipText,
+        border: "1px solid",
+        borderColor:
+          theme.palette.mode === "dark"
+            ? "rgba(255,255,255,0.24)"
+            : "rgba(0,0,0,0.12)",
+      };
+    }
+
+    if (variant === "edit") {
+      return {
+        bgcolor:
+          theme.palette.mode === "dark"
+            ? "rgba(76,175,80,0.18)"
+            : "rgba(76,175,80,0.1)",
+        color:
+          theme.palette.mode === "dark"
+            ? "#C8E6C9"
+            : theme.palette.success.main,
+        border: "1px solid",
+        borderColor:
+          theme.palette.mode === "dark"
+            ? "rgba(200,230,201,0.4)"
+            : "rgba(76,175,80,0.4)",
+      };
+    }
+
+    return {
+      bgcolor:
+        theme.palette.mode === "dark"
+          ? "rgba(171,71,188,0.22)"
+          : "rgba(171,71,188,0.12)",
+      color:
+        theme.palette.mode === "dark"
+          ? "#F3E5F5"
+          : theme.palette.secondary.main,
+      border: "1px solid",
+      borderColor:
+        theme.palette.mode === "dark"
+          ? "rgba(243,229,245,0.5)"
+          : "rgba(171,71,188,0.5)",
+    };
+  };
 
   if (isLoading) {
     return null;
@@ -70,26 +142,42 @@ const RoleOverviewCards = () => {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: {
-          xs: "1fr",
-          md: "1fr 1fr",
-        },
-        gap: 2,
+        gridTemplateColumns: "1fr",
+        gap: 2.5,
         pb: 2,
       }}
     >
-      {records.map((record) => {
+      {sortedRecords.map((record) => {
         const role = record as any;
         const name = role.name ?? "—";
         const displayName = role.displayName ?? name;
-        const roleDisplayName = getRoleDisplayName(name) || displayName || name || "—";
+        const roleDisplayName =
+          getRoleDisplayName(name) || displayName || name || "—";
         const description = role.description ?? "";
         const rawPermissions = role.permissions as unknown;
         const permissions: string[] = Array.isArray(rawPermissions)
           ? rawPermissions
           : typeof rawPermissions === "string"
-            ? rawPermissions.split(",").map((s: string) => s.trim()).filter(Boolean)
+            ? rawPermissions
+                .split(",")
+                .map((s: string) => s.trim())
+                .filter(Boolean)
             : [];
+
+        const isSuperAdmin = name === "ROLE_SUPER_ADMIN";
+        const isAdminRole = name === "ROLE_ADMIN";
+        const tierLabel = isSuperAdmin
+          ? "最高權限"
+          : isAdminRole
+            ? "管理員"
+            : "一般角色";
+
+        const sortedPermissions = [...permissions].sort((a, b) => {
+          const [moduleA] = String(a).split(":");
+          const [moduleB] = String(b).split(":");
+          if (moduleA !== moduleB) return moduleA.localeCompare(moduleB);
+          return String(a).localeCompare(String(b));
+        });
 
         return (
           <Card
@@ -97,7 +185,8 @@ const RoleOverviewCards = () => {
             elevation={0}
             sx={{
               border: "1px solid",
-              borderColor: "divider",
+              borderColor: isSuperAdmin ? "warning.main" : "divider",
+              boxShadow: isSuperAdmin ? "0 0 0 1px rgba(255,193,7,0.4)" : "none",
               display: "flex",
               flexDirection: "column",
               height: "100%",
@@ -110,7 +199,57 @@ const RoleOverviewCards = () => {
                 gap: 2,
               }}
             >
-              {/* 區塊一：基本資訊（與 RoleShow 風格對齊） */}
+              {/* 區塊零：角色標題與層級徽章 */}
+              <Box
+                component="header"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 1,
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={600}
+                    color="text.primary"
+                    noWrap
+                  >
+                    {roleDisplayName || "—"}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      mt: 0.25,
+                      lineHeight: 1.7,
+                    }}
+                    noWrap
+                  >
+                    {(description ||
+                      (isSuperAdmin
+                        ? "擁有全系統最高權限，可存取並管理所有模組與資料。"
+                        : "此角色的權限設定可在下方檢視。")
+                    ).replace(/\badmin:manage\b/gi, "管理其他管理員")}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={tierLabel}
+                  size="small"
+                  color={isSuperAdmin ? "warning" : isAdminRole ? "primary" : "default"}
+                  sx={{
+                    fontWeight: 600,
+                    borderRadius: 1,
+                    ...(isSuperAdmin && {
+                      border: "1px solid",
+                      borderColor: "warning.light",
+                    }),
+                  }}
+                />
+              </Box>
+
+              {/* 區塊一：基本資訊 */}
               <Box component="section">
                 <Typography
                   variant="subtitle2"
@@ -125,7 +264,7 @@ const RoleOverviewCards = () => {
                   sx={{
                     "& .role-row": {
                       display: "grid",
-                      gridTemplateColumns: "80px 1fr",
+                      gridTemplateColumns: "90px 1fr",
                       gap: 1.5,
                       alignItems: "flex-start",
                       py: 0.5,
@@ -146,14 +285,6 @@ const RoleOverviewCards = () => {
                       {roleDisplayName || "—"}
                     </Typography>
                   </Box>
-                  <Box className="role-row">
-                    <Typography className="role-label" component="span">
-                      說明
-                    </Typography>
-                    <Typography className="role-value" component="span">
-                      {description || "—"}
-                    </Typography>
-                  </Box>
                 </Box>
               </Box>
 
@@ -168,7 +299,7 @@ const RoleOverviewCards = () => {
                   權限
                 </Typography>
                 <Divider sx={{ mb: 1.5 }} />
-                {permissions.length === 0 ? (
+                {sortedPermissions.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">
                     此角色尚未設定權限
                   </Typography>
@@ -181,7 +312,7 @@ const RoleOverviewCards = () => {
                       alignItems: "center",
                     }}
                   >
-                    {permissions.map((code) => (
+                    {sortedPermissions.map((code) => (
                       <Chip
                         key={code}
                         label={getPermissionLabel(code)}
@@ -189,9 +320,8 @@ const RoleOverviewCards = () => {
                         sx={{
                           height: 24,
                           fontSize: "0.75rem",
-                          bgcolor: chipBg,
-                          color: chipText,
-                          border: "1px solid rgba(0,0,0,0.12)",
+                          borderRadius: 1,
+                          ...getPermissionChipStyle(code),
                         }}
                       />
                     ))}

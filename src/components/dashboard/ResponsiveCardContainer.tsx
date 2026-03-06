@@ -39,19 +39,22 @@ export const ResponsiveCardContainer: React.FC<ResponsiveCardContainerProps> = (
       }
     : { xs: '1fr', sm: '1fr', md: '1fr 1fr' };
 
+  const baseSx: SxProps<Theme> = {
+    ...CONTENT_BOX_SX,
+    display: 'grid',
+    gridTemplateColumns,
+    gap,
+    mb,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  };
+
+  const mergedSx: SxProps<Theme> = sx ? ([baseSx, sx] as SxProps<Theme>) : baseSx;
+
   return (
     <Box
-      sx={{
-        ...CONTENT_BOX_SX,
-        display: 'grid',
-        gridTemplateColumns: gridTemplateColumns,
-        gap,
-        mb,
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
-        ...sx,
-      }}
+      sx={mergedSx}
     >
       {children}
     </Box>

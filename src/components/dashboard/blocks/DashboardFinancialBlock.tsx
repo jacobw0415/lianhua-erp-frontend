@@ -53,7 +53,7 @@ export const DashboardFinancialBlock: React.FC = () => {
           hasMounted={hasMounted}
           profitLossMonths={profitLossMonths}
           setProfitLossMonths={setProfitLossMonths}
-          profitLossTrend={profitLossTrend}
+          profitLossTrend={profitLossTrend as any}
           isProfitLossTrendLoading={isProfitLossTrendLoading}
         />
       </Box>

@@ -1,7 +1,5 @@
 import { type ReactNode } from 'react';
-import { Box, Paper, Typography, Breadcrumbs, Fade, type SxProps, type Theme } from '@mui/material'; // ★ 1. 新增 SxProps, Theme 引用
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+import { Box, Paper, Typography, Fade, type SxProps, type Theme } from '@mui/material';
 import { ReportSkeleton } from '@/components/skeletons/ReportSkeleton';
 
 interface ReportLayoutProps {
@@ -30,7 +28,6 @@ export const ReportLayout = ({
   headerSx, // ★ 3. 解構取出 headerSx
   children,
 }: ReportLayoutProps) => {
-  
 
   // 核心邏輯：只有在「正在讀取」且「完全沒有舊資料」時，才顯示骨架屏
   // 這能解決切換月份時的畫面閃爍問題

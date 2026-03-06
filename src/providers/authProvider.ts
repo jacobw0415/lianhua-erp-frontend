@@ -28,6 +28,21 @@ function clearAuthStorage(): void {
 }
 
 /**
+ * 強制清除登入狀態並導向登入頁，供 IdleTimer 自動登出與 401 錯誤共用。
+ * 透過直接 redirect，避免在過期瞬間由 react-admin 顯示預設錯誤畫面。
+ */
+export function forceLogoutAndRedirect(): void {
+  clearAppCache();
+  clearAuthStorage();
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.setItem("login_expired", "1");
+    // 清除可能被用來「登入後導向」的儲存，避免下一位使用者（如 ROLE_USER）被導到無權限頁
+    sessionStorage.removeItem("redirectPath");
+  }
+  redirectToLogin();
+}
+
+/**
  * 解析 JWT payload（不驗簽），取得 exp（秒）。非 JWT 或解析失敗回傳 undefined。
  */
 function getJwtExp(token: string): number | undefined {
@@ -517,14 +532,7 @@ export const authProvider: AuthProvider = {
   checkError: (error: unknown) => {
     const status = (error as { status?: number })?.status;
     if (status === 401) {
-      clearAppCache();
-      clearAuthStorage();
-      if (typeof sessionStorage !== "undefined") {
-        sessionStorage.setItem("login_expired", "1");
-        // 清除可能被用來「登入後導向」的儲存，避免下一位使用者（如 ROLE_USER）被導到無權限頁
-        sessionStorage.removeItem("redirectPath");
-      }
-      redirectToLogin();
+      forceLogoutAndRedirect();
       return Promise.reject();
     }
     if (status === 403) {

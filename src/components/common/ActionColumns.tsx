@@ -63,7 +63,9 @@ export const ActionColumns = () => {
 
   // 使用者資源：該列為管理員時僅超級管理員（admin:manage / ROLE_SUPER_ADMIN）可編輯/刪除；一般使用者則有 user:edit 即可
   const superCanManageAdmin = canManageAdmin();
-  const targetIsAdmin = isUsersResource ? isUserRecordAdmin(record ?? null) : false;
+  const targetIsAdmin = isUsersResource
+    ? isUserRecordAdmin((record ?? null) as { roles?: unknown; roleNames?: unknown } | null)
+    : false;
 
   const canEdit = isUsersResource
     ? targetIsAdmin

@@ -35,7 +35,7 @@ export const DashboardInsightsBlock: React.FC = () => {
     tasks,
     derived,
     customerConcentration,
-  } = useDashboardContext();
+  } = useDashboardContext() as any;
 
   const {
     clampedRange,

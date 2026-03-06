@@ -38,11 +38,7 @@ export const ProductParetoSection: React.FC<ProductParetoSectionProps> = ({
   const gridStroke = getChartGridStroke(theme);
 
   /** 商品貢獻度：自訂 Tooltip，金額使用對應色調 */
-  const renderProductParetoTooltip = (props: {
-    active?: boolean;
-    payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>;
-    label?: string;
-  }) => {
+  const renderProductParetoTooltip = (props: any) => {
     const { active, payload, label } = props;
     if (!active || !payload?.length) return null;
     const item = payload[0];

@@ -57,10 +57,7 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
   );
 
   /** 客戶採購集中度：自訂 Tooltip，客戶名稱與金額使用與扇形相同的顏色 */
-  const renderCustomerConcentrationTooltip = (props: {
-    active?: boolean;
-    payload?: Array<{ name?: string; value?: number }>;
-  }) => {
+  const renderCustomerConcentrationTooltip = (props: any) => {
     const { active, payload } = props;
     if (!active || !payload?.length) return null;
     const name = String(payload[0].name ?? '');

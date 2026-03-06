@@ -156,6 +156,7 @@ export const RoleShow: React.FC = () => {
 
   const displayName = (record as { displayName?: string }).displayName ?? (record as { name?: string }).name ?? "—";
   const description = (record as { description?: string }).description ?? "";
+  const displayDescription = description.replace(/\badmin:manage\b/gi, "管理其他管理員");
   const name = (record as { name?: string }).name ?? "—";
   const permissions = parsePermissions((record as { permissions?: unknown }).permissions);
 
@@ -237,9 +238,9 @@ export const RoleShow: React.FC = () => {
             <Typography variant="subtitle1" component="p" fontWeight={600}>
               {displayName}
             </Typography>
-            {description && (
+            {displayDescription && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                {description}
+                {displayDescription}
               </Typography>
             )}
             <Button
@@ -297,9 +298,9 @@ export const RoleShow: React.FC = () => {
             <Typography variant="h6" component="p" fontWeight={600}>
               {displayName}
             </Typography>
-            {description && (
+            {displayDescription && (
               <Typography variant="body2" color="text.secondary">
-                {description}
+                {displayDescription}
               </Typography>
             )}
           </Box>
@@ -356,7 +357,7 @@ export const RoleShow: React.FC = () => {
                     說明
                   </Typography>
                   <Typography className="role-value" component="span">
-                    {description || "—"}
+                    {displayDescription || "—"}
                   </Typography>
                 </Box>
               </Box>

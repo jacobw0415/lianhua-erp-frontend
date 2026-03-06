@@ -71,7 +71,6 @@ export function useDashboardDerivedData(params: UseDashboardDerivedDataParams) {
     customerConcentration,
     customerRetention,
     retentionDormantOnly,
-    stats,
     breakEvenPeriod,
   } = params;
 

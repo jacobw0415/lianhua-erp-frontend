@@ -80,4 +80,14 @@ export const apiRules: Record<string, ApiRule> = {
     list: true,
     detail: true,
   },
+  users: {
+    search: true,
+    list: true,
+    detail: true,
+  },
+  roles: {
+    search: true,
+    list: true,
+    detail: true,
+  },
 };

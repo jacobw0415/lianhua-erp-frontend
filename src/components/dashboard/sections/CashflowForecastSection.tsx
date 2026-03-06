@@ -61,11 +61,7 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
   );
 
   /** 現金流量預測：自訂 Tooltip，流入／流出／淨流入使用對應色調 */
-  const renderCashflowForecastTooltip = (props: {
-    active?: boolean;
-    payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>;
-    label?: string;
-  }) => {
+  const renderCashflowForecastTooltip = (props: any) => {
     const { active, payload, label } = props;
     if (!active || !payload?.length || label == null) return null;
     return (
@@ -81,7 +77,7 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
           {dayjs(label).format('YYYY-MM-DD')}
         </Typography>
-        {payload.map((item, index) => (
+        {payload.map((item: { name: string; value: number; color?: string; dataKey?: string }, index: number) => (
           <Typography
             key={item.dataKey ?? item.name ?? index}
             variant="body2"
