@@ -61,10 +61,10 @@ export const ExpenseCategoryList = () => {
           {
             type: "select",
             source: "active",
-            label: "狀態",
+            label: "啟用狀態",
             choices: [
-              { id: true, name: "啟用" },
-              { id: false, name: "停用" },
+              { id: "true", name: "啟用" },
+              { id: "false", name: "終止" },
             ],
           },
         ]}

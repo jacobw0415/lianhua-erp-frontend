@@ -44,8 +44,8 @@ export const UserList = () => {
             source: "enabled",
             label: "啟用狀態",
             choices: [
-              { id: true, name: "啟用" },
-              { id: false, name: "停用" },
+              { id: "true", name: "啟用" },
+              { id: "false", name: "終止" },
             ],
           },
         ]}

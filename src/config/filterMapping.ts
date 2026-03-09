@@ -6,6 +6,7 @@ export const filterMapping: Record<string, Record<string, string>> = {
         phone: "phone",
         billingCycle: "billingCycle",
         note: "note",
+        active: "active",
     },
 
     products: {

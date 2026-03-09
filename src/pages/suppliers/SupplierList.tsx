@@ -48,6 +48,16 @@ export const SupplierList = () => {
               { id: "BIWEEKLY", name: "每兩週結帳" },
             ],
           },
+          {
+            type: "select",
+            source: "active",
+            label: "啟用狀態",
+            choices: [
+              { id: "true", name: "啟用" },
+              { id: "false", name: "終止" },
+            ],
+          },
+
         ]}
         exportConfig={{
           filename: "supplier_export",
