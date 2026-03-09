@@ -58,10 +58,10 @@ export const EmployeeList = () => (
         {
           type: "select",
           source: "status",
-          label: "狀態",
+          label: "啟用狀態",
           choices: [
             { id: "ACTIVE", name: "啟用" },
-            { id: "INACTIVE", name: "停用" },
+            { id: "INACTIVE", name: "終止" },
           ],
         },
       ]}

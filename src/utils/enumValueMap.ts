@@ -14,7 +14,8 @@ export const enumValueMap: Record<string, Record<string, string>> = {
   },
   // 狀態
   status: {
-    ACTIVE: "有效",
+    ACTIVE: "啟用",
+    INACTIVE: "終止",
     VOIDED: "作廢",
     PENDING: "未付款",
     PARTIAL: "部分付款",
@@ -33,6 +34,15 @@ export const enumValueMap: Record<string, Record<string, string>> = {
     DAYS_0_30: "0–30 天",
     DAYS_31_60: "31–60 天",
     DAYS_60_PLUS: "60 天以上",
+  },
+  // 啟用 / 停用類布林欄位（以字串 "true"/"false" 表示）
+  active: {
+    true: "啟用",
+    false: "終止",
+  },
+  enabled: {
+    true: "啟用",
+    false: "終止",
   },
 };
 

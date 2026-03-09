@@ -18,6 +18,10 @@ const valueOnlyKeys = new Set([
   "categoryName",     // 費用類別名稱
   "employeeName",     // 員工名稱
 
+  // 啟用 / 停用狀態：chips 只顯示「啟用／終止」，不需要再帶 label
+  "active",
+  "enabled",
+
   // 日期範圍（base keys）
   "fromDate",         // 進貨日（起）/ 付款日（起）/ 支出日（起）
   "toDate",           // 進貨日（迄）/ 付款日（迄）/ 支出日（迄）

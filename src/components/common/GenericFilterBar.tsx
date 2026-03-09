@@ -791,11 +791,21 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           <Popover
             open={Boolean(anchor) && anchor !== null}
             anchorEl={anchor}
-            onClose={() => setAnchor(null)}
+            onClose={() => {
+              // 關閉前先移除目前的焦點，避免 aria-hidden 與保留焦點衝突
+              if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+              }
+              setAnchor(null);
+            }}
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
             PaperProps={{
               sx: { width: 350, maxWidth: 350 },
             }}
+            // 直接在 Popover 上關閉焦點管理，避免 aria-hidden 警告
+            disableAutoFocus
+            disableEnforceFocus
+            disableRestoreFocus
             // 確保 anchorEl 有效
             disablePortal={false}
           >
