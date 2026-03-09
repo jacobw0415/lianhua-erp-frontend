@@ -36,12 +36,13 @@ export const createDataProvider = ({
    * 原始 httpClient（只處理 header 與 fetch）
    * ======================================================== */
   const httpClient = (url: string, options: fetchUtils.Options = {}) => {
-    const headers = new Headers(options.headers || {});
+    const opts = options as fetchUtils.Options & { meta?: Record<string, unknown> };
+    const headers = new Headers(opts.headers || {});
     headers.set("Accept", "application/json");
 
-    const hasBody = options.body != null;
+    const hasBody = opts.body != null;
     const isFormData =
-      typeof FormData !== "undefined" && options.body instanceof FormData;
+      typeof FormData !== "undefined" && opts.body instanceof FormData;
 
     if (hasBody && !isFormData && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
@@ -49,14 +50,26 @@ export const createDataProvider = ({
 
     // ========================================================
     // 🔐 所有 API 請求帶入 Authorization: Bearer <TOKEN>（RFC 6750 / Stateless）
+    //    並記錄此次請求使用的 token 快照，供 401 處理時判斷是否為「舊會話請求」
     // ========================================================
-    const token = localStorage.getItem("token");
-    const tokenType = localStorage.getItem("tokenType") || "Bearer";
+    const token =
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("token")
+        : null;
+    const tokenType =
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("tokenType") || "Bearer"
+        : "Bearer";
+
     if (token) {
       headers.set("Authorization", `${tokenType} ${token}`);
+      opts.meta = {
+        ...(opts.meta || {}),
+        _tokenSnapshot: token,
+      };
     }
 
-    return fetchUtils.fetchJson(url, { ...options, headers });
+    return fetchUtils.fetchJson(url, { ...opts, headers });
   };
 
   /* ========================================================
@@ -84,6 +97,22 @@ export const createDataProvider = ({
         const alreadyRetried = Boolean(
           meta && (meta as { _retryWithRefresh?: boolean })._retryWithRefresh
         );
+
+        // 若此次請求使用的 token 與目前 localStorage 中的 token 不同，代表是「舊會話」的 401，僅視為單次請求失敗
+        const tokenSnapshot =
+          meta && (meta as { _tokenSnapshot?: unknown })._tokenSnapshot;
+        const currentToken =
+          typeof localStorage !== "undefined"
+            ? localStorage.getItem("token")
+            : null;
+        if (
+          typeof tokenSnapshot === "string" &&
+          tokenSnapshot &&
+          currentToken &&
+          tokenSnapshot !== currentToken
+        ) {
+          throw error;
+        }
 
         const refreshToken =
           typeof localStorage !== "undefined"
@@ -128,7 +157,7 @@ export const createDataProvider = ({
               refreshResponse.status === 401
             ) {
               void authProvider.checkError({ status: 401 } as ApiError);
-              throw error;
+              throw new Error("SESSION_EXPIRED");
             }
           } catch {
             // 換發過程本身失敗（網路等）：落到下方被動登出邏輯
@@ -136,8 +165,8 @@ export const createDataProvider = ({
         }
 
         // 無 refreshToken 或已嘗試換發仍失敗 → 被動登出
-        void authProvider.checkError(apiError);
-        throw error;
+        void authProvider.checkError({ status: 401 } as ApiError);
+        throw new Error("SESSION_EXPIRED");
       }
 
       /* --------------------------------------------
@@ -188,17 +217,29 @@ export const createDataProvider = ({
 
   /* ========================================================
    * 共用：List Response 正規化
+   * - 支援以下回傳格式：
+   *   1. { data: [...], total: number }
+   *   2. { data: { content: [...], totalElements: number } }
+   *   3. [...]
    * ======================================================== */
   const normalizeListResponse = (json: unknown) => {
-    const jsonObj = json as Record<string, unknown>;
-    const data = Array.isArray(jsonObj?.data)
-      ? jsonObj.data
-      : Array.isArray(json)
-        ? json
+    const root = (json as { data?: unknown }) ?? {};
+    const payload = root.data ?? json;
+
+    const data = Array.isArray(payload)
+      ? payload
+      : Array.isArray(
+        (payload as { content?: unknown }).content
+      )
+        ? (payload as { content: unknown[] }).content
         : [];
 
-    const total =
-      typeof jsonObj?.total === "number" ? jsonObj.total : data.length;
+    const total = Array.isArray(payload)
+      ? payload.length
+      : typeof (payload as { totalElements?: unknown }).totalElements ===
+        "number"
+        ? (payload as { totalElements: number }).totalElements
+        : data.length;
 
     return { data, total };
   };
@@ -330,15 +371,9 @@ export const createDataProvider = ({
         basePath = `${apiUrl}/${resource}/search`;
       }
 
-      return httpClientSafe(`${basePath}?${query}`).then(({ json }) => {
-        const payload = json?.data ?? json;
-        const data = Array.isArray(payload) ? payload : payload?.content ?? [];
-
-        const total = Array.isArray(payload)
-          ? payload.length
-          : payload?.totalElements ?? data.length;
-        return { data, total };
-      });
+      return httpClientSafe(`${basePath}?${query}`).then(({ json }) =>
+        normalizeListResponse(json)
+      );
     },
 
     /* ===================== getOne ===================== */
@@ -362,45 +397,36 @@ export const createDataProvider = ({
         return { data };
       }),
 
-    /* ===================== getMany ===================== */
-    getMany: (resource, params) =>
-      Promise.all(
-        params.ids.map((id) =>
-          httpClientSafe(`${apiUrl}/${resource}/${id}`).then(
-            ({ json }) => json?.data ?? json
-          )
-        )
-      ).then((records) => ({ data: records })),
+    /* ===================== getMany (優化：合併請求，但前端需要處理分頁) ===================== */
+    getMany: (resource, params) => {
+      // 將 ids 轉為 query string，例如 ?id=1&id=2 或使用逗號分隔 ?ids=1,2,3
+      const query = new URLSearchParams();
+      params.ids.forEach(id => query.append('id', String(id))); 
 
-    /* ================= getManyReference ================= */
-    getManyReference: async (resource, params) => {
-      const { json } = await httpClientSafe(`${apiUrl}/${resource}`);
-      const { data } = normalizeListResponse(json);
-
-      const filtered = data.filter(
-        (r: Record<string, unknown>) => r?.[params.target] === params.id
-      );
-
-      const { field, order } = params.sort ?? {
-        field: "id",
-        order: "ASC",
-      };
-
-      const sorted = [...filtered].sort((a, b) => {
-        const av = a?.[field];
-        const bv = b?.[field];
-        if (av === bv) return 0;
-        return (av > bv ? 1 : -1) * (order === "ASC" ? 1 : -1);
+      return httpClientSafe(`${apiUrl}/${resource}?${query}`).then(({ json }) => {
+        const data = json?.data ?? json;
+        // 確保回傳格式為 { data: [...] }
+        return { data: Array.isArray(data) ? data : data.content ?? [] };
       });
+    },
 
-      const { page = 1, perPage = 25 } = params.pagination || {};
-      const start = (page - 1) * perPage;
-      const end = start + perPage;
+    /* ================= getManyReference (優化：交給後端分頁) ===================== */
+    getManyReference: async (resource, params) => {
+      const { page, perPage } = params.pagination;
+      const { field, order } = params.sort;
+      const query = new URLSearchParams();
+      
+      query.set("page", String(page - 1));
+      query.set("size", String(perPage));
+      query.set("sort", `${field},${order.toLowerCase()}`);
+      
+      // 核心：將 target 欄位作為過期條件傳給後端
+      // 例如：找某一供應商的所有產品，target 是 supplierId
+      query.set(params.target, String(params.id));
 
-      return {
-        data: sorted.slice(start, end),
-        total: sorted.length,
-      };
+      return httpClientSafe(`${apiUrl}/${resource}?${query}`).then(
+        ({ json }) => normalizeListResponse(json)
+      );
     },
 
     /* ===================== update ===================== */

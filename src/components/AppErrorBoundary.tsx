@@ -31,6 +31,10 @@ export class AppErrorBoundary extends React.Component<
 
   render(): React.ReactNode {
     if (this.state.hasError && this.state.error) {
+      // 會話過期／被動登出情境：交由 authProvider / dataProvider 的 redirect 處理，不顯示錯誤頁
+      if (this.state.error.message === "SESSION_EXPIRED") {
+        return null;
+      }
       return (
         <Box
           sx={{
