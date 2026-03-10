@@ -25,6 +25,13 @@ const AUTH_STORAGE_KEYS = [
 function clearAuthStorage(): void {
   AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
   localStorage.removeItem("mfaEnabled"); // 登出時清除 MFA 提示，避免下一使用者看到錯誤狀態
+  // 同步清除閒置計時相關儲存，避免新登入會話沿用舊的最後活動時間導致立刻被 IdleTimer 登出
+  try {
+    localStorage.removeItem("idle_last_active_at");
+    localStorage.removeItem("idle_force_logout_at");
+  } catch {
+    // ignore
+  }
 }
 
 /**
