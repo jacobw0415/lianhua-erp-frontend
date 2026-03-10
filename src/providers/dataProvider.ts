@@ -177,6 +177,14 @@ export const createDataProvider = ({
         throw error;
       }
 
+      /* --------------------------------------------
+       * 429 請求過於頻繁：交由全域錯誤處理顯示友善提示（避免誤認為系統壞掉）
+       * -------------------------------------------- */
+      if (status === 429) {
+        handleApiError(apiError);
+        throw error;
+      }
+
       let msg = "";
       if (apiError && typeof apiError === "object") {
         if (
@@ -474,6 +482,18 @@ export const createDataProvider = ({
           method: voidMethod,
           body,
         }).then(({ json }) => ({ data: json?.data ?? json }));
+      }
+
+      if (endpoint === "forceLogout") {
+        return httpClientSafe(
+          `${apiUrl}/${resource}/${params.id}/force_logout`,
+          {
+            method: "POST",
+          }
+        ).then(() => ({
+          // 後端回傳 204 無內容即可，前端保留原本資料避免 UI 閃動
+          data: params.previousData ?? params.data,
+        }));
       }
 
       return httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {

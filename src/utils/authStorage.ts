@@ -43,7 +43,14 @@ export function hasRoleAdmin(roles?: string[]): boolean {
  */
 export function canManageAdmin(): boolean {
   const roles = getStoredAuthRoles();
-  return ADMIN_MANAGE_AUTHORITIES.some((a) => hasStoredAuthority(roles, a));
+  // 放寬判斷：同時支援 ROLE_SUPER_ADMIN / SUPER_ADMIN / admin:manage 等常見寫法，避免後端實際回傳代碼與預期不符時按鈕被誤隱藏
+  return (
+    ADMIN_MANAGE_AUTHORITIES.some((a) => hasStoredAuthority(roles, a)) ||
+    roles.some((r) => {
+      const code = String(r).trim().toUpperCase();
+      return code === "SUPER_ADMIN" || code.endsWith("SUPER_ADMIN");
+    })
+  );
 }
 
 /** 將單一角色項轉成字串（支援字串或 { authority: "ROLE_xxx" }，與 authProvider 一致） */

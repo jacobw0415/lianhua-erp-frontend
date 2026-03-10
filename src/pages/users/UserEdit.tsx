@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTheme, Box, Typography, Divider, Alert, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
@@ -16,9 +16,11 @@ import { useFormContext } from "react-hook-form";
 
 import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { GenericEditPage } from "@/components/common/GenericEditPage";
+import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { getRoleChoicesForUserForm, getRoleDisplayName } from "@/constants/userRoles";
 import { canManageAdmin } from "@/utils/authStorage";
+import { useDataProvider } from "react-admin";
 import {
   editNewPasswordValidators,
   emailValidators,
@@ -86,44 +88,104 @@ interface UserEditToolbarProps {
 const UserEditToolbar: React.FC<UserEditToolbarProps> = ({ onBack, onDelete }) => {
   const record = useRecordContext<User>();
   const { data: identity } = useGetIdentity();
+  const dataProvider = useDataProvider();
+  const { showAlert } = useGlobalAlert();
+  const [openForceLogoutConfirm, setOpenForceLogoutConfirm] = useState(false);
   const isEditingSelf =
     identity?.id != null &&
     record?.id != null &&
     String(record.id) === String(identity.id);
+  // 編輯頁的強制登出按鈕：僅超級使用者（admin:manage / ROLE_SUPER_ADMIN）可見
+  const canForceLogout = !!record && !isEditingSelf && canManageAdmin();
+
+  const handleForceLogoutConfirm = async () => {
+    if (!record) return;
+    setOpenForceLogoutConfirm(false);
+    try {
+      await dataProvider.update("users", {
+        id: record.id,
+        data: {},
+        previousData: record,
+        meta: { endpoint: "forceLogout" },
+      });
+      showAlert({
+        title: "已強制登出",
+        message:
+          `「${record.username}」已被強制登出，若該使用者仍在使用系統，下一個操作會被要求重新登入。`,
+        severity: "success",
+        hideCancel: true,
+      });
+    } catch (error) {
+      showAlert({
+        title: "強制登出失敗",
+        message: error instanceof Error ? error.message : "請稍後再試或聯絡系統管理員。",
+        severity: "error",
+        hideCancel: true,
+      });
+    }
+  };
 
   return (
-    <Toolbar
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "0.8rem 1.5rem",
-        borderRadius: "0 0 12px 12px",
-      }}
-    >
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        color="success"
-        onClick={onBack}
+    <>
+      <Toolbar
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "0.8rem 1.5rem",
+          borderRadius: "0 0 12px 12px",
+        }}
       >
-        返回
-      </Button>
-      <Box sx={{ display: "flex", gap: 2 }}>
-        {!isEditingSelf && onDelete && (
-          <Button
-            variant="contained"
-            color="error"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              onDelete();
-            }}
-          >
-            刪除
-          </Button>
-        )}
-        <SaveButton label="儲存" color="success" />
-      </Box>
-    </Toolbar>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          color="success"
+          onClick={onBack}
+        >
+          返回
+        </Button>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          {canForceLogout && (
+            <Button
+              variant="outlined"
+              color="warning"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setOpenForceLogoutConfirm(true);
+              }}
+            >
+              強制登出
+            </Button>
+          )}
+          {!isEditingSelf && onDelete && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                onDelete();
+              }}
+            >
+              刪除
+            </Button>
+          )}
+          <SaveButton label="儲存" color="success" />
+        </Box>
+      </Toolbar>
+      <GlobalAlertDialog
+        open={openForceLogoutConfirm}
+        title="確認強制登出"
+        description={
+          record
+            ? `確定要強制登出「${record.username}」嗎？該使用者將在下一次操作時被要求重新登入。`
+            : ""
+        }
+        severity="warning"
+        confirmLabel="強制登出"
+        cancelLabel="取消"
+        onClose={() => setOpenForceLogoutConfirm(false)}
+        onConfirm={handleForceLogoutConfirm}
+      />
+    </>
   );
 };
 

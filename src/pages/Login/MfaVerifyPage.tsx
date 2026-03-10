@@ -16,7 +16,7 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { getApiUrl } from "@/config/apiUrl";
-import { applyLoginSuccessFromContainer } from "@/providers/authProvider";
+import { applyLoginSuccessWithSse } from "@/providers/authProvider";
 
 const apiUrl = getApiUrl();
 
@@ -129,10 +129,10 @@ export const MfaVerifyPage = () => {
         return;
       }
 
-      // 成功：後端回傳 JwtResponse，直接寫入 localStorage（與一般登入相同）；標記 MFA 已啟用供個人資料頁顯示
+      // 成功：後端回傳 JwtResponse，直接寫入 localStorage 並啟動 SSE（與一般登入相同）；標記 MFA 已啟用供個人資料頁顯示
       try {
         if (jsonBody && typeof jsonBody === "object") {
-          applyLoginSuccessFromContainer(
+          applyLoginSuccessWithSse(
             jsonBody as Record<string, unknown>,
             username ?? undefined,
             true // 剛以 MFA 驗證登入，個人資料頁應顯示「MFA 已啟用」

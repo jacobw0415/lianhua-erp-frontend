@@ -64,33 +64,35 @@ export const ActionColumns = () => {
   // 使用者資源：該列為管理員時僅超級管理員（admin:manage / ROLE_SUPER_ADMIN）可編輯/刪除；一般使用者則有 user:edit 即可
   const superCanManageAdmin = canManageAdmin();
   const targetIsAdmin = isUsersResource
-    ? isUserRecordAdmin((record ?? null) as { roles?: unknown; roleNames?: unknown } | null)
+    ? isUserRecordAdmin(
+        (record ?? null) as { roles?: unknown; roleNames?: unknown } | null
+      )
     : false;
 
   const canEdit = isUsersResource
     ? targetIsAdmin
       ? superCanManageAdmin
       : hasRoleAdmin(storedRoles) ||
-        hasStoredAuthority(storedRoles ?? [], "user:edit")
+      hasStoredAuthority(storedRoles ?? [], "user:edit")
     : hasRoleAdmin(storedRoles) ||
-      (EDIT_PERMISSION_BY_RESOURCE[resource]
-        ? hasStoredAuthority(
-            storedRoles ?? [],
-            EDIT_PERMISSION_BY_RESOURCE[resource]
-          )
-        : false);
+    (EDIT_PERMISSION_BY_RESOURCE[resource]
+      ? hasStoredAuthority(
+        storedRoles ?? [],
+        EDIT_PERMISSION_BY_RESOURCE[resource]
+      )
+      : false);
   const canDelete = isUsersResource
     ? targetIsAdmin
       ? superCanManageAdmin
       : hasRoleAdmin(storedRoles) ||
-        hasStoredAuthority(storedRoles ?? [], "user:edit")
+      hasStoredAuthority(storedRoles ?? [], "user:edit")
     : hasRoleAdmin(storedRoles) ||
-      (DELETE_PERMISSION_BY_RESOURCE[resource]
-        ? hasStoredAuthority(
-            storedRoles ?? [],
-            DELETE_PERMISSION_BY_RESOURCE[resource]
-          )
-        : false);
+    (DELETE_PERMISSION_BY_RESOURCE[resource]
+      ? hasStoredAuthority(
+        storedRoles ?? [],
+        DELETE_PERMISSION_BY_RESOURCE[resource]
+      )
+      : false);
 
   /** ⭐ fallback record（避免 TS any） */
   const safeRecord = (record ?? { id: "placeholder" }) as RaRecord;
@@ -225,7 +227,7 @@ export const ActionColumns = () => {
         description={`「${displayName}」已成功刪除`}
         severity="success"
         hideButtons
-        onClose={() => {}}
+        onClose={() => { }}
       />
     </>
   );

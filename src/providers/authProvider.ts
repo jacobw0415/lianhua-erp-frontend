@@ -5,7 +5,67 @@ import { clearAppCache } from "@/utils/appCache";
 import { clearProfileCache } from "@/utils/profileCache";
 
 /** 應用基底路徑（Vite 的 import.meta.env.BASE_URL，部署子路徑時為 /erp 等） */
-const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
+const BASE_PATH =
+  (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
+
+/** SSE 事件來源（登入成功後建立，FORCE_LOGOUT 時立刻踢回登入頁） */
+let sessionEventSource: EventSource | null = null;
+
+function closeSessionEventSource(): void {
+  try {
+    sessionEventSource?.close();
+  } catch {
+    // ignore
+  } finally {
+    sessionEventSource = null;
+  }
+}
+
+function startSessionEventSource(token: string): void {
+  if (typeof window === "undefined" || typeof EventSource === "undefined") return;
+  if (!token) return;
+
+  const apiUrl = getApiUrl();
+  // 確保不會重複建立多條連線
+  closeSessionEventSource();
+
+  // 這裡示意用 query string 帶 accessToken，與後端 /api/session/stream?token=<accessToken> 對齊
+  const url = `${apiUrl}/session/stream?token=${encodeURIComponent(token)}`;
+  const es = new EventSource(url);
+
+  es.addEventListener("INIT", () => {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[SSE] session stream connected");
+    }
+  });
+
+  es.addEventListener("FORCE_LOGOUT", () => {
+  // 後端強制登出：標記原因並立即清除本地會話導回登入頁（無需再等下一次 API 呼叫）
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.setItem("login_expired", "1");
+    sessionStorage.setItem("login_expired_reason", "force_logout");
+  }
+    closeSessionEventSource();
+    forceLogoutAndRedirect();
+  });
+
+  es.onerror = () => {
+    // 簡單處理：連線異常時關閉，避免瀏覽器持續重試；下次登入會重新建立
+    closeSessionEventSource();
+  };
+
+  sessionEventSource = es;
+}
+
+/** 若目前已有有效 token 但尚未建立 SSE，啟動一條會話 SSE 連線（供頁面重新整理後恢復即時登出能力） */
+function ensureSessionEventSourceStarted(): void {
+  if (sessionEventSource) return;
+  if (typeof localStorage === "undefined") return;
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  startSessionEventSource(token);
+}
 
 /* ========================================================
  * 常數與儲存鍵
@@ -39,10 +99,15 @@ function clearAuthStorage(): void {
  * 透過直接 redirect，避免在過期瞬間由 react-admin 顯示預設錯誤畫面。
  */
 export function forceLogoutAndRedirect(): void {
+  closeSessionEventSource();
   clearAppCache();
   clearAuthStorage();
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.setItem("login_expired", "1");
+    // 若尚未指定更細的原因（例如 SSE 已標記 force_logout），預設為 expired
+    if (!sessionStorage.getItem("login_expired_reason")) {
+      sessionStorage.setItem("login_expired_reason", "expired");
+    }
     // 清除可能被用來「登入後導向」的儲存，避免下一位使用者（如 ROLE_USER）被導到無權限頁
     sessionStorage.removeItem("redirectPath");
   }
@@ -98,9 +163,18 @@ function hasValidToken(): boolean {
 /** 強制導向登入頁（401 時使用，避免過期會話持續操作）；支援子路徑部署 */
 function redirectToLogin(): void {
   if (typeof window === "undefined") return;
-  const base = window.location.origin;
   const basePath = BASE_PATH.replace(/\/$/, "") || "";
   const path = `${basePath}/login`;
+
+  // 優先使用 History API 做 SPA 導頁，避免整頁重新載入造成「閃一下」的體感
+  if (window.history && typeof window.history.pushState === "function") {
+    window.history.pushState(null, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    return;
+  }
+
+  // 環境不支援 History API 時退回傳統導頁
+  const base = window.location.origin;
   if (base) window.location.href = `${base}${path}`;
 }
 
@@ -378,6 +452,22 @@ export function applyLoginSuccessFromContainer(
   }
 }
 
+/**
+ * 寫入登入成功資訊並同時啟動 SSE 連線
+ * - 給登入與 MFA 第二階段共用，確保所有成功登入路徑都會建立 SSE
+ */
+export function applyLoginSuccessWithSse(
+  container: LoginResponseContainer,
+  usernameForDisplay?: string,
+  mfaEnabled?: boolean
+): void {
+  applyLoginSuccessFromContainer(container, usernameForDisplay, mfaEnabled);
+  const token = getTokenFromContainer(container);
+  if (token) {
+    startSessionEventSource(token);
+  }
+}
+
 /* ========================================================
  * AuthProvider 實作
  * ======================================================== */
@@ -482,7 +572,7 @@ export const authProvider: AuthProvider = {
       throw new Error("登入回應格式錯誤，請聯絡系統管理員");
     }
 
-    applyLoginSuccessFromContainer(container, username);
+    applyLoginSuccessWithSse(container, username);
   },
 
   logout: async () => {
@@ -508,13 +598,25 @@ export const authProvider: AuthProvider = {
         // 網路錯誤等：後端登出失敗仍清除前端，避免卡在已登入狀態
       }
     }
+    // 標記主動登出成功，供登入頁顯示友善提示；同時清除被動登出標記
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem("logout_success", "1");
+      sessionStorage.removeItem("login_expired");
+      sessionStorage.removeItem("login_expired_reason");
+    }
+    // 關閉 SSE 連線，避免在登出後仍接收事件
+    closeSessionEventSource();
     // 先清快取，避免儀表板等 useQuery 在導向登入頁前繼續 refetch 導致一排 HttpError2
     clearAppCache();
     clearAuthStorage();
   },
 
-  checkAuth: () =>
-    hasValidToken() ? Promise.resolve() : Promise.reject(),
+  checkAuth: () => {
+    if (!hasValidToken()) return Promise.reject();
+    // 已有有效 token 但可能是重新整理後進入系統，這裡補啟 SSE，確保仍能即時收到 FORCE_LOGOUT
+    ensureSessionEventSourceStarted();
+    return Promise.resolve();
+  },
 
   /** RBAC：回傳完整 roles 陣列（ROLE_* + 細部權限如 user:edit），供 hasAuthority / 選單過濾；無則 fallback 單一 role */
   getPermissions: () => {
@@ -548,8 +650,11 @@ export const authProvider: AuthProvider = {
     return Promise.resolve();
   },
 
-  check: () =>
-    hasValidToken() ? Promise.resolve() : Promise.reject(),
+  check: () => {
+    if (!hasValidToken()) return Promise.reject();
+    ensureSessionEventSourceStarted();
+    return Promise.resolve();
+  },
 
   getIdentity: () => {
     const username = localStorage.getItem("username");

@@ -25,10 +25,16 @@ const SUBTITLE = "請登入以繼續使用系統";
 
 const LOGIN_COOLDOWN_SEC = 60;
 
+type BannerState = {
+  message: string;
+  severity: "success" | "info" | "warning" | "error";
+} | null;
+
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [banner, setBanner] = useState<BannerState>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginCooldown, setLoginCooldown] = useState(0);
@@ -39,12 +45,33 @@ export const LoginPage = () => {
   const { mode } = useColorMode();
   const isDark = mode === "dark";
 
-  // 登入逾期／401 後導回登入頁時顯示提示
+  // 登入逾期／被強制登出／主動登出後導回登入頁時顯示提示
   useEffect(() => {
     if (typeof sessionStorage === "undefined") return;
-    if (sessionStorage.getItem("login_expired") === "1") {
+    const expiredFlag = sessionStorage.getItem("login_expired");
+    const reason = sessionStorage.getItem("login_expired_reason");
+    const logoutSuccess = sessionStorage.getItem("logout_success");
+
+    if (logoutSuccess === "1") {
+      setBanner({
+        message: "您已成功登出。",
+        severity: "success",
+      });
+      sessionStorage.removeItem("logout_success");
+    } else if (expiredFlag === "1") {
+      if (reason === "force_logout") {
+        setBanner({
+          message: "您已被系統管理員強制登出，請重新登入。",
+          severity: "warning",
+        });
+      } else {
+        setBanner({
+          message: "登入已逾期或會話已失效，請重新登入。",
+          severity: "warning",
+        });
+      }
       sessionStorage.removeItem("login_expired");
-      setError("登入逾期或已登出，請重新登入");
+      sessionStorage.removeItem("login_expired_reason");
     }
   }, []);
 
@@ -189,6 +216,16 @@ export const LoginPage = () => {
               {SUBTITLE}
             </Typography>
           </Box>
+
+          {banner && (
+            <Alert
+              severity={banner.severity}
+              onClose={() => setBanner(null)}
+              sx={{ mb: 2, borderRadius: 2 }}
+            >
+              {banner.message}
+            </Alert>
+          )}
 
           {error && (
             <Alert
