@@ -156,7 +156,11 @@ export const createDataProvider = ({
               refreshResponse.status === 400 ||
               refreshResponse.status === 401
             ) {
-              void authProvider.checkError({ status: 401 } as ApiError);
+              authProvider
+                .checkError({ status: 401 } as ApiError)
+                .catch(() => {
+                  // ignore rejection – SESSION_EXPIRED will be thrown below
+                });
               throw new Error("SESSION_EXPIRED");
             }
           } catch {
@@ -165,7 +169,11 @@ export const createDataProvider = ({
         }
 
         // 無 refreshToken 或已嘗試換發仍失敗 → 被動登出
-        void authProvider.checkError({ status: 401 } as ApiError);
+        authProvider
+          .checkError({ status: 401 } as ApiError)
+          .catch(() => {
+            // ignore rejection – SESSION_EXPIRED will be thrown below
+          });
         throw new Error("SESSION_EXPIRED");
       }
 
@@ -173,7 +181,9 @@ export const createDataProvider = ({
        * 403 權限不足：觸發 authProvider.checkError，導向無權限頁
        * -------------------------------------------- */
       if (status === 403) {
-        void authProvider.checkError(apiError);
+        authProvider.checkError(apiError).catch(() => {
+          // ignore rejection – 原始錯誤仍會丟給 React-Admin
+        });
         throw error;
       }
 

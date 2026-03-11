@@ -1,9 +1,9 @@
 /**
  * 使用者上線狀態（WebSocket）全域 Context
- *
- * - 在 App 層級掛載，登入成功拿到 Token 時即觸發 connect()（聆聽 auth:login），不等待頁面渲染。
- * - 在 onConnect 回呼中主動請求一次最新在線列表（GET /api/users/online）。
- * - 登出（auth:logout）或 F5 時斷線；路由切換時連線持續存在。
+ * * 終極修正版：
+ * 1. 解決手機刷新導致的「狀態覆蓋」問題。
+ * 2. 強化異步清理與全域單例。
+ * 3. 增加 Console 診斷，方便追蹤事件到達順序。
  */
 
 import {
@@ -17,247 +17,159 @@ import {
 } from "react";
 import SockJS from "sockjs-client";
 import { Client, ReconnectionTimeMode } from "@stomp/stompjs";
-
 import { getApiUrl, getWsUrl } from "@/config/apiUrl";
-import type { OnlineUserDto, UserOnlineEventDto } from "@/types/onlineUsers";
-import type { WsConnectionStatus } from "@/types/onlineUsers";
+import type { OnlineUserDto, UserOnlineEventDto, WsConnectionStatus } from "@/types/onlineUsers";
 
-function getAuthHeaders(): Headers {
-  const headers = new Headers();
-  headers.set("Accept", "application/json");
-  const token =
-    typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
-  const tokenType =
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem("tokenType") || "Bearer"
-      : "Bearer";
-  if (token) {
-    headers.set("Authorization", `${tokenType} ${token}`);
-  }
-  return headers;
-}
+// --- 【全域單例】 ---
+let globalClient: Client | null = null;
 
-interface OnlineUsersApiResponse {
-  status?: number;
-  message?: string;
-  data?: OnlineUserDto[];
-  timestamp?: string;
-}
+const OnlineUsersContext = createContext<any>(null);
 
-async function fetchOnlineUsers(): Promise<OnlineUserDto[]> {
-  const apiUrl = getApiUrl();
-  const res = await fetch(`${apiUrl}/users/online`, {
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`GET /api/users/online 失敗: ${res.status} ${text}`);
-  }
-  const json = (await res.json()) as OnlineUsersApiResponse;
-  if (!Array.isArray(json?.data)) return [];
-  return json.data;
-}
-
-export interface OnlineUsersContextValue {
-  onlineUsers: OnlineUserDto[];
-  loading: boolean;
-  error: Error | null;
-  refresh: () => Promise<void>;
-  /** WebSocket 連線狀態，可用於顯示綠／黃／紅燈或提示文案 */
-  connectionStatus: WsConnectionStatus;
-}
-
-const OnlineUsersContext = createContext<OnlineUsersContextValue | null>(null);
-
-const EMPTY_VALUE: OnlineUsersContextValue = {
-  onlineUsers: [],
-  loading: false,
-  error: null,
-  refresh: async () => {},
-  connectionStatus: "idle",
-};
-
-export interface OnlineUsersProviderProps {
-  children: ReactNode;
-}
-
-/**
- * 在 App 層級掛載。登入成功時 authProvider 會 dispatch('auth:login')，此時立即建立 WebSocket，
- * 不等待 Layout/頁面渲染。onConnect 時主動請求一次最新在線列表。
- */
-export function OnlineUsersProvider({ children }: OnlineUsersProviderProps) {
+export function OnlineUsersProvider({ children }: { children: ReactNode }) {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUserDto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<WsConnectionStatus>("idle");
-  const [hasToken, setHasToken] = useState(() => !!localStorage.getItem("token"));
-  const clientRef = useRef<Client | null>(null);
+  const [hasToken, setHasToken] = useState(() => {
+    if (typeof localStorage !== 'undefined') return !!localStorage.getItem("token");
+    return false;
+  });
+  
+  const refreshRef = useRef<(() => Promise<void>) | null>(null);
 
+  // 獲取最新清單
   const refresh = useCallback(async () => {
-    if (!localStorage.getItem("token")) {
-      setOnlineUsers([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem("token") : null;
+    if (!token) return;
     try {
-      const list = await fetchOnlineUsers();
-      setOnlineUsers(list);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
-      setOnlineUsers([]);
-    } finally {
-      setLoading(false);
+      const res = await fetch(`${getApiUrl()}/users/online`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      if (Array.isArray(json?.data)) {
+        setOnlineUsers(json.data);
+        console.log("[WS] API 清單已同步", json.data.length, "人在線");
+      }
+    } catch (e) {
+      console.error("[WS] Refresh Error", e);
     }
   }, []);
 
-  // 聆聽登入／登出，取得 Token 當下就觸發連線
+  useEffect(() => { refreshRef.current = refresh; }, [refresh]);
+
+  // 1. 強效登出與登入事件監聽
   useEffect(() => {
+    const onLogout = async () => {
+      console.log("[WS] 偵測到登出，清理連線與狀態");
+      setHasToken(false);
+      setOnlineUsers([]);
+      setConnectionStatus("idle");
+      if (globalClient) {
+        const clientToKill = globalClient;
+        globalClient = null;
+        clientToKill.deactivate().catch(() => {});
+      }
+    };
     const onLogin = () => setHasToken(true);
-    const onLogout = () => setHasToken(false);
-    window.addEventListener("auth:login", onLogin);
+
     window.addEventListener("auth:logout", onLogout);
+    window.addEventListener("auth:login", onLogin);
     return () => {
-      window.removeEventListener("auth:login", onLogin);
       window.removeEventListener("auth:logout", onLogout);
+      window.removeEventListener("auth:login", onLogin);
     };
   }, []);
 
-  // hasToken 為 true 時立即建立 WebSocket；onConnect 時再請求最新在線列表
+  // 2. WebSocket 生命周期 (對抗手機刷新與 ECONNRESET)
   useEffect(() => {
-    if (!hasToken) {
-      setOnlineUsers([]);
-      setLoading(false);
-      setError(null);
-      setConnectionStatus("idle");
-      if (clientRef.current) {
-        try {
-          clientRef.current.deactivate();
-        } catch {
-          // ignore
+    let isMounted = true;
+
+    const startConnection = async () => {
+      try {
+        if (globalClient) {
+          await globalClient.deactivate().catch(() => {});
+          globalClient = null;
         }
-        clientRef.current = null;
-      }
-      return;
-    }
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
+        if (!hasToken || !isMounted) return;
 
-    let mounted = true;
-    setLoading(true);
-    setError(null);
-    setConnectionStatus("connecting");
+        const token = localStorage.getItem("token");
+        const wsUrl = getWsUrl();
+        if (!token || !wsUrl) return;
 
-    // 僅透過 CONNECT header 傳遞 Token，不放入 URL 以降低被記錄的風險
-    const baseWsUrl = getWsUrl();
-    const client = new Client({
-      webSocketFactory: () => new SockJS(baseWsUrl) as unknown as WebSocket,
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      // 指數退避重連：首次 2 秒，之後加倍，上限 60 秒，避免伺服器異常時密集重連
-      reconnectDelay: 2000,
-      maxReconnectDelay: 60 * 1000,
-      reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
-      // Heartbeat 協助及早發現死連線（單位 ms）
-      heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000,
-      onConnect: () => {
-        if (!mounted || !clientRef.current) return;
-        setConnectionStatus("connected");
-        setError(null); // 重連成功後清除先前錯誤
-        clientRef.current.subscribe("/topic/online-users", (msg) => {
-          if (!mounted) return;
-          try {
-            const event = JSON.parse(msg.body) as UserOnlineEventDto;
-            setOnlineUsers((prev) => {
-              if (event.eventType === "ONLINE") {
-                const exists = prev.some((u) => u.id === event.userId);
-                if (exists) {
-                  return prev.map((u) =>
-                    u.id === event.userId
-                      ? {
-                          ...u,
-                          username: event.username,
-                          fullName: event.fullName,
-                          onlineAt: event.at,
-                        }
-                      : u
-                  );
-                }
-                return [
-                  ...prev,
-                  {
-                    id: event.userId,
-                    username: event.username,
-                    fullName: event.fullName,
-                    onlineAt: event.at,
-                  },
-                ].sort(
-                  (a, b) =>
-                    new Date(a.onlineAt).getTime() -
-                    new Date(b.onlineAt).getTime()
-                );
-              }
-              if (event.eventType === "OFFLINE") {
-                return prev.filter((u) => u.id !== event.userId);
-              }
-              return prev;
+        setConnectionStatus("connecting");
+
+        const client = new Client({
+          webSocketFactory: () => new SockJS(`${wsUrl}?t=${Date.now()}`) as any,
+          connectHeaders: { Authorization: `Bearer ${token}` },
+          reconnectDelay: 8000,
+          heartbeatIncoming: 20000,
+          heartbeatOutgoing: 20000,
+          onConnect: () => {
+            if (!isMounted) { client.deactivate(); return; }
+            setConnectionStatus("connected");
+
+            client.subscribe("/topic/online-users", (msg) => {
+              if (!isMounted) return;
+              try {
+                const event = JSON.parse(msg.body) as UserOnlineEventDto;
+                const uidStr = String(event.userId);
+                
+                setOnlineUsers((prev) => {
+                  // 強制過濾：無論什麼事件，先移除舊的該 ID 資料
+                  const filtered = prev.filter(u => String(u.id) !== uidStr);
+                  
+                  if (event.eventType === "ONLINE") {
+                    console.log(`[WS] 收到上線通知: ${event.username}`);
+                    return [...filtered, 
+                      { id: event.userId, username: event.username, fullName: event.fullName, onlineAt: event.at }
+                    ].sort((a, b) => new Date(a.onlineAt).getTime() - new Date(b.onlineAt).getTime());
+                  }
+                  
+                  console.log(`[WS] 收到離線通知: ID ${event.userId}`);
+                  return filtered;
+                });
+              } catch (e) { console.error("[WS] Parse Error", e); }
             });
-          } catch (e) {
-            console.error("[OnlineUsers] 解析 WebSocket 訊息失敗", e);
+
+            // 【關鍵修正】稍微延遲 refresh，防止 API 回傳的舊資料蓋掉剛剛收到的離線廣播
+            setTimeout(() => {
+              if (isMounted && hasToken) refreshRef.current?.();
+            }, 1000); 
+          },
+          onWebSocketClose: () => {
+            if (isMounted && hasToken) setConnectionStatus("reconnecting");
+          },
+          onStompError: () => {
+            if (isMounted) setConnectionStatus("error");
           }
         });
-        // 連線成功後主動請求一次最新在線列表（含當前使用者）
-        refresh();
-      },
-      onWebSocketClose: () => {
-        if (mounted) setConnectionStatus("reconnecting");
-      },
-      onStompError: (frame) => {
-        if (mounted) {
-          setConnectionStatus("error");
-          setError(
-            new Error(frame.headers?.message || "WebSocket 連線錯誤")
-          );
-        }
-      },
-    });
 
-    clientRef.current = client;
-    client.activate();
-
-    return () => {
-      mounted = false;
-      if (clientRef.current) {
-        try {
-          clientRef.current.deactivate();
-        } catch {
-          // ignore
-        }
-        clientRef.current = null;
+        globalClient = client;
+        client.activate();
+      } catch (err) {
+        if (isMounted) setConnectionStatus("error");
       }
     };
-  }, [hasToken, refresh]);
 
-  const value: OnlineUsersContextValue = {
-    onlineUsers,
-    loading,
-    error,
-    refresh,
-    connectionStatus,
-  };
+    startConnection();
+
+    return () => {
+      isMounted = false;
+      if (globalClient) {
+        globalClient.deactivate().catch(() => {});
+        globalClient = null;
+      }
+    };
+  }, [hasToken]);
 
   return (
-    <OnlineUsersContext.Provider value={value}>
+    <OnlineUsersContext.Provider value={{ onlineUsers, loading: false, error: null, refresh, connectionStatus }}>
       {children}
     </OnlineUsersContext.Provider>
   );
 }
 
-export function useOnlineUsers(): OnlineUsersContextValue {
-  const ctx = useContext(OnlineUsersContext);
-  return ctx ?? EMPTY_VALUE;
-}
+export const useOnlineUsers = () => {
+    const context = useContext(OnlineUsersContext);
+    return context || { onlineUsers: [], loading: false, error: null, refresh: async () => {}, connectionStatus: "idle" };
+};
