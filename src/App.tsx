@@ -69,6 +69,7 @@ import {
 
 import { GlobalAlertProvider } from "@/contexts/GlobalAlertContext";
 import { ColorModeProvider } from "@/contexts/ColorModeProvider";
+import { OnlineUsersProvider } from "@/contexts/OnlineUsersContext";
 import { useColorMode } from "@/contexts/useColorMode";
 
 import { LianhuaLightTheme } from "@/theme/LianhuaTheme";
@@ -139,9 +140,11 @@ export const AppWithProvider = () => {
     <ErrorHandlerProvider>
       <GlobalAlertProvider>
         <ColorModeProvider>
-          <AppErrorBoundary>
-            <App />
-          </AppErrorBoundary>
+          <OnlineUsersProvider>
+            <AppErrorBoundary>
+              <App />
+            </AppErrorBoundary>
+          </OnlineUsersProvider>
         </ColorModeProvider>
       </GlobalAlertProvider>
     </ErrorHandlerProvider>

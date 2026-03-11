@@ -92,6 +92,10 @@ function clearAuthStorage(): void {
   } catch {
     // ignore
   }
+  // 通知全域：Token 已清除，WebSocket 應斷線
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("auth:logout"));
+  }
 }
 
 /**
@@ -465,6 +469,10 @@ export function applyLoginSuccessWithSse(
   const token = getTokenFromContainer(container);
   if (token) {
     startSessionEventSource(token);
+    // 通知全域：已有 Token，可立即建立 WebSocket（不需等 Layout 渲染）
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("auth:login"));
+    }
   }
 }
 

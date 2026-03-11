@@ -4,6 +4,10 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // sockjs-client 等套件在瀏覽器會參考 Node 的 global，導致 "global is not defined"
+    global: "globalThis",
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -25,6 +29,21 @@ export default defineConfig({
             proxyReq.setHeader("Origin", "http://localhost:5173");
             proxyReq.setHeader("Referer", "http://localhost:5173/");
           });
+        },
+      },
+      // 使用者上線狀態 WebSocket（STOMP over SockJS），後端端點為 /ws（非 /api/ws）
+      "/ws": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        ws: true,
+        // 區網存取時轉發給後端的 Origin 與 /api 一致，減少被後端關閉連線（ECONNRESET）
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            proxyReq.setHeader("Origin", "http://localhost:5173");
+            proxyReq.setHeader("Referer", "http://localhost:5173/");
+          });
+          // ECONNRESET：後端關閉連線時會觸發，避免未處理錯誤造成 log 刷屏（連線會由前端重試）
+          proxy.on("error", () => {});
         },
       },
     },

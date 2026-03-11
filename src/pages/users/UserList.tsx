@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useTheme, Box } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
@@ -12,12 +12,19 @@ import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagr
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
+import { OnlineStatusChip } from "@/components/common/OnlineStatusChip";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { getRoleDisplayName } from "@/constants/userRoles";
+import { useOnlineUsers } from "@/hooks/useOnlineUsers";
 
 /** 使用者列表（/api/users）；頂端不顯示預設 + Create，改由共用「新增資料」按鈕新增 */
 export const UserList = () => {
   const theme = useTheme();
+  const { onlineUsers } = useOnlineUsers();
+  const onlineUserIds = useMemo(
+    () => new Set(onlineUsers.map((u) => u.id)),
+    [onlineUsers]
+  );
 
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -53,21 +60,36 @@ export const UserList = () => {
         <Box
           sx={{
             width: "100%",
+            // 第 1 欄：上線燈號（較窄）
             "& .RaDatagrid-table th:nth-of-type(1), & .RaDatagrid-table td:nth-of-type(1)": {
-              width: 100,
-              minWidth: 100,
-              maxWidth: 100,
+              width: 80,
+              minWidth: 72,
+              maxWidth: 96,
               boxSizing: "border-box",
             },
+            // 第 2 欄：帳號
             "& .RaDatagrid-table th:nth-of-type(2), & .RaDatagrid-table td:nth-of-type(2)": {
-              width: 112,
-              minWidth: 88,
-              maxWidth: 112,
+              width: 120,
+              minWidth: 100,
+              maxWidth: 140,
               boxSizing: "border-box",
             },
           }}
         >
           <ResponsiveListDatagrid tabletLayout="card" rowClick={false}>
+            {/* 上線狀態放在第一欄 */}
+            <FunctionField
+              label="上線狀態"
+              className="cell-centered"
+              render={(record: RaRecord) =>
+                record ? (
+                  <OnlineStatusChip
+                    isOnline={onlineUserIds.has(Number(record.id))}
+                  />
+                ) : null
+              }
+            />
+
             <TextField source="username" label="帳號" />
             <TextField source="fullName" label="姓名" />
             <TextField source="email" label="Email" />
@@ -86,7 +108,7 @@ export const UserList = () => {
               label="角色"
               source="roles"
               render={(record: RaRecord) => {
-                const roles = (record as any).roles as unknown;
+                const roles = (record as RaRecord & { roles?: string[] | string }).roles;
                 if (Array.isArray(roles) && roles.length > 0) {
                   return roles.map((r: string) => getRoleDisplayName(String(r))).join("、");
                 }

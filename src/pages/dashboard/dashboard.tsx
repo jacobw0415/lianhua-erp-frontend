@@ -28,6 +28,7 @@ import { WelcomeCard, getGreeting } from '@/components/dashboard/WelcomeCard';
 import { QuickActionsSection } from '@/components/dashboard/QuickActionsSection';
 import { SectionHeader } from '@/components/dashboard/SectionHeader';
 import { StatSection } from '@/components/dashboard/sections/StatSection';
+import { OnlineUsersSection } from '@/components/dashboard/sections/OnlineUsersSection';
 import { TrendAndExpenseSection } from '@/components/dashboard/sections/TrendAndExpenseSection';
 import { AdvancedAnalysisSection } from '@/components/dashboard/sections/AdvancedAnalysisSection';
 import { DashboardFinancialBlock } from '@/components/dashboard/blocks/DashboardFinancialBlock';
@@ -187,6 +188,8 @@ const DashboardContent: React.FC = () => {
         quickActions={quickActions}
         alerts={alertsForQuick}
       />
+
+      <OnlineUsersSection />
 
       {statSections.map((section) => (
         <StatSection
