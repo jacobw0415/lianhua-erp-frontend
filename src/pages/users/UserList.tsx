@@ -16,13 +16,24 @@ import { OnlineStatusChip } from "@/components/common/OnlineStatusChip";
 import { ActionColumns } from "@/components/common/ActionColumns";
 import { getRoleDisplayName } from "@/constants/userRoles";
 import { useOnlineUsers } from "@/hooks/useOnlineUsers";
+// 確保匯入 OnlineUserDto 型別
+import type { OnlineUserDto } from "@/types/onlineUsers";
 
-/** 使用者列表（/api/users）；頂端不顯示預設 + Create，改由共用「新增資料」按鈕新增 */
+/**
+ * 使用者列表（/api/users）
+ * 修正重點：
+ * 1. 明確指定 map((u: OnlineUserDto)) 解決 TypeScript 隱式 any 警告。
+ * 2. 統一使用 String(id) 進行 Set 比對，確保跨裝置狀態同步。
+ */
 export const UserList = () => {
   const theme = useTheme();
+  
+  // 從 Context 獲取即時在線名單
   const { onlineUsers } = useOnlineUsers();
+
+  // 將在線用戶 ID 轉化為 Set 並統一轉為 String 提升比對效能與準確性
   const onlineUserIds = useMemo(
-    () => new Set(onlineUsers.map((u) => u.id)),
+    () => new Set(onlineUsers.map((u: OnlineUserDto) => String(u.id))),
     [onlineUsers]
   );
 
@@ -60,7 +71,7 @@ export const UserList = () => {
         <Box
           sx={{
             width: "100%",
-            // 第 1 欄：上線燈號（較窄）
+            // 第 1 欄：上線燈號
             "& .RaDatagrid-table th:nth-of-type(1), & .RaDatagrid-table td:nth-of-type(1)": {
               width: 80,
               minWidth: 72,
@@ -77,24 +88,25 @@ export const UserList = () => {
           }}
         >
           <ResponsiveListDatagrid tabletLayout="card" rowClick={false}>
-            {/* 上線狀態放在第一欄 */}
+            {/* 上線狀態欄位 */}
             <FunctionField
               label="上線狀態"
               className="cell-centered"
-              render={(record: RaRecord) =>
-                record ? (
-                  <OnlineStatusChip
-                    isOnline={onlineUserIds.has(Number(record.id))}
-                  />
-                ) : null
-              }
+              render={(record: RaRecord) => {
+                if (!record) return null;
+                
+                // 使用 String 強制轉型比對，確保 isOnline 判斷正確
+                const isOnline = onlineUserIds.has(String(record.id));
+                
+                return <OnlineStatusChip isOnline={isOnline} />;
+              }}
             />
 
             <TextField source="username" label="帳號" />
             <TextField source="fullName" label="姓名" />
             <TextField source="email" label="Email" />
 
-            {/* 啟用狀態顯示（對應 enabled 欄位） */}
+            {/* 啟用狀態顯示 */}
             <FunctionField
               label="狀態"
               className="cell-centered"
@@ -103,7 +115,7 @@ export const UserList = () => {
               )}
             />
 
-            {/* 角色清單（顯示中文名稱） */}
+            {/* 角色清單 */}
             <FunctionField
               label="角色"
               source="roles"
@@ -117,7 +129,7 @@ export const UserList = () => {
               }}
             />
 
-            {/* 操作欄：沿用共用 ActionColumns */}
+            {/* 操作欄 */}
             <FunctionField
               label="操作"
               source="action"
@@ -132,4 +144,3 @@ export const UserList = () => {
 };
 
 UserList.displayName = "UserList";
-
