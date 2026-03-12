@@ -1,14 +1,3 @@
-/**
- * 線上使用者面板（可選）
- * 放置位置：src/components/OnlineUsersPanel.tsx
- * 使用方式：在 Layout（如 CustomAppBar）中引入，例如顯示在頂欄與通知並排，或側邊欄底部。
- *
- * 範例（在 CustomAppBar 內）：
- *   import { OnlineUsersPanel } from "@/components/OnlineUsersPanel";
- *   // 在 Toolbar 內加入：
- *   <OnlineUsersPanel />
- */
-
 import {
   Box,
   IconButton,
@@ -26,17 +15,30 @@ import { WS_CONNECTION_STATUS_LABEL } from "@/types/onlineUsers";
 import { useState } from "react";
 import dayjs from "dayjs";
 
+/** 定義線上使用者資料結構 */
+interface OnlineUser {
+  id: string | number;
+  username: string;
+  fullName?: string;
+  onlineAt: string | Date;
+}
+
 export function OnlineUsersPanel() {
   const { onlineUsers, loading, error, connectionStatus } = useOnlineUsers();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
+
+  // 將 onlineUsers 斷言為正確的型別，解決 ts(7006)
+  const users = onlineUsers as OnlineUser[];
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => setAnchorEl(null);
 
-  const statusLabel = WS_CONNECTION_STATUS_LABEL[connectionStatus];
+  // 修正 ts(7053)：使用 as keyof typeof 確保索引安全
+  const statusLabel = WS_CONNECTION_STATUS_LABEL[connectionStatus as keyof typeof WS_CONNECTION_STATUS_LABEL];
+  
   const statusColor =
     connectionStatus === "connected"
       ? "success.main"
@@ -81,7 +83,7 @@ export function OnlineUsersPanel() {
         <Box sx={{ p: 2, minWidth: 220, maxWidth: 320 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
             <Typography variant="subtitle2" color="text.secondary">
-              線上使用者 ({onlineUsers.length})
+              線上使用者 ({users.length})
             </Typography>
             <Box
               component="span"
@@ -109,14 +111,14 @@ export function OnlineUsersPanel() {
               {error.message}
             </Typography>
           )}
-          {!loading && !error && onlineUsers.length === 0 && (
+          {!loading && !error && users.length === 0 && (
             <Typography variant="body2" color="text.secondary">
               目前無線上使用者
             </Typography>
           )}
-          {!loading && onlineUsers.length > 0 && (
+          {!loading && users.length > 0 && (
             <List dense disablePadding>
-              {onlineUsers.map((u) => (
+              {users.map((u) => (
                 <ListItem key={u.id} disablePadding sx={{ py: 0.25 }}>
                   <ListItemText
                     primary={u.fullName || u.username}

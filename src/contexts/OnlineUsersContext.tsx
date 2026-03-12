@@ -16,7 +16,7 @@ import {
   type ReactNode,
 } from "react";
 import SockJS from "sockjs-client";
-import { Client, ReconnectionTimeMode } from "@stomp/stompjs";
+import { Client } from "@stomp/stompjs";
 import { getApiUrl, getWsUrl } from "@/config/apiUrl";
 import type { OnlineUserDto, UserOnlineEventDto, WsConnectionStatus } from "@/types/onlineUsers";
 
