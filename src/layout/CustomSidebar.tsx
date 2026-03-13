@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Sidebar, type SidebarProps } from "react-admin";
 import { styled } from "@mui/material/styles";
 
@@ -33,7 +34,9 @@ const RawSidebar = (props: SidebarProps) => {
   );
 };
 
-export const CustomSidebar = styled(RawSidebar)(() => ({
+const MemoSidebar = React.memo(RawSidebar);
+
+export const CustomSidebar = styled(MemoSidebar)(() => ({
   "& .RaSidebar-fixed": {
     width: drawerWidth,
     transition: "width 0.2s ease",

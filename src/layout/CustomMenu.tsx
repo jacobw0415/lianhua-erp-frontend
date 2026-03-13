@@ -43,7 +43,7 @@ function filterItemsByRole(
     });
 }
 
-export const CustomMenu = () => {
+const CustomMenuInner = () => {
     const [open] = useSidebarState();
     const location = useLocation();
     const { permissions } = usePermissions();
@@ -253,5 +253,7 @@ export const CustomMenu = () => {
         </Menu>
     );
 };
+
+export const CustomMenu = React.memo(CustomMenuInner);
 
 export default CustomMenu;

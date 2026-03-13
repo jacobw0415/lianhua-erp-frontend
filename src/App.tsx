@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { createDataProvider } from "@/providers/dataProvider";
 import { NoopNotification } from "@/components/NoopNotification";
-import Dashboard from "@/pages/dashboard/dashboard";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 import { SupplierList } from "@/pages/suppliers/SupplierList";
 import { SupplierCreate } from "@/pages/suppliers/SupplierCreate";
@@ -158,6 +158,24 @@ const App = () => {
   const { handleApiError } = useErrorHandler();
   const { mode } = useColorMode();
 
+  // 儀表板採用 lazy loading，減少初始載入 JS 體積，改善 LCP
+  const Dashboard = React.useMemo(
+    () =>
+      React.lazy(async () => ({
+        default: (await import("@/pages/dashboard/dashboard")).default,
+      })),
+    []
+  );
+
+  const LazyDashboard: React.FC = React.useCallback(
+    () => (
+      <React.Suspense fallback={<DashboardSkeleton />}>
+        <Dashboard />
+      </React.Suspense>
+    ),
+    [Dashboard]
+  );
+
   const dataProvider = React.useMemo(() => {
     return createDataProvider({
       handleApiError,
@@ -168,7 +186,7 @@ const App = () => {
   return (
     <Admin
       layout={CustomLayout}
-      dashboard={Dashboard}
+      dashboard={LazyDashboard}
       dataProvider={dataProvider}
       authProvider={authProvider}
       loginPage={LoginPage}

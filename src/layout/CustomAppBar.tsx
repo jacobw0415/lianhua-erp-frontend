@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
     useTheme,
     useRedirect,
@@ -6,6 +6,7 @@ import {
     useDataProvider,
     useLogout,
     useGetIdentity,
+    useRefresh,
     type AppBarProps,
 } from "react-admin";
 
@@ -100,6 +101,7 @@ export const CustomAppBar = (props: AppBarProps) => {
     const moreMenuButtonRef = useRef<HTMLElement | null>(null);
     const periodButtonRef = useRef<HTMLDivElement | null>(null);
     const [periodMenuWidth, setPeriodMenuWidth] = useState<number | undefined>(undefined);
+    const refresh = useRefresh();
 
     /* =====================================================
      * 🚀 解決 Console 報警與 ARIA 衝突
@@ -124,22 +126,36 @@ export const CustomAppBar = (props: AppBarProps) => {
         }
     }, [periodMenuAnchor, accountingPeriod, isMobile]);
 
-    const handleNotificationClick = async (noti: any) => {
-        setNotiAnchor(null);
-        const actualId = noti.id || noti.userNotificationId;
-        if (!actualId) return;
+    const handleNotificationClick = useCallback(
+        async (noti: any) => {
+            setNotiAnchor(null);
+            const actualId = noti.id || noti.userNotificationId;
+            if (!actualId) return;
 
-        const success = await markAsRead({ ...noti, userNotificationId: actualId });
-        
-        if (success && noti.targetId) {
-            switch (noti.targetType) {
-                case 'purchases': redirect(`/purchases/${noti.targetId}/show`); break;
-                case 'expenses': redirect(`/expenses/${noti.targetId}/show`); break;
-                case 'orders': redirect(`/orders/${noti.targetId}/show`); break;
-                default: console.info("💡 無跳轉目標:", noti.targetType);
+            // 先處理導頁，讓使用者立刻看到畫面變化
+            if (noti.targetId) {
+                switch (noti.targetType) {
+                    case "purchases":
+                        redirect(`/purchases/${noti.targetId}/show`);
+                        break;
+                    case "expenses":
+                        redirect(`/expenses/${noti.targetId}/show`);
+                        break;
+                    case "orders":
+                        redirect(`/orders/${noti.targetId}/show`);
+                        break;
+                    default:
+                        console.info("💡 無跳轉目標:", noti.targetType);
+                }
             }
-        }
-    };
+
+            // 標記已讀改為背景執行，避免阻塞當前互動的 INP
+            markAsRead({ ...noti, userNotificationId: actualId }).catch(() => {
+                // ignore 標記失敗，避免影響互動流暢度
+            });
+        },
+        [markAsRead, redirect]
+    );
 
     /* =====================================================
      * 🔍 搜尋與主題邏輯
@@ -200,20 +216,20 @@ export const CustomAppBar = (props: AppBarProps) => {
         return () => clearTimeout(timer);
     }, [inputValue, accountingPeriod, dataProvider]);
 
-    const handleToggleTheme = () => {
+    const handleToggleTheme = useCallback(() => {
         const next = isDark ? "light" : "dark";
         setMode(next);
         setRaTheme(next);
         setMoreMenuAnchor(null);
-    };
+    }, [isDark, muiTheme.palette.mode, setMode, setRaTheme, setMoreMenuAnchor]);
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(() => {
         setUserAnchor(null);
         // 透過 react-admin 的 logout 流程：
         // 1. 呼叫 authProvider.logout 清除 Token
         // 2. 自動導回登入頁
         logout();
-    };
+    }, [logout]);
 
     return (
         <AppBar
@@ -341,8 +357,15 @@ export const CustomAppBar = (props: AppBarProps) => {
                                     {isDark ? <Brightness7Icon sx={{ color: "#fff" }} /> : <Brightness4Icon sx={{ color: "#fff" }} />}
                                 </IconButton>
                             </Tooltip>
-                            <Tooltip title="重新整理">  
-                                <IconButton onClick={() => window.location.reload()}><RefreshIcon sx={{ color: "#fff" }} /></IconButton>
+                            <Tooltip title="重新整理">
+                                <IconButton
+                                    onClick={() => {
+                                        // 先執行 react-admin 的 refresh（輕量重抓資料）
+                                        refresh();
+                                    }}
+                                >
+                                    <RefreshIcon sx={{ color: "#fff" }} />
+                                </IconButton>
                             </Tooltip>
                         </>
                     ) : (
@@ -515,7 +538,12 @@ export const CustomAppBar = (props: AppBarProps) => {
                         <ListItemIcon>{isDark ? <Brightness7Icon fontSize="small" /> : <Brightness4Icon fontSize="small" />}</ListItemIcon>
                         <ListItemText>{isDark ? '淺色模式' : '深色模式'}</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => window.location.reload()}>
+                    <MenuItem
+                        onClick={() => {
+                            refresh();
+                            setMoreMenuAnchor(null);
+                        }}
+                    >
                         <ListItemIcon><RefreshIcon fontSize="small" /></ListItemIcon>
                         <ListItemText>重新整理</ListItemText>
                     </MenuItem>

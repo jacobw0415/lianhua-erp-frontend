@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect} from "react";
 import {
   Box,
   Stack,
@@ -81,9 +81,9 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   const useCompactFilterLayout = !isLargeScreen;
   const useTabletSemiCompact = useCompactFilterLayout && isTablet;
 
-  const [localInputValues, setLocalInputValues] = useState<
-    Record<string, string>
-  >({});
+  const [localInputValues, setLocalInputValues] = useState<Record<string, string>>(
+    {},
+  );
   const [isComposing, setIsComposing] = useState(false);
 
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -140,8 +140,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     }
   }, [anchor, isSmallScreen]);
 
-  /** 🔍 搜尋 */
-  const handleSearch = () => {
+  /** 🔍 建立有效搜尋條件物件（去除空值） */
+  const buildValidFilters = () => {
     const validFilters: Record<string, string> = {};
     for (const [key, value] of Object.entries(localInputValues)) {
       if (
@@ -153,6 +153,12 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         validFilters[key] = value.trim();
       }
     }
+    return validFilters;
+  };
+
+  /** 🔍 搜尋 */
+  const handleSearch = () => {
+    const validFilters = buildValidFilters();
 
     const hasAny = Object.keys(validFilters).length > 0;
 

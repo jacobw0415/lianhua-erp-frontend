@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Snackbar, useTheme, Alert as MuiAlert } from '@mui/material';
+import { Box, Snackbar, useTheme, Alert as MuiAlert, Skeleton } from '@mui/material';
 
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -29,10 +29,26 @@ import { QuickActionsSection } from '@/components/dashboard/QuickActionsSection'
 import { SectionHeader } from '@/components/dashboard/SectionHeader';
 import { StatSection } from '@/components/dashboard/sections/StatSection';
 import { OnlineUsersSection } from '@/components/dashboard/sections/OnlineUsersSection';
-import { TrendAndExpenseSection } from '@/components/dashboard/sections/TrendAndExpenseSection';
-import { AdvancedAnalysisSection } from '@/components/dashboard/sections/AdvancedAnalysisSection';
-import { DashboardFinancialBlock } from '@/components/dashboard/blocks/DashboardFinancialBlock';
-import { DashboardInsightsBlock } from '@/components/dashboard/blocks/DashboardInsightsBlock';
+const TrendAndExpenseSection = React.lazy(() =>
+  import('@/components/dashboard/sections/TrendAndExpenseSection').then((m) => ({
+    default: m.TrendAndExpenseSection,
+  })),
+);
+const AdvancedAnalysisSection = React.lazy(() =>
+  import('@/components/dashboard/sections/AdvancedAnalysisSection').then((m) => ({
+    default: m.AdvancedAnalysisSection,
+  })),
+);
+const DashboardFinancialBlock = React.lazy(() =>
+  import('@/components/dashboard/blocks/DashboardFinancialBlock').then((m) => ({
+    default: m.DashboardFinancialBlock,
+  })),
+);
+const DashboardInsightsBlock = React.lazy(() =>
+  import('@/components/dashboard/blocks/DashboardInsightsBlock').then((m) => ({
+    default: m.DashboardInsightsBlock,
+  })),
+);
 import { STAT_SECTIONS_CONFIG, QUICK_ACTIONS_CONFIG, ALERT_AP_WARNING_THRESHOLD, DASHBOARD_SNACKBAR_DURATION_MS } from '@/constants/dashboardConstants';
 import { formatDashboardDate, formatDashboardTime } from '@/utils/dashboardFormatters';
 import { buildStatSectionItems } from '@/utils/buildStatSectionItems';
@@ -184,10 +200,7 @@ const DashboardContent: React.FC = () => {
         }
       />
 
-      <QuickActionsSection
-        quickActions={quickActions}
-        alerts={alertsForQuick}
-      />
+      <QuickActionsSection quickActions={quickActions} alerts={alertsForQuick} />
 
       <OnlineUsersSection />
 
@@ -200,7 +213,15 @@ const DashboardContent: React.FC = () => {
         />
       ))}
 
-      <DashboardFinancialBlock />
+      <Suspense
+        fallback={
+          <Box sx={{ mt: 2 }}>
+            <Skeleton variant="rectangular" height={420} />
+          </Box>
+        }
+      >
+        <DashboardFinancialBlock />
+      </Suspense>
 
       <Box sx={{ mb: 4 }}>
         <SectionHeader
@@ -208,29 +229,53 @@ const DashboardContent: React.FC = () => {
           subtitle="Operation & Cash Collection Overview"
           icon={<AssessmentIcon color="primary" />}
         />
-        <TrendAndExpenseSection
-          trendDays={trendDays}
-          setTrendDays={setTrendDays}
-          safeTrendData={safeTrendData}
-          isTrendsLoading={isTrendsLoading}
-          hasMounted={hasMounted}
-          expenses={expenses}
-          isExpensesLoading={isExpensesLoading}
-          variant="trendOnly"
-        />
-        <AdvancedAnalysisSection
-          hasMounted={hasMounted}
-          accountsAging={accountsAging as AccountAgingBucket[] | undefined}
-          isAccountsAgingLoading={isAccountsAgingLoading}
-          orderFunnelDisplay={orderFunnelDisplay}
-          orderFunnelMetric={orderFunnelMetric}
-          setOrderFunnelMetric={setOrderFunnelMetric}
-          isOrderFunnelLoading={isOrderFunnelLoading}
-          blockLayout
-        />
+        <Suspense
+          fallback={
+            <Box sx={{ mt: 2 }}>
+              <Skeleton variant="rectangular" height={450} />
+            </Box>
+          }
+        >
+          <TrendAndExpenseSection
+            trendDays={trendDays}
+            setTrendDays={setTrendDays}
+            safeTrendData={safeTrendData}
+            isTrendsLoading={isTrendsLoading}
+            hasMounted={hasMounted}
+            expenses={expenses}
+            isExpensesLoading={isExpensesLoading}
+            variant="trendOnly"
+          />
+        </Suspense>
+        <Suspense
+          fallback={
+            <Box sx={{ mt: 2 }}>
+              <Skeleton variant="rectangular" height={420} />
+            </Box>
+          }
+        >
+          <AdvancedAnalysisSection
+            hasMounted={hasMounted}
+            accountsAging={accountsAging as AccountAgingBucket[] | undefined}
+            isAccountsAgingLoading={isAccountsAgingLoading}
+            orderFunnelDisplay={orderFunnelDisplay}
+            orderFunnelMetric={orderFunnelMetric}
+            setOrderFunnelMetric={setOrderFunnelMetric}
+            isOrderFunnelLoading={isOrderFunnelLoading}
+            blockLayout
+          />
+        </Suspense>
       </Box>
 
-      <DashboardInsightsBlock />
+      <Suspense
+        fallback={
+          <Box sx={{ mt: 2 }}>
+            <Skeleton variant="rectangular" height={360} />
+          </Box>
+        }
+      >
+        <DashboardInsightsBlock />
+      </Suspense>
 
       {error && (
         <MuiAlert severity="error" sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 2000 }}>
