@@ -86,21 +86,29 @@ export const ReceiptList = () => {
           },
           {
             type: "dateRange",
-            sourceFrom: "receivedDateFrom",
-            sourceTo: "receivedDateTo",
+            source: "receivedDate",
             label: "收款日期",
           },
         ]}
         exportConfig={{
           filename: "receipt_export",
           format: "excel",
+          exportDateFilter: {
+            source: "receivedDate",
+            label: "收款日期（匯出篩選）",
+            mode: "range",
+            listRangeFilterKeys: {
+              from: "receivedDateStart",
+              to: "receivedDateEnd",
+            },
+          },
           columns: [
             { header: "收款日期", key: "receivedDate", width: 15 },
             { header: "訂單編號", key: "orderNo", width: 18 },
             { header: "客戶名稱", key: "customerName", width: 25 },
             { header: "收款金額", key: "amount", width: 18 },
-            { header: "收款方式", key: "method", width: 15 },
-            { header: "狀態", key: "status", width: 12 },
+            { header: "收款方式", key: "method", width: 15, enumKey: "method" },
+            { header: "狀態", key: "status", width: 12, enumKey: "status" },
             { header: "會計期間", key: "accountingPeriod", width: 15 },
             { header: "備註", key: "note", width: 30 },
           ],

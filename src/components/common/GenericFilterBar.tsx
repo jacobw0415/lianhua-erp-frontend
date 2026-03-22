@@ -38,14 +38,22 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import dayjs from "dayjs";
+import { parseYmdLocal } from "@/utils/localYmd";
 import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
 import {
   CREATE_PERMISSION_BY_RESOURCE,
   EXPORT_PERMISSION_BY_RESOURCE,
 } from "@/constants/permissionConfig";
 
-interface FilterOption {
-  type: "text" | "select" | "dateRange" | "date" | "autocomplete" | "month";
+export interface FilterOption {
+  type:
+    | "text"
+    | "select"
+    | "dateRange"
+    | "date"
+    | "autocomplete"
+    | "month"
+    | "boolean";
   source: string;
   label: string;
   choices?: { id: string | number; name: string }[];
@@ -88,6 +96,24 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
+  /** 已套用至列表的篩選 → 同步到輸入框，避免「進階裡看到的日期」與實際搜尋／匯出帶入不一致 */
+  const filterAppliedSignature = JSON.stringify(filterValues ?? {});
+
+  useEffect(() => {
+    const fv = filterValues ?? {};
+    const next: Record<string, string> = {};
+    Object.entries(fv).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      if (typeof v === "boolean") {
+        if (v) next[k] = "true";
+        return;
+      }
+      const s = String(v).trim();
+      if (s !== "") next[k] = s;
+    });
+    setLocalInputValues(next);
+  }, [filterAppliedSignature, filterValues]);
+
   const resource = useResourceContext() ?? "";
   const createPath = useCreatePath();
   const redirect = useRedirect();
@@ -127,7 +153,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         setAnchor(null);
       }
     }
-  }, [isSmallScreen]);
+  }, [isSmallScreen, anchor]);
 
   // 當 anchor 改變時，驗證其有效性
   useEffect(() => {
@@ -305,10 +331,17 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     );
   };
 
+  const storedStringToPickerDay = (stored: string | undefined) => {
+    if (!stored?.trim()) return null;
+    return (
+      parseYmdLocal(stored) ?? (dayjs(stored).isValid() ? dayjs(stored) : null)
+    );
+  };
+
   /** 📅 單一日期（YYYY-MM-DD） */
   const renderDateInput = (f: FilterOption) => {
     const key = f.source;
-    const date = localInputValues[key] ? dayjs(localInputValues[key]) : null;
+    const date = storedStringToPickerDay(localInputValues[key]);
 
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -350,30 +383,39 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     );
   };
 
-  /** 📅 日期區間（YYYY-MM-DD） */
+  /** 📅 日期區間（YYYY-MM-DD）；查詢鍵為 `${source}Start` / `${source}End`，經 filterMapping 對應後端 From/To */
   const renderDateRange = (f: FilterOption) => {
     const startKey = `${f.source}Start`;
     const endKey = `${f.source}End`;
 
-    const startDate = localInputValues[startKey]
-      ? dayjs(localInputValues[startKey])
-      : null;
+    const startDate = storedStringToPickerDay(localInputValues[startKey]);
 
-    const endDate = localInputValues[endKey]
-      ? dayjs(localInputValues[endKey])
-      : null;
+    const endDate = storedStringToPickerDay(localInputValues[endKey]);
 
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Stack 
-          direction={{ xs: "column", sm: "row" }} 
-          spacing={1}
-          sx={{ 
+        <Stack
+          spacing={0.75}
+          sx={{
             width: "100%",
             maxWidth: "100%",
             minWidth: 0,
           }}
         >
+          {f.label ? (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              {f.label}
+            </Typography>
+          ) : null}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              width: "100%",
+              maxWidth: "100%",
+              minWidth: 0,
+            }}
+          >
           <DatePicker
             label="開始"
             format="YYYY-MM-DD"
@@ -446,6 +488,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               },
             }}
           />
+          </Stack>
         </Stack>
       </LocalizationProvider>
     );

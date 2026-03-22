@@ -1,10 +1,14 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import {
+  formatExportFieldValue,
+  type ExportColumnLike,
+} from "@/utils/exportCellValue";
 
 export const exportExcel = async <T extends Record<string, unknown>>(
   data: T[],
   filename: string,
-  columns: { header: string; key: string; width?: number }[]
+  columns: (ExportColumnLike & { header: string; width?: number })[]
 ) => {
   if (!data || data.length === 0) return;
 
@@ -18,17 +22,11 @@ export const exportExcel = async <T extends Record<string, unknown>>(
     width: col.width ?? 20,
   }));
 
-  // 加入資料
+  // 加入資料（日期／枚舉與列表顯示對齊）
   data.forEach((item) => {
     const row: Record<string, unknown> = {};
     columns.forEach((col) => {
-      let value = item[col.key];
-
-      if (value instanceof Date) {
-        value = value.toISOString().split("T")[0];
-      }
-
-      row[col.key] = value;
+      row[col.key] = formatExportFieldValue(col, item);
     });
 
     sheet.addRow(row);

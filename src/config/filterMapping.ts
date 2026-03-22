@@ -30,6 +30,9 @@ export const filterMapping: Record<string, Record<string, string>> = {
         payMethod: "payMethod",
         saleDateFrom: "saleDateFrom",
         saleDateTo: "saleDateTo",
+        /** GenericFilterBar `dateRange`（source: saleDate）產生的內部鍵 */
+        saleDateStart: "saleDateFrom",
+        saleDateEnd: "saleDateTo",
     },
 
     purchases: {
@@ -71,6 +74,10 @@ export const filterMapping: Record<string, Record<string, string>> = {
         orderDateTo: "orderDateTo",
         deliveryDateFrom: "deliveryDateFrom",
         deliveryDateTo: "deliveryDateTo",
+        orderDateStart: "orderDateFrom",
+        orderDateEnd: "orderDateTo",
+        deliveryDateStart: "deliveryDateFrom",
+        deliveryDateEnd: "deliveryDateTo",
         totalAmountMin: "totalAmountMin",
         totalAmountMax: "totalAmountMax",
         accountingPeriod: "accountingPeriod",
@@ -87,6 +94,8 @@ export const filterMapping: Record<string, Record<string, string>> = {
         toDate: "toDate",
         receivedDateFrom: "receivedDateFrom",
         receivedDateTo: "receivedDateTo",
+        receivedDateStart: "receivedDateFrom",
+        receivedDateEnd: "receivedDateTo",
     },
 
     items: {

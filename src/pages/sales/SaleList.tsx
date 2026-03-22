@@ -53,7 +53,7 @@ export const SaleList = () => {
             ],
           },
           {
-            type: "date",
+            type: "dateRange",
             source: "saleDate",
             label: "銷售日期",
           },
@@ -61,10 +61,19 @@ export const SaleList = () => {
         exportConfig={{
           filename: "sale_export",
           format: "excel",
+          exportDateFilter: {
+            source: "saleDate",
+            label: "銷售日期（匯出篩選）",
+            mode: "range",
+            listRangeFilterKeys: {
+              from: "saleDateStart",
+              to: "saleDateEnd",
+            },
+          },
           columns: [
             { header: "商品名稱", key: "productName", width: 20 },
             { header: "數量", key: "qty", width: 10 },
-            { header: "付款方式", key: "payMethod", width: 12 },
+            { header: "付款方式", key: "payMethod", width: 12, enumKey: "method" },
             { header: "總金額", key: "amount", width: 15 },
             { header: "銷售日期", key: "saleDate", width: 15 },
           ],
@@ -76,9 +85,13 @@ export const SaleList = () => {
           <TextField source="qty" label="數量" />
           <FunctionField
             label="付款方式"
-            render={(record: RaRecord) =>
-              getEnumLabel("method", (record as any).payMethod)
-            }
+            render={(record: RaRecord) => {
+              const pm = record["payMethod"];
+              return getEnumLabel(
+                "method",
+                typeof pm === "string" ? pm : undefined,
+              );
+            }}
           />
           <CurrencyField source="amount" label="總金額" />
           <DateField source="saleDate" label="銷售日期" />

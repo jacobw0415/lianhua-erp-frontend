@@ -28,6 +28,10 @@ const valueOnlyKeys = new Set([
   "purchaseDate",     // 進貨日期
   "payDate",          // 付款日期
   "expenseDate",      // 支出日期
+  "saleDate",
+  "receivedDate",
+  "orderDate",
+  "deliveryDate",
 ]);
 
 export const formatFilters = (filters: Record<string, any>) => {

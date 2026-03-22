@@ -1,32 +1,53 @@
+import {
+  formatExportFieldValue,
+  type ExportColumnLike,
+} from "@/utils/exportCellValue";
+
+const escapeCsvCell = (value: unknown): string => {
+  if (value === null || value === undefined) return '""';
+  const s = String(value);
+  return `"${s.replace(/"/g, '""')}"`;
+};
+
+export interface ExportCsvColumn extends ExportColumnLike {
+  header: string;
+}
+
 /**
  * 將 JSON 陣列匯出成 CSV 檔案
  * @param data 資料陣列
- * @param filename 檔案名稱
+ * @param filename 檔案名稱（若無 .csv 副檔名會自動補上）
+ * @param columns 若提供則依欄位定義輸出表頭與順序；否則使用第一筆資料的 key
  */
-export const exportCsv = (data: any[], filename: string = "export.csv") => {
+export const exportCsv = (
+  data: Record<string, unknown>[],
+  filename: string = "export.csv",
+  columns?: ExportCsvColumn[]
+) => {
   if (!data || data.length === 0) {
     console.warn("沒有資料可匯出");
     return;
   }
 
-  const keys = Object.keys(data[0]);
+  const cols: ExportCsvColumn[] =
+    columns && columns.length > 0
+      ? columns
+      : Object.keys(data[0]).map((key) => ({ header: key, key }));
 
-  // 產生 CSV header
-  const header = keys.join(",");
+  const header = cols.map((c) => escapeCsvCell(c.header)).join(",");
 
-  // 產生 CSV rows
   const rows = data.map((row) =>
-    keys
-      .map((key) => {
-        const value = row[key] ?? "";
-        return typeof value === "string"
-          ? `"${value.replace(/"/g, '""')}"`
-          : value;
-      })
+    cols
+      .map((c) => escapeCsvCell(formatExportFieldValue(c, row)))
       .join(",")
   );
 
-  const csvContent = [header, ...rows].join("\n");
+  // UTF-8 BOM：Excel 開啟中文較不易亂碼
+  const csvContent = "\uFEFF" + [header, ...rows].join("\n");
+
+  const outName = filename.toLowerCase().endsWith(".csv")
+    ? filename
+    : `${filename}.csv`;
 
   // 下載檔案
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -34,7 +55,7 @@ export const exportCsv = (data: any[], filename: string = "export.csv") => {
 
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", filename);
+  link.setAttribute("download", outName);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

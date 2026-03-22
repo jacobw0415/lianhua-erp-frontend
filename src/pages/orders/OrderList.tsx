@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@mui/material";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
-import { List, TextField, DateField, FunctionField, type RaRecord } from "react-admin";
+import { List, TextField, DateField, FunctionField } from "react-admin";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
@@ -94,24 +94,14 @@ export const OrderList = () => {
               label: "會計期間 (YYYY-MM)",
             },
             {
-              type: "date",
-              source: "orderDateFrom",
-              label: "訂單日期（起）",
+              type: "dateRange",
+              source: "orderDate",
+              label: "訂單日期",
             },
             {
-              type: "date",
-              source: "orderDateTo",
-              label: "訂單日期（迄）",
-            },
-            {
-              type: "date",
-              source: "deliveryDateFrom",
-              label: "交貨日期（起）",
-            },
-            {
-              type: "date",
-              source: "deliveryDateTo",
-              label: "交貨日期（迄）",
+              type: "dateRange",
+              source: "deliveryDate",
+              label: "交貨日期",
             },
             {
               type: "select",
@@ -140,11 +130,20 @@ export const OrderList = () => {
           exportConfig={{
             filename: "order_export",
             format: "excel",
+            exportDateFilter: {
+              source: "orderDate",
+              label: "訂單日期（匯出篩選）",
+              mode: "range",
+              listRangeFilterKeys: {
+                from: "orderDateStart",
+                to: "orderDateEnd",
+              },
+            },
             columns: [
               { header: "訂單編號", key: "orderNo", width: 15 },
               { header: "客戶名稱", key: "customerName", width: 25 },
-              { header: "訂單狀態", key: "orderStatus", width: 15 },
-              { header: "付款狀態", key: "paymentStatus", width: 15 },
+              { header: "訂單狀態", key: "orderStatus", width: 15, enumKey: "orderStatus" },
+              { header: "付款狀態", key: "paymentStatus", width: 15, enumKey: "paymentStatus" },
               { header: "訂單金額", key: "totalAmount", width: 18 },
               { header: "訂單日期", key: "orderDate", width: 15 },
               { header: "交貨日期", key: "deliveryDate", width: 15 },
@@ -157,8 +156,8 @@ export const OrderList = () => {
             <TextField source="customerName" label="客戶" />
             <FunctionField
               label="訂單狀態"
-              render={(record: RaRecord) =>
-                getEnumLabel("orderStatus", (record as any).orderStatus)
+              render={(record: OrderListRow) =>
+                getEnumLabel("orderStatus", record.orderStatus)
               }
             />
             <OrderPaymentStatusField source="paymentStatus" label="收款狀態" />

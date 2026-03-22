@@ -28,6 +28,11 @@ export const enumValueMap: Record<string, Record<string, string>> = {
     DELIVERED: "已交付",
     CANCELLED: "已取消",
   },
+  // 訂單收款狀態（與 OrderPaymentStatusField 一致）
+  paymentStatus: {
+    UNPAID: "未收款",
+    PAID: "已收款",
+  },
   // 帳齡區間
   agingBucket: {
     ALL: "全部",
