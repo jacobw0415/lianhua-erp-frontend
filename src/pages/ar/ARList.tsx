@@ -52,7 +52,7 @@ export const ARList = () => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
-  
+
   const [openDrawer, setOpenDrawer] = useState(false);
 
   /** ⭐ 只存 Drawer 真正需要的型別 */
@@ -120,15 +120,15 @@ export const ARList = () => {
            * =============================== */
           exportConfig={{
             filename: "應收帳款總表",
-            columns: [
-              { header: "客戶", key: "customerName" },
-              { header: "0–30 天", key: "aging0to30" },
-              { header: "31–60 天", key: "aging31to60" },
-              { header: "60 天以上", key: "aging60plus" },
-              { header: "已收款", key: "receivedAmount" },
-              { header: "未收款", key: "balance" },
-              { header: "應收總額", key: "totalAmount" },
-            ],
+            format: "excel",
+            exportPickerTitle: "匯出AR Aging",
+            exportColumnPicker: false,
+            backendExport: {
+              resource: "ar",
+              defaultFormat: "xlsx",
+            },
+            // 新規格：GET /api/ar/export 查詢參數未要求 columns，因此此處不送 columns。
+            columns: [],
           }}
         >
           <ResponsiveListDatagrid rowClick={false} tabletLayout="card">

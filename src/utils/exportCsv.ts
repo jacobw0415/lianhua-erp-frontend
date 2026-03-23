@@ -3,10 +3,11 @@ import {
   type ExportColumnLike,
 } from "@/utils/exportCellValue";
 
-const escapeCsvCell = (value: unknown): string => {
-  if (value === null || value === undefined) return '""';
-  const s = String(value);
-  return `"${s.replace(/"/g, '""')}"`;
+/** 避免換行破壞列結構；RFC 4180 允許引號內換行但 Excel 常不易讀 */
+const escapeCsvCell = (text: unknown): string => {
+  const raw = text === null || text === undefined ? "" : String(text);
+  const s = raw.replace(/\r\n|\r|\n/g, " ").replace(/"/g, '""');
+  return `"${s}"`;
 };
 
 export interface ExportCsvColumn extends ExportColumnLike {

@@ -35,6 +35,7 @@ export const SupplierList = () => {
       <StyledListWrapper
         quickFilters={[
           { type: "text", source: "name", label: "供應商名稱" },
+          { type: "text", source: "contact", label: "聯絡人" },
           { type: "text", source: "phone", label: "電話" },
         ]}
         advancedFilters={[
@@ -57,18 +58,20 @@ export const SupplierList = () => {
               { id: "false", name: "終止" },
             ],
           },
+          { type: "text", source: "note", label: "備註" },
 
         ]}
         exportConfig={{
           filename: "supplier_export",
           format: "excel",
-          columns: [
-            { header: "供應商名稱", key: "name", width: 20 },
-            { header: "聯絡人", key: "contact", width: 15 },
-            { header: "電話", key: "phone", width: 15 },
-            { header: "結帳週期", key: "billingCycle", width: 12 },
-            { header: "備註", key: "note", width: 25 },
-          ]
+          exportPickerTitle: "匯出供應商",
+          exportColumnPicker: false,
+          backendExport: {
+            resource: "suppliers",
+            defaultFormat: "xlsx",
+          },
+          // 新規格未提及 columns query，因此避免送出 columns=...
+          columns: [],
         }}
       >
         <ResponsiveListDatagrid tabletLayout="card">

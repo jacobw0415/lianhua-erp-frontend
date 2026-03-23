@@ -22,6 +22,7 @@ import {
 import { exportExcel } from "@/utils/exportExcel";
 import { exportCsv } from "@/utils/exportCsv";
 import { filterRecordsByExportDateRange } from "@/utils/exportDateFilter";
+import { downloadResourceExport } from "@/api/resourceExportDownload";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { LIST_WRAPPER_CONTENT_SX, LIST_CONTENT_AREA_SX, LIST_MIN_HEIGHT } from "@/constants/layoutConstants";
 import type { ExportEnumMapKey } from "@/utils/exportCellValue";
@@ -37,6 +38,15 @@ interface ExportConfig {
   filename: string;
   format?: "excel" | "csv";
   columns: ExportColumn[];
+  /**
+   * 後端 GET `/{resource}/export`，query 與 `/{resource}/search` 一致並附加 `format`、`scope`。
+   * 設定後改走 `downloadResourceExport`，不再使用前端組檔。
+   */
+  backendExport?: { resource: string; defaultFormat?: string };
+  /**
+   * 後端匯出對話框內可選日期區間（`listRangeFilterKeys` 對應列表 filter，會經 filterMapping 轉成 API 參數）。
+   */
+  backendExportDateFilter?: ExportDateFilterConfig;
   /**
    * 是否於匯出前開啟欄位勾選。
    * - `true`：一律開啟（含僅一欄時）。
@@ -79,21 +89,17 @@ export const StyledListWrapper: React.FC<{
   // 偵測裝置尺寸
   const isMobile = useIsMobile();
 
-  const showExportColumnPicker = useMemo(() => {
-    if (!exportConfig?.columns?.length) return false;
-    const { exportColumnPicker: picker, columns } = exportConfig;
-    if (picker === false) return false;
-    if (picker === true) return true;
-    return columns.length > 1;
-  }, [exportConfig]);
-
   const showExportDialog = useMemo(() => {
     if (!exportConfig?.columns?.length) return false;
-    return showExportColumnPicker || Boolean(exportConfig.exportDateFilter);
-  }, [exportConfig, showExportColumnPicker]);
+    return true;
+  }, [exportConfig]);
 
   const listDatePrefill = useMemo(() => {
-    const keys = exportConfig?.exportDateFilter?.listRangeFilterKeys;
+    const keys =
+      exportConfig?.backendExport?.resource &&
+      exportConfig?.backendExportDateFilter?.listRangeFilterKeys
+        ? exportConfig.backendExportDateFilter.listRangeFilterKeys
+        : exportConfig?.exportDateFilter?.listRangeFilterKeys;
     if (!keys) return undefined;
     const from = filterValues?.[keys.from];
     const to = filterValues?.[keys.to];
@@ -101,7 +107,12 @@ export const StyledListWrapper: React.FC<{
     const ts = typeof to === "string" && to.trim() ? to.trim() : undefined;
     if (!fs && !ts) return undefined;
     return { from: fs, to: ts };
-  }, [exportConfig?.exportDateFilter?.listRangeFilterKeys, filterValues]);
+  }, [
+    exportConfig?.backendExport?.resource,
+    exportConfig?.backendExportDateFilter?.listRangeFilterKeys,
+    exportConfig?.exportDateFilter?.listRangeFilterKeys,
+    filterValues,
+  ]);
 
   /** 查無資料 → 顯示提示 */
   useEffect(() => {
@@ -121,10 +132,12 @@ export const StyledListWrapper: React.FC<{
     async (
       columns: ExportPickerColumn[],
       dateFrom?: string,
-      dateTo?: string
+      dateTo?: string,
+      chosenFormat?: "excel" | "csv"
     ) => {
       if (!raListCtx.data?.length || !exportConfig) return;
       const { filename, format = "excel", exportDateFilter } = exportConfig;
+      const outputFormat = chosenFormat ?? format;
 
       let rows = raListCtx.data as Record<string, unknown>[];
       if (
@@ -142,7 +155,7 @@ export const StyledListWrapper: React.FC<{
         return;
       }
 
-      if (format === "excel") {
+      if (outputFormat === "excel") {
         await exportExcel(rows, filename, columns);
       } else {
         exportCsv(rows, filename, columns);
@@ -151,18 +164,100 @@ export const StyledListWrapper: React.FC<{
     [alert, exportConfig, raListCtx.data]
   );
 
+  const runBackendExport = useCallback(
+    async (
+      scope: "page" | "all",
+      format: string,
+      dateFrom?: string,
+      dateTo?: string,
+      columnKeys?: string[]
+    ) => {
+      const resource = exportConfig?.backendExport?.resource;
+      if (!resource) return;
+      const rangeKeys = exportConfig?.backendExportDateFilter?.listRangeFilterKeys;
+      const filter: Record<string, unknown> = { ...(filterValues ?? {}) };
+      if (rangeKeys) {
+        if (dateFrom !== undefined && dateFrom !== "") {
+          filter[rangeKeys.from] = dateFrom;
+        } else {
+          delete filter[rangeKeys.from];
+        }
+        if (dateTo !== undefined && dateTo !== "") {
+          filter[rangeKeys.to] = dateTo;
+        } else {
+          delete filter[rangeKeys.to];
+        }
+      }
+      try {
+        await downloadResourceExport(
+          resource,
+          {
+            pagination: {
+              page: raListCtx.page,
+              perPage: raListCtx.perPage,
+            },
+            sort: raListCtx.sort,
+            filter,
+          },
+          {
+            scope,
+            format,
+            columns:
+              columnKeys && columnKeys.length > 0 ? columnKeys : undefined,
+          }
+        );
+      } catch (e: unknown) {
+        if (e instanceof Error && e.message === "SESSION_EXPIRED") {
+          return;
+        }
+        const msg =
+          e instanceof Error ? e.message : "匯出失敗，請稍後再試";
+        alert.trigger(msg);
+      }
+    },
+    [
+      alert,
+      exportConfig?.backendExport?.resource,
+      exportConfig?.backendExportDateFilter?.listRangeFilterKeys,
+      filterValues,
+      raListCtx.page,
+      raListCtx.perPage,
+      raListCtx.sort,
+    ]
+  );
+
   /** 匯出：可選先開啟對話框（欄位／日期） */
   const handleExport = () => {
-    if (!raListCtx.data?.length || !exportConfig) return;
+    if (!exportConfig) return;
+    if (exportConfig.backendExport?.resource) {
+      setExportPickerOpen(true);
+      return;
+    }
+    if (!raListCtx.data?.length) return;
     if (showExportDialog) {
       setExportPickerOpen(true);
       return;
     }
-    void runExport(exportConfig.columns);
+    void runExport(exportConfig.columns, undefined, undefined, exportConfig.format);
   };
 
   const handleExportPickerConfirm = (payload: ExportOptionsConfirm) => {
-    void runExport(payload.columns, payload.dateFrom, payload.dateTo);
+    if (payload.backend && exportConfig?.backendExport?.resource) {
+      void runBackendExport(
+        payload.backend.scope,
+        payload.backend.format,
+        payload.backend.dateFrom,
+        payload.backend.dateTo,
+        payload.backend.columnKeys
+      );
+      return;
+    }
+    void runExport(
+      payload.columns,
+      payload.dateFrom,
+      payload.dateTo,
+      payload.format
+    );
   };
 
   /** 合成 ListContext */
@@ -218,8 +313,15 @@ export const StyledListWrapper: React.FC<{
           open={exportPickerOpen}
           title={exportConfig.exportPickerTitle}
           columns={exportConfig.columns}
-          showColumnPicker={showExportColumnPicker}
+          mode={
+            exportConfig.backendExport?.resource ? "backend" : "client"
+          }
+          defaultBackendFormat={
+            exportConfig.backendExport?.defaultFormat ?? "xlsx"
+          }
+          defaultClientFormat={exportConfig.format ?? "excel"}
           dateFilter={exportConfig.exportDateFilter}
+          backendDateFilter={exportConfig.backendExportDateFilter}
           listDatePrefill={listDatePrefill}
           onClose={() => setExportPickerOpen(false)}
           onConfirm={handleExportPickerConfirm}

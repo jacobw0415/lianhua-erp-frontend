@@ -104,6 +104,7 @@ export const PaymentList = () => {
         disableCreate
         quickFilters={[
           { type: "text", source: "supplierName", label: "供應商名稱" },
+          { type: "text", source: "item", label: "品項" },
         ]}
         advancedFilters={[
           {
@@ -137,6 +138,21 @@ export const PaymentList = () => {
         exportConfig={{
           filename: "payment_export",
           format: "excel",
+          exportPickerTitle: "匯出付款",
+          backendExport: {
+            resource: "payments",
+            defaultFormat: "xlsx",
+          },
+          backendExportDateFilter: {
+            source: "payDate",
+            label: "付款日期（匯出條件）",
+            mode: "range",
+            listRangeFilterKeys: {
+              from: "fromDate",
+              to: "toDate",
+            },
+          },
+          exportColumnPicker: false,
           columns: [
             { header: "進貨單號", key: "purchaseNo", width: 18 },
             { header: "付款日期", key: "payDate", width: 14 },

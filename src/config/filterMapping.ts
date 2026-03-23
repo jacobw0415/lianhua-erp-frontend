@@ -2,6 +2,9 @@ export const filterMapping: Record<string, Record<string, string>> = {
 
     suppliers: {
         name: "supplierName",
+        // `SupplierList` 新增 quick filter 使用 `source: "contact"`，
+        // 這裡提供 alias 以對齊後端查詢參數（目前後端/既有 mapping 為 contactName）
+        contact: "contactName",
         contactName: "contactName",
         phone: "phone",
         billingCycle: "billingCycle",
@@ -37,6 +40,7 @@ export const filterMapping: Record<string, Record<string, string>> = {
 
     purchases: {
         supplier: "supplierId",
+        supplierId: "supplierId",
         date: "purchaseDate",
         status: "status",
         purchaseNo: "purchaseNo",

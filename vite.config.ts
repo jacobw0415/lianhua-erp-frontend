@@ -20,9 +20,27 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
         configure: (proxy) => {
-          proxy.on("proxyReq", (proxyReq) => {
-            proxyReq.setHeader("Origin", "http://localhost:5173");
-            proxyReq.setHeader("Referer", "http://localhost:5173/");
+          // 保持与瀏覽器實際來源一致，避免後端/安全策略因 Origin 不符而拒絕
+          proxy.on("proxyReq", (proxyReq, req) => {
+            const origin =
+              (req?.headers?.origin as string | undefined) ||
+              (req?.headers?.Origin as string | undefined);
+            const referer =
+              (req?.headers?.referer as string | undefined) ||
+              (req?.headers?.Referer as string | undefined);
+
+            // 若瀏覽器沒有直接帶 Origin，嘗試從 Referer 解析（同協議/同主機/同 port）
+            if (!origin && referer) {
+              try {
+                const url = new URL(referer);
+                proxyReq.setHeader("Origin", url.origin);
+              } catch {
+                // ignore
+              }
+            } else if (origin) {
+              proxyReq.setHeader("Origin", origin);
+            }
+            if (referer) proxyReq.setHeader("Referer", referer);
           });
         },
       },
@@ -32,9 +50,27 @@ export default defineConfig({
         ws: true,
         // 強化 WebSocket 代理穩定性
         configure: (proxy) => {
-          proxy.on("proxyReqWs", (proxyReq) => {
+          proxy.on("proxyReqWs", (proxyReq, req) => {
             // 對齊 Origin，防止 Spring Security 因為來源不符斷開連線
-            proxyReq.setHeader("Origin", "http://localhost:5173");
+            const origin =
+              (req?.headers?.origin as string | undefined) ||
+              (req?.headers?.Origin as string | undefined);
+            if (origin) {
+              proxyReq.setHeader("Origin", origin);
+              return;
+            }
+
+            const referer =
+              (req?.headers?.referer as string | undefined) ||
+              (req?.headers?.Referer as string | undefined);
+            if (referer) {
+              try {
+                const url = new URL(referer);
+                proxyReq.setHeader("Origin", url.origin);
+              } catch {
+                // ignore
+              }
+            }
           });
 
           // 核心修正：處理 Socket 錯誤，防止 ECONNRESET 導致的資源洩漏
@@ -47,7 +83,7 @@ export default defineConfig({
             socket.on("error", (err) => {
               // 這裡不只是壓制，而是確保 Socket 異常時能被回收
               console.error("[Vite WS Socket Error]:", err.message);
-              socket.destroy(); 
+              socket.destroy();
             });
           });
         },

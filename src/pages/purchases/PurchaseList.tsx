@@ -167,6 +167,7 @@ export const PurchaseList = () => {
           quickFilters={[
             { type: "text", source: "purchaseNo", label: "進貨單號" },
             { type: "text", source: "supplierName", label: "供應商名稱" },
+            { type: "text", source: "item", label: "品項名稱" },
           ]}
           advancedFilters={[
             {
@@ -184,22 +185,30 @@ export const PurchaseList = () => {
               source: "accountingPeriod",
               label: "會計期間 (YYYY-MM)",
             },
+            { type: "text", source: "supplierId", label: "供應商ID（精準）" },
             { type: "date", source: "fromDate", label: "進貨日（起）" },
             { type: "date", source: "toDate", label: "進貨日（迄）" },
           ]}
           exportConfig={{
             filename: "purchase_export",
             format: "excel",
-            columns: [
-              { header: "進貨單號", key: "purchaseNo", width: 18 },
-              { header: "供應商名稱", key: "supplierName", width: 20 },
-              { header: "進貨日期", key: "purchaseDate", width: 15 },
-              { header: "總金額", key: "totalAmount", width: 15 },
-              { header: "已付款", key: "paidAmount", width: 15 },
-              { header: "餘額", key: "balance", width: 15 },
-              { header: "狀態", key: "status", width: 15 },
-              { header: "備註", key: "note", width: 25 },
-            ],
+            exportPickerTitle: "匯出進貨紀錄",
+            exportColumnPicker: false,
+            backendExport: {
+              resource: "purchases",
+              defaultFormat: "xlsx",
+            },
+            backendExportDateFilter: {
+              label: "進貨日期（匯出條件）",
+              mode: "range",
+              // 對應你規格的 fromDate / toDate (YYYY-MM-DD)
+              listRangeFilterKeys: {
+                from: "fromDate",
+                to: "toDate",
+              },
+            },
+            // 新 API 未提及 columns query，因此避免送出 columns=...
+            columns: [],
           }}
         >
           <ResponsiveListDatagrid rowClick={false} tabletLayout="card">

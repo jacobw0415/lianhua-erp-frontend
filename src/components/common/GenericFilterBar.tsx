@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Stack,
@@ -8,6 +8,8 @@ import {
   IconButton,
   Popover,
   Drawer,
+  Checkbox,
+  FormControlLabel,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -40,20 +42,17 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { parseYmdLocal } from "@/utils/localYmd";
 import { getStoredAuthRoles, hasStoredAuthority, hasRoleAdmin } from "@/utils/authStorage";
-import {
-  CREATE_PERMISSION_BY_RESOURCE,
-  EXPORT_PERMISSION_BY_RESOURCE,
-} from "@/constants/permissionConfig";
+import { CREATE_PERMISSION_BY_RESOURCE } from "@/constants/permissionConfig";
 
 export interface FilterOption {
   type:
-    | "text"
-    | "select"
-    | "dateRange"
-    | "date"
-    | "autocomplete"
-    | "month"
-    | "boolean";
+  | "text"
+  | "select"
+  | "dateRange"
+  | "date"
+  | "autocomplete"
+  | "month"
+  | "boolean";
   source: string;
   label: string;
   choices?: { id: string | number; name: string }[];
@@ -133,15 +132,9 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
       ? hasStoredAuthority(storedRoles, requiredCreateAuth)
       : false);
 
-  const requiredExportAuth =
-    resource && EXPORT_PERMISSION_BY_RESOURCE[resource]
-      ? EXPORT_PERMISSION_BY_RESOURCE[resource]
-      : "";
-  const canExport =
-    isAdmin ||
-    (requiredExportAuth
-      ? hasStoredAuthority(storedRoles, requiredExportAuth)
-      : false);
+  // 匯出按鈕只給管理員角色（ROLE_ADMIN / ROLE_SUPER_ADMIN）
+  // 以移除「一般使用者（ROLE_USER）」的匯出功能。
+  const canExport = isAdmin;
 
   // 當 isSmallScreen 改變時，清除 anchor 以避免 anchorEl 無效錯誤
   useEffect(() => {
@@ -276,13 +269,13 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             lineHeight: 1.5,
             "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
           },
-          "& .MuiInputBase-root": { 
+          "& .MuiInputBase-root": {
             height: 40,
             fontSize: { xs: "0.8rem", sm: "0.85rem" },
             width: "100%",
             maxWidth: "100%",
           },
-          "& .MuiSelect-select": { 
+          "& .MuiSelect-select": {
             padding: { xs: "8px 12px", sm: "10px 14px" },
             fontSize: { xs: "0.8rem", sm: "0.85rem" },
             width: "100%",
@@ -331,6 +324,39 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     );
   };
 
+  /** ✅ 布林值（用 Checkbox；checked 才會送出 "true" 字串） */
+  const renderBooleanInput = (f: FilterOption) => {
+    const key = f.source;
+    const checked = localInputValues[key] === "true";
+
+    return (
+      <FormControlLabel
+        sx={{
+          m: 0,
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          justifyContent: { xs: "flex-start", sm: "flex-start" },
+        }}
+        control={
+          <Checkbox
+            checked={checked}
+            onChange={(e) => {
+              const nextChecked = e.target.checked;
+              setLocalInputValues((prev) => {
+                const next = { ...prev };
+                if (nextChecked) next[key] = "true";
+                else delete next[key];
+                return next;
+              });
+            }}
+          />
+        }
+        label={f.label}
+      />
+    );
+  };
+
   const storedStringToPickerDay = (stored: string | undefined) => {
     if (!stored?.trim()) return null;
     return (
@@ -354,30 +380,30 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             setLocalInputValues((prev) => ({ ...prev, [key]: formatted }));
           }}
           slots={{ openPickerIcon: CalendarMonthIcon }}
-            slotProps={{
-              openPickerIcon: {
-                sx: { color: theme.palette.text.primary },
-              },
-              textField: {
-                fullWidth: true,
-                size: "small",
-                sx: { 
+          slotProps={{
+            openPickerIcon: {
+              sx: { color: theme.palette.text.primary },
+            },
+            textField: {
+              fullWidth: true,
+              size: "small",
+              sx: {
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
+                "& .MuiInputLabel-root": {
+                  lineHeight: 1.5,
+                  "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+                },
+                "& .MuiInputBase-root": {
+                  height: 40,
+                  fontSize: { xs: "0.8rem", sm: "0.85rem" },
                   width: "100%",
                   maxWidth: "100%",
-                  minWidth: 0,
-                  "& .MuiInputLabel-root": {
-                    lineHeight: 1.5,
-                    "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
-                  },
-                  "& .MuiInputBase-root": { 
-                    height: 40,
-                    fontSize: { xs: "0.8rem", sm: "0.85rem" },
-                    width: "100%",
-                    maxWidth: "100%",
-                  },
                 },
               },
-            }}
+            },
+          }}
         />
       </LocalizationProvider>
     );
@@ -416,78 +442,78 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
               minWidth: 0,
             }}
           >
-          <DatePicker
-            label="開始"
-            format="YYYY-MM-DD"
-            value={startDate}
-            onChange={(newValue) => {
-              const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
-              setLocalInputValues((prev) => ({
-                ...prev,
-                [startKey]: formatted,
-              }));
-            }}
-            slots={{ openPickerIcon: CalendarMonthIcon }}
-            slotProps={{
-              openPickerIcon: {
-                sx: { color: theme.palette.text.primary },
-              },
-              textField: {
-                fullWidth: true,
-                size: "small",
-                sx: { 
-                  width: "100%",
-                  maxWidth: "100%",
-                  minWidth: 0,
-                  "& .MuiInputLabel-root": {
-                    lineHeight: 1.5,
-                    "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
-                  },
-                  "& .MuiInputBase-root": { 
-                    height: 40,
-                    fontSize: { xs: "0.8rem", sm: "0.85rem" },
+            <DatePicker
+              label="開始"
+              format="YYYY-MM-DD"
+              value={startDate}
+              onChange={(newValue) => {
+                const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
+                setLocalInputValues((prev) => ({
+                  ...prev,
+                  [startKey]: formatted,
+                }));
+              }}
+              slots={{ openPickerIcon: CalendarMonthIcon }}
+              slotProps={{
+                openPickerIcon: {
+                  sx: { color: theme.palette.text.primary },
+                },
+                textField: {
+                  fullWidth: true,
+                  size: "small",
+                  sx: {
                     width: "100%",
                     maxWidth: "100%",
+                    minWidth: 0,
+                    "& .MuiInputLabel-root": {
+                      lineHeight: 1.5,
+                      "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+                    },
+                    "& .MuiInputBase-root": {
+                      height: 40,
+                      fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                      width: "100%",
+                      maxWidth: "100%",
+                    },
                   },
                 },
-              },
-            }}
-          />
+              }}
+            />
 
-          <DatePicker
-            label="結束"
-            format="YYYY-MM-DD"
-            value={endDate}
-            onChange={(newValue) => {
-              const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
-              setLocalInputValues((prev) => ({ ...prev, [endKey]: formatted }));
-            }}
-            slots={{ openPickerIcon: CalendarMonthIcon }}
-            slotProps={{
-              openPickerIcon: {
-                sx: { color: theme.palette.text.primary },
-              },
-              textField: {
-                fullWidth: true,
-                size: "small",
-                sx: { 
-                  width: "100%",
-                  maxWidth: "100%",
-                  minWidth: 0,
-                  "& .MuiInputLabel-root": {
-                    lineHeight: 1.5,
-                    "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
-                  },
-                  "& .MuiInputBase-root": { 
-                    height: 40,
-                    fontSize: { xs: "0.8rem", sm: "0.85rem" },
+            <DatePicker
+              label="結束"
+              format="YYYY-MM-DD"
+              value={endDate}
+              onChange={(newValue) => {
+                const formatted = newValue ? newValue.format("YYYY-MM-DD") : "";
+                setLocalInputValues((prev) => ({ ...prev, [endKey]: formatted }));
+              }}
+              slots={{ openPickerIcon: CalendarMonthIcon }}
+              slotProps={{
+                openPickerIcon: {
+                  sx: { color: theme.palette.text.primary },
+                },
+                textField: {
+                  fullWidth: true,
+                  size: "small",
+                  sx: {
                     width: "100%",
                     maxWidth: "100%",
+                    minWidth: 0,
+                    "& .MuiInputLabel-root": {
+                      lineHeight: 1.5,
+                      "&.MuiInputLabel-shrink": { lineHeight: 1.4 },
+                    },
+                    "& .MuiInputBase-root": {
+                      height: 40,
+                      fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                      width: "100%",
+                      maxWidth: "100%",
+                    },
                   },
                 },
-              },
-            }}
-          />
+              }}
+            />
           </Stack>
         </Stack>
       </LocalizationProvider>
@@ -501,6 +527,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
         return renderTextInput(f);
       case "select":
         return renderSelectInput(f);
+      case "boolean":
+        return renderBooleanInput(f);
       case "date":
         return renderDateInput(f);
       case "dateRange":
@@ -568,7 +596,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           spacing={{ xs: 0.75, sm: 1.25, md: 1.5 }}
           flexWrap="wrap"
           alignItems={{ xs: "stretch", sm: "center" }}
-          sx={{ 
+          sx={{
             flex: 1,
             width: "100%",
             maxWidth: "100%",
@@ -598,9 +626,9 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           ))}
 
           {/* 按鈕群組：進階(左)、搜尋(中)、清除(右) */}
-          <Stack 
-            direction={{ xs: "row", sm: "row" }} 
-            spacing={{ xs: 0.75, sm: 1 }} 
+          <Stack
+            direction={{ xs: "row", sm: "row" }}
+            spacing={{ xs: 0.75, sm: 1 }}
             alignItems="center"
             sx={{
               width: { xs: "100%", sm: "auto" },
@@ -633,8 +661,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 variant="contained"
                 size="small"
                 startIcon={isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? <SearchIcon /> : null}
-                sx={{ 
-                  height: 32, 
+                sx={{
+                  height: 32,
                   flex: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "1 1 0" : "none",
                   minWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? 0 : "auto",
                   maxWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "100%" : "none",
@@ -654,8 +682,8 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 color="error"
                 size="small"
                 startIcon={isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? <DeleteOutlineIcon /> : null}
-                sx={{ 
-                  height: 32, 
+                sx={{
+                  height: 32,
                   flex: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "1 1 0" : "none",
                   minWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? 0 : "auto",
                   maxWidth: isMobile || (useCompactFilterLayout && !useTabletSemiCompact) ? "100%" : "none",
@@ -691,9 +719,9 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           }}
         >
           {chips.length > 0 && (
-            <Box 
-              sx={{ 
-                overflowX: "auto", 
+            <Box
+              sx={{
+                overflowX: "auto",
                 py: { xs: 0.5, md: 0 },
                 // 手機／平板：Chips 佔滿一整行，與搜尋欄對齊
                 width: useCompactFilterLayout ? "100%" : { xs: "100%", sm: "auto" },
@@ -704,16 +732,16 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             </Box>
           )}
 
-        <Stack 
-          direction={useCompactFilterLayout ? "column" : { xs: "column", sm: "row" }} 
-            spacing={{ xs: 0.75, sm: 1 }} 
+          <Stack
+            direction={useCompactFilterLayout ? "column" : { xs: "column", sm: "row" }}
+            spacing={{ xs: 0.75, sm: 1 }}
             justifyContent="flex-end"
             sx={{
               width: { xs: "100%", sm: "auto" },
               maxWidth: { xs: "100%", sm: "none" },
               minWidth: 0,
-            // 手機與平板：功能按鈕群組改為直向、全寬，避免平板寬度下超出表框
-            ...(useCompactFilterLayout && { direction: "column", width: "100%" }),
+              // 手機與平板：功能按鈕群組改為直向、全寬，避免平板寬度下超出表框
+              ...(useCompactFilterLayout && { direction: "column", width: "100%" }),
             }}
           >
             {enableCreate && !disableCreate && canCreate && (

@@ -120,6 +120,12 @@ export const APList = () => {
            * =============================== */
           exportConfig={{
             filename: "應付帳款總表",
+            format: "excel",
+            exportPickerTitle: "匯出應付帳款（AP Aging）",
+            backendExport: {
+              resource: "ap",
+              defaultFormat: "xlsx",
+            },
             columns: [
               { header: "供應商", key: "supplierName" },
               { header: "0–30 天", key: "aging0to30" },

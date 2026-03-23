@@ -45,7 +45,7 @@ export const OrderList = () => {
     const cleanup = applyBodyScrollbarStyles(theme);
     return cleanup;
   }, [theme]);
-  
+
   const [openDetailDrawer, setOpenDetailDrawer] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SelectedOrder | null>(null);
 
@@ -130,15 +130,21 @@ export const OrderList = () => {
           exportConfig={{
             filename: "order_export",
             format: "excel",
-            exportDateFilter: {
-              source: "orderDate",
-              label: "訂單日期（匯出篩選）",
+            exportPickerTitle: "匯出訂單",
+            backendExport: {
+              resource: "orders",
+              defaultFormat: "xlsx",
+            },
+            backendExportDateFilter: {
+              label: "訂單日期（匯出條件）",
               mode: "range",
+              source: "orderDate",
               listRangeFilterKeys: {
                 from: "orderDateStart",
                 to: "orderDateEnd",
               },
             },
+            exportColumnPicker: false,
             columns: [
               { header: "訂單編號", key: "orderNo", width: 15 },
               { header: "客戶名稱", key: "customerName", width: 25 },

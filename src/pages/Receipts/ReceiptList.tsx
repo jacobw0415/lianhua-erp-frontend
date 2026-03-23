@@ -93,25 +93,23 @@ export const ReceiptList = () => {
         exportConfig={{
           filename: "receipt_export",
           format: "excel",
-          exportDateFilter: {
+          exportPickerTitle: "匯出收款紀錄",
+          exportColumnPicker: false,
+          backendExport: {
+            resource: "receipts",
+            defaultFormat: "xlsx",
+          },
+          backendExportDateFilter: {
             source: "receivedDate",
-            label: "收款日期（匯出篩選）",
+            label: "收款日期（匯出條件）",
             mode: "range",
             listRangeFilterKeys: {
               from: "receivedDateStart",
               to: "receivedDateEnd",
             },
           },
-          columns: [
-            { header: "收款日期", key: "receivedDate", width: 15 },
-            { header: "訂單編號", key: "orderNo", width: 18 },
-            { header: "客戶名稱", key: "customerName", width: 25 },
-            { header: "收款金額", key: "amount", width: 18 },
-            { header: "收款方式", key: "method", width: 15, enumKey: "method" },
-            { header: "狀態", key: "status", width: 12, enumKey: "status" },
-            { header: "會計期間", key: "accountingPeriod", width: 15 },
-            { header: "備註", key: "note", width: 30 },
-          ],
+          // 新增的後端規格未提及 columns query，因此預設不送出 columns。
+          columns: [],
         }}
       >
         <ResponsiveListDatagrid tabletLayout="card">

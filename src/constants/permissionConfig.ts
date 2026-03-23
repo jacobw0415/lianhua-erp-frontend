@@ -63,7 +63,16 @@ export const CREATE_PERMISSION_BY_RESOURCE: Record<string, string> = {
  *   並由後端在 roles 中回傳相同代碼。
  */
 export const EXPORT_PERMISSION_BY_RESOURCE: Record<string, string> = {
-  // 例如：
-  // suppliers: "supplier:export",
+  // 對應後端授權代碼：*:<resource-type>:view / export...
+  // 用於列表匯出按鈕顯示（後端仍需檢查權限）。
+  suppliers: "supplier:view",
+  receipts: "receipt:view",
+  ar: "ar:view",
+  ap: "ap:view",
+  purchases: "purchase:view",
+  orders: "order:view",
+  sales: "sale:view",
+  payments: "payment:view",
+  order_customers: "order_customer:view",
 };
 

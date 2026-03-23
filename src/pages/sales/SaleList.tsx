@@ -61,15 +61,21 @@ export const SaleList = () => {
         exportConfig={{
           filename: "sale_export",
           format: "excel",
-          exportDateFilter: {
-            source: "saleDate",
-            label: "銷售日期（匯出篩選）",
+          exportPickerTitle: "匯出銷售",
+          backendExport: {
+            resource: "sales",
+            defaultFormat: "xlsx",
+          },
+          backendExportDateFilter: {
+            label: "銷售日期（匯出條件）",
             mode: "range",
+            source: "saleDate",
             listRangeFilterKeys: {
               from: "saleDateStart",
               to: "saleDateEnd",
             },
           },
+          exportColumnPicker: false,
           columns: [
             { header: "商品名稱", key: "productName", width: 20 },
             { header: "數量", key: "qty", width: 10 },
