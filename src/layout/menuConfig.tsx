@@ -67,7 +67,7 @@ export const menuGroups: MenuGroup[] = [
     label: "儀表板",
     icon: <SpaceDashboardIcon />,
     items: [
-      { label: "Dashboard", to: "/", icon: <DashboardCustomizeIcon /> },
+      { label: "儀表資訊", to: "/", icon: <DashboardCustomizeIcon /> },
     ],
   },
 

@@ -50,25 +50,32 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
   showWarning,
 }) => {
   const theme = useTheme();
+  const WARNING_TOP3_COLORS = ['#F57C00', '#FB8C00', '#FFB74D'] as const;
+
+  const getSegmentColor = React.useCallback(
+    (index: number) => {
+      if (index < 0) return theme.palette.text.primary;
+      if (showWarning && index < 3) {
+        return WARNING_TOP3_COLORS[index] ?? STAT_CARD_COLORS.warning;
+      }
+      return PIE_COLORS[index % PIE_COLORS.length];
+    },
+    [showWarning, theme.palette.text.primary]
+  );
 
   const total = React.useMemo(
     () => donutData.reduce((sum, d) => sum + Number(d.value), 0),
     [donutData]
   );
 
-  /** 客戶採購集中度：自訂 Tooltip，客戶名稱與金額使用與扇形相同的顏色 */
+  /** 客戶採購集中度：自訂 Tooltip，客戶名稱與金額使用與扇形相同的顏色（與營運支出結構分析對齊） */
   const renderCustomerConcentrationTooltip = (props: any) => {
     const { active, payload } = props;
     if (!active || !payload?.length) return null;
     const name = String(payload[0].name ?? '');
     const value = Number(payload[0].value ?? 0);
     const index = donutData.findIndex((d) => d.name === name);
-    const segmentColor =
-      index >= 0
-        ? showWarning && index < 3
-          ? STAT_CARD_COLORS.warning
-          : PIE_COLORS[index % PIE_COLORS.length]
-        : theme.palette.text.primary;
+    const segmentColor = getSegmentColor(index);
     const ratioStr = rawData?.find((c) => c.customerName === name)?.ratio;
     const suffix = ratioStr != null ? ` (${ratioStr.toFixed(2)}%)` : '';
     return (
@@ -178,17 +185,17 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
                     {donutData.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={
-                          showWarning && index < 3
-                            ? STAT_CARD_COLORS.warning
-                            : PIE_COLORS[index % PIE_COLORS.length]
-                        }
+                        fill={getSegmentColor(index)}
                         stroke={theme.palette.background.paper}
                         strokeWidth={2}
                       />
                     ))}
                   </Pie>
-                  <Tooltip content={renderCustomerConcentrationTooltip} />
+                  <Tooltip
+                    content={renderCustomerConcentrationTooltip}
+                    offset={12}
+                    wrapperStyle={{ zIndex: 10 }}
+                  />
                   <Legend
                     verticalAlign="bottom"
                     align="center"
@@ -207,10 +214,14 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
               sx={{
                 position: 'absolute',
                 left: '50%',
-                top: '50%',
+                top: '45%', // 稍微往上移，避免遮住下方扇形的 Tooltip
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
                 textAlign: 'center',
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 999,
+                zIndex: 1,
               }}
             >
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
