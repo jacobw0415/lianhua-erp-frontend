@@ -98,7 +98,7 @@ export const ReceiptList = () => {
           backendExport: {
             resource: "receipts",
             defaultFormat: "xlsx",
-            sendColumns: false,
+            defaultScope: "all",
           },
           backendExportDateFilter: {
             source: "receivedDate",
@@ -109,7 +109,7 @@ export const ReceiptList = () => {
               to: "receivedDateEnd",
             },
           },
-          // 新增的後端規格未提及 columns query，因此預設不送出 columns。
+          // 由匯出策略統一控制：此 resource 不送 columns query。
           columns: [],
         }}
       >

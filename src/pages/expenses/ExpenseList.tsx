@@ -117,6 +117,7 @@ export const ExpenseList = () => {
           backendExport: {
             resource: "expenses",
             defaultFormat: "xlsx",
+            defaultScope: "all",
           },
           backendExportDateFilter: {
             source: "expenseDate",

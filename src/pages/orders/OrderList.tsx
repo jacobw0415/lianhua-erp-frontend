@@ -135,6 +135,7 @@ export const OrderList = () => {
             backendExport: {
               resource: "orders",
               defaultFormat: "xlsx",
+              defaultScope: "all",
             },
             backendExportDateFilter: {
               label: "訂單日期（匯出條件）",

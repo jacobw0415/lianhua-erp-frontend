@@ -26,7 +26,7 @@ import { downloadResourceExport } from "@/api/resourceExportDownload";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { LIST_WRAPPER_CONTENT_SX, LIST_CONTENT_AREA_SX, LIST_MIN_HEIGHT } from "@/constants/layoutConstants";
 import type { ExportEnumMapKey } from "@/utils/exportCellValue";
-import { getBackendExportBehavior } from "@/constants/exportBehavior";
+import { shouldSendBackendExportColumns } from "@/config/exportBackendPolicy";
 
 interface ExportColumn {
   header: string;
@@ -96,26 +96,23 @@ export const StyledListWrapper: React.FC<{
   // 偵測裝置尺寸
   const isMobile = useIsMobile();
 
-  const clientShouldOpenDialog = useMemo(() => {
+  const showExportDialog = useMemo(() => {
     if (!exportConfig) return false;
-    if (exportConfig.backendExport?.resource) return false;
-    if (exportConfig.exportDateFilter) return true;
+
+    // 後端匯出一定需要對話框（scope/format/可選日期）
+    if (exportConfig.backendExport?.resource) return true;
+
+    const hasColumns = (exportConfig.columns?.length ?? 0) > 0;
+    if (!hasColumns) return false;
+
+    // 有日期篩選設定時，即使單欄也需要開啟對話框供使用者輸入條件
+    const hasDateFilter = Boolean(exportConfig.exportDateFilter);
+
+    // 明確指定開關時優先採用；未指定則沿用「多欄才開」預設
     if (exportConfig.exportColumnPicker === true) return true;
-    if (exportConfig.exportColumnPicker === false) return false;
-    return (exportConfig.columns?.length ?? 0) > 1;
+    if (exportConfig.exportColumnPicker === false) return hasDateFilter;
+    return (exportConfig.columns?.length ?? 0) > 1 || hasDateFilter;
   }, [exportConfig]);
-
-  const backendShouldOpenDialog = useMemo(() => {
-    if (!exportConfig?.backendExport?.resource) return false;
-    if (exportConfig.backendExportDateFilter) return true;
-    if (exportConfig.exportColumnPicker === false) return false;
-    return true;
-  }, [exportConfig]);
-
-  const backendBehavior = useMemo(
-    () => getBackendExportBehavior(exportConfig?.backendExport?.resource),
-    [exportConfig?.backendExport?.resource]
-  );
 
   const listDatePrefill = useMemo(() => {
     const keys =
@@ -197,6 +194,9 @@ export const StyledListWrapper: React.FC<{
     ) => {
       const resource = exportConfig?.backendExport?.resource;
       if (!resource) return;
+      const shouldSendColumns =
+        exportConfig?.backendExport?.sendColumns ??
+        shouldSendBackendExportColumns(resource);
       const rangeKeys = exportConfig?.backendExportDateFilter?.listRangeFilterKeys;
       const filter: Record<string, unknown> = { ...(filterValues ?? {}) };
       if (rangeKeys) {
@@ -226,8 +226,7 @@ export const StyledListWrapper: React.FC<{
             scope,
             format,
             columns:
-              (exportConfig?.backendExport?.sendColumns ??
-                backendBehavior.sendColumns) === false
+              shouldSendColumns === false
                 ? undefined
                 : columnKeys && columnKeys.length > 0
                   ? columnKeys
@@ -245,7 +244,6 @@ export const StyledListWrapper: React.FC<{
     },
     [
       alert,
-      backendBehavior.sendColumns,
       exportConfig?.backendExport?.resource,
       exportConfig?.backendExportDateFilter?.listRangeFilterKeys,
       filterValues,
@@ -259,29 +257,11 @@ export const StyledListWrapper: React.FC<{
   const handleExport = () => {
     if (!exportConfig) return;
     if (exportConfig.backendExport?.resource) {
-      if (backendShouldOpenDialog) {
-        setExportPickerOpen(true);
-        return;
-      }
-      const defaultScope =
-        exportConfig.backendExport.defaultScope ?? backendBehavior.defaultScope;
-      const defaultFormat = exportConfig.backendExport.defaultFormat ?? "xlsx";
-      const defaultColumnKeys =
-        (exportConfig.backendExport.sendColumns ?? backendBehavior.sendColumns) ===
-        false
-          ? undefined
-          : exportConfig.columns?.map((c) => c.key);
-      void runBackendExport(
-        defaultScope,
-        defaultFormat,
-        undefined,
-        undefined,
-        defaultColumnKeys
-      );
+      setExportPickerOpen(true);
       return;
     }
     if (!raListCtx.data?.length) return;
-    if (clientShouldOpenDialog) {
+    if (showExportDialog) {
       setExportPickerOpen(true);
       return;
     }
@@ -367,8 +347,7 @@ export const StyledListWrapper: React.FC<{
             exportConfig.backendExport?.defaultFormat ?? "xlsx"
           }
           defaultBackendScope={
-            exportConfig.backendExport?.defaultScope ??
-            backendBehavior.defaultScope
+            exportConfig.backendExport?.defaultScope ?? "page"
           }
           defaultClientFormat={exportConfig.format ?? "excel"}
           dateFilter={exportConfig.exportDateFilter}

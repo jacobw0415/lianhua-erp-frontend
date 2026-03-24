@@ -142,6 +142,7 @@ export const PaymentList = () => {
           backendExport: {
             resource: "payments",
             defaultFormat: "xlsx",
+            defaultScope: "all",
           },
           backendExportDateFilter: {
             source: "payDate",

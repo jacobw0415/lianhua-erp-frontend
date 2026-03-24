@@ -59,6 +59,7 @@ export const OrderCustomerList = () => {
           backendExport: {
             resource: "order_customers",
             defaultFormat: "xlsx",
+            defaultScope: "all",
           },
           columns: [
             { header: "客戶名稱", key: "name", width: 20 },

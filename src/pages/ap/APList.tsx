@@ -126,6 +126,7 @@ export const APList = () => {
             backendExport: {
               resource: "ap",
               defaultFormat: "xlsx",
+              defaultScope: "all",
             },
             columns: [
               { header: "供應商", key: "supplierName" },

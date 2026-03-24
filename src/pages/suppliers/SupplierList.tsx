@@ -69,9 +69,9 @@ export const SupplierList = () => {
           backendExport: {
             resource: "suppliers",
             defaultFormat: "xlsx",
-            sendColumns: false,
+            defaultScope: "all",
           },
-          // 新規格未提及 columns query，因此避免送出 columns=...
+          // 由匯出策略統一控制：此 resource 不送 columns query。
           columns: [],
         }}
       >

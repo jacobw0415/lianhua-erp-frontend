@@ -72,6 +72,7 @@ export const EmployeeList = () => (
         backendExport: {
           resource: "employees",
           defaultFormat: "xlsx",
+          defaultScope: "all",
         },
         exportColumnPicker: false,
         columns: [

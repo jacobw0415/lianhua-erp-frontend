@@ -66,6 +66,7 @@ export const SaleList = () => {
           backendExport: {
             resource: "sales",
             defaultFormat: "xlsx",
+            defaultScope: "all",
           },
           backendExportDateFilter: {
             label: "銷售日期（匯出條件）",

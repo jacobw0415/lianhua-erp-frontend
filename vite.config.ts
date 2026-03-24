@@ -13,15 +13,24 @@ export default defineConfig({
     },
   },
   server: {
-    host: true,
+    host: true, // 允許透過 IP  訪問前端
     port: 5173,
     proxy: {
+      // 1. 處理一般 API 與 Stream 請求
       "/api": {
-        target: "http://localhost:8080",
+        // 建議改為 127.0.0.1，防止某些系統將 localhost 解析為 ::1 (IPv6) 導致後端拒絕連線
+        target: "http://127.0.0.1:8080", 
         changeOrigin: true,
+        // 針對 Stream (SSE/流式傳輸) 增加超時時間，避免被 Vite 提前斷開
+        timeout: 60000, 
         configure: (proxy) => {
-          // 保持与瀏覽器實際來源一致，避免後端/安全策略因 Origin 不符而拒絕
+          // 錯誤監聽：若轉發失敗，會在 Vite 終端機顯示具體原因
+          proxy.on("error", (err, _req, _res) => {
+            console.error("[Vite Proxy Error]:", err.message);
+          });
+
           proxy.on("proxyReq", (proxyReq, req) => {
+            // 保持與瀏覽器實際來源一致，避免 Spring Security 因 Origin 不符而拒絕
             const origin =
               (req?.headers?.origin as string | undefined) ||
               (req?.headers?.Origin as string | undefined);
@@ -29,7 +38,6 @@ export default defineConfig({
               (req?.headers?.referer as string | undefined) ||
               (req?.headers?.Referer as string | undefined);
 
-            // 若瀏覽器沒有直接帶 Origin，嘗試從 Referer 解析（同協議/同主機/同 port）
             if (!origin && referer) {
               try {
                 const url = new URL(referer);
@@ -44,47 +52,30 @@ export default defineConfig({
           });
         },
       },
+      // 2. 處理 WebSocket 請求
       "/ws": {
-        target: "http://localhost:8080",
+        target: "http://127.0.0.1:8080",
         changeOrigin: true,
         ws: true,
-        // 強化 WebSocket 代理穩定性
         configure: (proxy) => {
-          proxy.on("proxyReqWs", (proxyReq, req) => {
-            // 對齊 Origin，防止 Spring Security 因為來源不符斷開連線
+          proxy.on("proxyReqWs", (proxyReq, req, socket) => {
+            // 對齊 Origin，防止 Spring Security 斷開連線
             const origin =
               (req?.headers?.origin as string | undefined) ||
               (req?.headers?.Origin as string | undefined);
             if (origin) {
               proxyReq.setHeader("Origin", origin);
-              return;
             }
 
-            const referer =
-              (req?.headers?.referer as string | undefined) ||
-              (req?.headers?.Referer as string | undefined);
-            if (referer) {
-              try {
-                const url = new URL(referer);
-                proxyReq.setHeader("Origin", url.origin);
-              } catch {
-                // ignore
-              }
-            }
-          });
-
-          // 核心修正：處理 Socket 錯誤，防止 ECONNRESET 導致的資源洩漏
-          proxy.on("error", (err) => {
-            console.warn(`[Vite Proxy Error]: ${err.message}`);
-          });
-
-          // 針對 WebSocket 專用的錯誤監聽
-          proxy.on("proxyReqWs", (_proxyReq, _req, socket) => {
+            // 確保 Socket 異常時能被回收，防止記憶體洩漏
             socket.on("error", (err) => {
-              // 這裡不只是壓制，而是確保 Socket 異常時能被回收
               console.error("[Vite WS Socket Error]:", err.message);
               socket.destroy();
             });
+          });
+
+          proxy.on("error", (err) => {
+            console.warn(`[Vite WS Proxy General Error]: ${err.message}`);
           });
         },
       },

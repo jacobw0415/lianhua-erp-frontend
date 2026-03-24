@@ -122,12 +122,15 @@ export const filterMapping: Record<string, Record<string, string>> = {
 
     expenses: {
         categoryName: "categoryName",
+        categoryId: "categoryId",
         employeeName: "employeeName",
+        employeeId: "employeeId",
         accountingPeriod: "accountingPeriod",
         fromDate: "fromDate",
         toDate: "toDate",
         note: "note",
         status: "status",
+        includeVoided: "includeVoided",
     },
 
     notifications: {

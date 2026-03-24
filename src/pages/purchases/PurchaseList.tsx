@@ -197,7 +197,7 @@ export const PurchaseList = () => {
             backendExport: {
               resource: "purchases",
               defaultFormat: "xlsx",
-              sendColumns: false,
+              defaultScope: "all",
             },
             backendExportDateFilter: {
               label: "進貨日期（匯出條件）",
@@ -208,7 +208,7 @@ export const PurchaseList = () => {
                 to: "toDate",
               },
             },
-            // 新 API 未提及 columns query，因此避免送出 columns=...
+            // 由匯出策略統一控制：此 resource 不送 columns query。
             columns: [],
           }}
         >
