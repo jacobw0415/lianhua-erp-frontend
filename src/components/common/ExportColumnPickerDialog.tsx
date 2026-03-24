@@ -79,6 +79,8 @@ export interface ExportColumnPickerDialogProps {
   mode?: "client" | "backend";
   /** 後端匯出預設檔案格式（query: format） */
   defaultBackendFormat?: string;
+  /** 後端匯出預設範圍（query: scope） */
+  defaultBackendScope?: "page" | "all";
   /** 前端匯出預設檔案格式 */
   defaultClientFormat?: "excel" | "csv";
   dateFilter?: ExportDateFilterConfig;
@@ -98,6 +100,7 @@ export const ExportColumnPickerDialog: React.FC<ExportColumnPickerDialogProps> =
   columns,
   mode = "client",
   defaultBackendFormat = "xlsx",
+  defaultBackendScope = "page",
   defaultClientFormat = "excel",
   dateFilter,
   backendDateFilter,
@@ -110,7 +113,7 @@ export const ExportColumnPickerDialog: React.FC<ExportColumnPickerDialogProps> =
 
   const [fromDay, setFromDay] = useState<Dayjs | null>(null);
   const [toDay, setToDay] = useState<Dayjs | null>(null);
-  const [exportScope, setExportScope] = useState<"page" | "all">("page");
+  const [exportScope, setExportScope] = useState<"page" | "all">(defaultBackendScope);
   const [backendFormat, setBackendFormat] = useState(defaultBackendFormat);
   const [clientFormat, setClientFormat] = useState<"excel" | "csv">(defaultClientFormat);
   const [guardOpen, setGuardOpen] = useState(false);
@@ -123,12 +126,12 @@ export const ExportColumnPickerDialog: React.FC<ExportColumnPickerDialogProps> =
   useEffect(() => {
     if (!open) return;
     if (mode === "backend") {
-      setExportScope("page");
+      setExportScope(defaultBackendScope);
       setBackendFormat(defaultBackendFormat);
     } else {
       setClientFormat(defaultClientFormat);
     }
-  }, [mode, open, defaultBackendFormat, defaultClientFormat]);
+  }, [mode, open, defaultBackendFormat, defaultBackendScope, defaultClientFormat]);
 
   useEffect(() => {
     if (!open || (mode === "client" && columns.length === 0)) return;

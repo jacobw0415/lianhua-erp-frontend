@@ -126,6 +126,7 @@ export const ARList = () => {
             backendExport: {
               resource: "ar",
               defaultFormat: "xlsx",
+              sendColumns: false,
             },
             // 新規格：GET /api/ar/export 查詢參數未要求 columns，因此此處不送 columns。
             columns: [],

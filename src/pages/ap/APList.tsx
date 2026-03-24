@@ -122,6 +122,7 @@ export const APList = () => {
             filename: "應付帳款總表",
             format: "excel",
             exportPickerTitle: "匯出應付帳款（AP Aging）",
+            exportColumnPicker: false,
             backendExport: {
               resource: "ap",
               defaultFormat: "xlsx",

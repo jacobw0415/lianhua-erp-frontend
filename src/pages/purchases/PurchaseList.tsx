@@ -197,6 +197,7 @@ export const PurchaseList = () => {
             backendExport: {
               resource: "purchases",
               defaultFormat: "xlsx",
+              sendColumns: false,
             },
             backendExportDateFilter: {
               label: "進貨日期（匯出條件）",

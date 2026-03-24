@@ -131,6 +131,7 @@ export const OrderList = () => {
             filename: "order_export",
             format: "excel",
             exportPickerTitle: "匯出訂單",
+            exportColumnPicker: false,
             backendExport: {
               resource: "orders",
               defaultFormat: "xlsx",
@@ -144,7 +145,6 @@ export const OrderList = () => {
                 to: "orderDateEnd",
               },
             },
-            exportColumnPicker: false,
             columns: [
               { header: "訂單編號", key: "orderNo", width: 15 },
               { header: "客戶名稱", key: "customerName", width: 25 },

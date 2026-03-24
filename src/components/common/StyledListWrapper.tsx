@@ -26,6 +26,7 @@ import { downloadResourceExport } from "@/api/resourceExportDownload";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { LIST_WRAPPER_CONTENT_SX, LIST_CONTENT_AREA_SX, LIST_MIN_HEIGHT } from "@/constants/layoutConstants";
 import type { ExportEnumMapKey } from "@/utils/exportCellValue";
+import { getBackendExportBehavior } from "@/constants/exportBehavior";
 
 interface ExportColumn {
   header: string;
@@ -42,7 +43,13 @@ interface ExportConfig {
    * 後端 GET `/{resource}/export`，query 與 `/{resource}/search` 一致並附加 `format`、`scope`。
    * 設定後改走 `downloadResourceExport`，不再使用前端組檔。
    */
-  backendExport?: { resource: string; defaultFormat?: string };
+  backendExport?: {
+    resource: string;
+    defaultFormat?: string;
+    defaultScope?: "page" | "all";
+    /** 是否送出 columns query（預設 true） */
+    sendColumns?: boolean;
+  };
   /**
    * 後端匯出對話框內可選日期區間（`listRangeFilterKeys` 對應列表 filter，會經 filterMapping 轉成 API 參數）。
    */
@@ -89,10 +96,26 @@ export const StyledListWrapper: React.FC<{
   // 偵測裝置尺寸
   const isMobile = useIsMobile();
 
-  const showExportDialog = useMemo(() => {
-    if (!exportConfig?.columns?.length) return false;
+  const clientShouldOpenDialog = useMemo(() => {
+    if (!exportConfig) return false;
+    if (exportConfig.backendExport?.resource) return false;
+    if (exportConfig.exportDateFilter) return true;
+    if (exportConfig.exportColumnPicker === true) return true;
+    if (exportConfig.exportColumnPicker === false) return false;
+    return (exportConfig.columns?.length ?? 0) > 1;
+  }, [exportConfig]);
+
+  const backendShouldOpenDialog = useMemo(() => {
+    if (!exportConfig?.backendExport?.resource) return false;
+    if (exportConfig.backendExportDateFilter) return true;
+    if (exportConfig.exportColumnPicker === false) return false;
     return true;
   }, [exportConfig]);
+
+  const backendBehavior = useMemo(
+    () => getBackendExportBehavior(exportConfig?.backendExport?.resource),
+    [exportConfig?.backendExport?.resource]
+  );
 
   const listDatePrefill = useMemo(() => {
     const keys =
@@ -203,7 +226,12 @@ export const StyledListWrapper: React.FC<{
             scope,
             format,
             columns:
-              columnKeys && columnKeys.length > 0 ? columnKeys : undefined,
+              (exportConfig?.backendExport?.sendColumns ??
+                backendBehavior.sendColumns) === false
+                ? undefined
+                : columnKeys && columnKeys.length > 0
+                  ? columnKeys
+                  : undefined,
           }
         );
       } catch (e: unknown) {
@@ -217,6 +245,7 @@ export const StyledListWrapper: React.FC<{
     },
     [
       alert,
+      backendBehavior.sendColumns,
       exportConfig?.backendExport?.resource,
       exportConfig?.backendExportDateFilter?.listRangeFilterKeys,
       filterValues,
@@ -230,11 +259,29 @@ export const StyledListWrapper: React.FC<{
   const handleExport = () => {
     if (!exportConfig) return;
     if (exportConfig.backendExport?.resource) {
-      setExportPickerOpen(true);
+      if (backendShouldOpenDialog) {
+        setExportPickerOpen(true);
+        return;
+      }
+      const defaultScope =
+        exportConfig.backendExport.defaultScope ?? backendBehavior.defaultScope;
+      const defaultFormat = exportConfig.backendExport.defaultFormat ?? "xlsx";
+      const defaultColumnKeys =
+        (exportConfig.backendExport.sendColumns ?? backendBehavior.sendColumns) ===
+        false
+          ? undefined
+          : exportConfig.columns?.map((c) => c.key);
+      void runBackendExport(
+        defaultScope,
+        defaultFormat,
+        undefined,
+        undefined,
+        defaultColumnKeys
+      );
       return;
     }
     if (!raListCtx.data?.length) return;
-    if (showExportDialog) {
+    if (clientShouldOpenDialog) {
       setExportPickerOpen(true);
       return;
     }
@@ -318,6 +365,10 @@ export const StyledListWrapper: React.FC<{
           }
           defaultBackendFormat={
             exportConfig.backendExport?.defaultFormat ?? "xlsx"
+          }
+          defaultBackendScope={
+            exportConfig.backendExport?.defaultScope ??
+            backendBehavior.defaultScope
           }
           defaultClientFormat={exportConfig.format ?? "excel"}
           dateFilter={exportConfig.exportDateFilter}

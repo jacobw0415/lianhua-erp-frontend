@@ -98,6 +98,7 @@ export const ReceiptList = () => {
           backendExport: {
             resource: "receipts",
             defaultFormat: "xlsx",
+            sendColumns: false,
           },
           backendExportDateFilter: {
             source: "receivedDate",

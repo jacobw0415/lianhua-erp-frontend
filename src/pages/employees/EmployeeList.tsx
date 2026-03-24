@@ -68,6 +68,12 @@ export const EmployeeList = () => (
       exportConfig={{
         filename: "employee_export",
         format: "excel",
+        exportPickerTitle: "匯出員工",
+        backendExport: {
+          resource: "employees",
+          defaultFormat: "xlsx",
+        },
+        exportColumnPicker: false,
         columns: [
           { header: "員工姓名", key: "fullName", width: 20 },
           { header: "職位", key: "position", width: 15 },

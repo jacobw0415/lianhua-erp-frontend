@@ -62,6 +62,7 @@ export const SaleList = () => {
           filename: "sale_export",
           format: "excel",
           exportPickerTitle: "匯出銷售",
+          exportColumnPicker: false,
           backendExport: {
             resource: "sales",
             defaultFormat: "xlsx",
@@ -75,7 +76,6 @@ export const SaleList = () => {
               to: "saleDateEnd",
             },
           },
-          exportColumnPicker: false,
           columns: [
             { header: "商品名稱", key: "productName", width: 20 },
             { header: "數量", key: "qty", width: 10 },

@@ -113,6 +113,21 @@ export const ExpenseList = () => {
         exportConfig={{
           filename: "expense_export",
           format: "excel",
+          exportPickerTitle: "匯出支出紀錄",
+          backendExport: {
+            resource: "expenses",
+            defaultFormat: "xlsx",
+          },
+          backendExportDateFilter: {
+            source: "expenseDate",
+            label: "支出日期（匯出條件）",
+            mode: "range",
+            listRangeFilterKeys: {
+              from: "fromDate",
+              to: "toDate",
+            },
+          },
+          exportColumnPicker: false,
           columns: [
             { header: "支出日期", key: "expenseDate", width: 15 },
             { header: "費用類別", key: "categoryName", width: 25 },
