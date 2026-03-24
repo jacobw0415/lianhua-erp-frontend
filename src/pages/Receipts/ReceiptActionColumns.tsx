@@ -91,7 +91,7 @@ export const ReceiptActionColumns = () => {
 
   return (
     <>
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: "-4px" }}>
         {/* 編輯按鈕 - 非作廢狀態才顯示 */}
         {!isVoided && (
           <Button

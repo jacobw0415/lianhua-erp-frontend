@@ -294,9 +294,13 @@ export const ResponsiveListDatagrid: React.FC<
             flexDirection: "column",
             flex: 1,
             height: "100%",
-            borderRadius: 12,
+            borderRadius: 0,
             position: "relative",
             maxWidth: "100%",
+            "& .RaDatagrid-tableWrapper": {
+              borderRadius: 0,
+              backgroundColor: theme.palette.background.paper,
+            },
             "& .RaDatagrid-list": {
               flex: 1,
               display: "flex",
@@ -328,6 +332,15 @@ export const ResponsiveListDatagrid: React.FC<
             "& .RaDatagrid-row": {
               height: "45px",
             },
+            "& .RaDatagrid-row:hover": {
+              backgroundColor: "transparent",
+            },
+            "& .RaDatagrid-row.Mui-selected": {
+              backgroundColor: "transparent",
+            },
+            "& .RaDatagrid-row.Mui-selected:hover": {
+              backgroundColor: "transparent",
+            },
             "& .MuiTableCell-body": {
               padding: "0 8px !important",
               height: "42px",
@@ -340,6 +353,22 @@ export const ResponsiveListDatagrid: React.FC<
             "& .column-action": {
               width: "150px",
               maxWidth: "150px",
+            },
+            "& .receipt-action-col": {
+              width: "150px",
+              maxWidth: "150px",
+            },
+            "& .MuiTableCell-body.receipt-action-col": {
+              textAlign: "left",
+              paddingLeft: "0px !important",
+              paddingRight: "4px !important",
+            },
+            "& .MuiTableCell-body.receipt-action-col > *": {
+              justifyContent: "flex-start",
+              marginLeft: "-6px",
+            },
+            "& .MuiTableCell-body.column-action .MuiTouchRipple-root": {
+              display: "none",
             },
             "&::-webkit-scrollbar": {
               width: "6px",

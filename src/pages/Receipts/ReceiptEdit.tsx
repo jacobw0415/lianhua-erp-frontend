@@ -11,26 +11,39 @@ import LockIcon from "@mui/icons-material/Lock";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { FormFieldRow } from "@/components/common/FormFieldRow";
-import { GenericEditPage } from "@/components/common/GenericEditPage";
+import {
+  GenericEditPage,
+  type GenericEditToolbarActionProps,
+} from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import type { ReceiptListRow } from "./ReceiptList"; // 引用您之前的型別定義
 
+type ReceiptEditRecord = ReceiptListRow & {
+  voidedAt?: string;
+  voidReason?: string;
+  accountingPeriod?: string;
+};
+
 /* -------------------------------------------------------
  * 🛠️ 自定義 Toolbar
  * ------------------------------------------------------- */
-const ReceiptEditToolbar = (props: any) => {
+type ReceiptEditToolbarProps = React.ComponentProps<typeof Toolbar> &
+  GenericEditToolbarActionProps;
+
+const ReceiptEditToolbar: React.FC<ReceiptEditToolbarProps> = (props) => {
+  const { backAction, ...toolbarProps } = props ?? {};
   const record = useRecordContext<ReceiptListRow>();
   const redirect = useRedirect();
   const isVoided = record?.status === "VOIDED";
 
   return (
-    <Toolbar {...props} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+    <Toolbar {...toolbarProps} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
       <Button
         variant="outlined"
         color="success"
         startIcon={<ArrowBackIcon />}
-        onClick={() => redirect("list", "receipts")}
+        onClick={backAction ?? (() => redirect("list", "receipts"))}
       >
         返回列表
       </Button>
@@ -88,32 +101,29 @@ export const ReceiptEdit: React.FC = () => {
  * ⭐ 收款紀錄欄位排版
  * ------------------------------------------------------- */
 const ReceiptFormFields: React.FC = () => {
-  const record = useRecordContext<ReceiptListRow & { voidedAt?: string; voidReason?: string }>();
+  const record = useRecordContext<ReceiptEditRecord>();
   const { showAlert } = useGlobalAlert();
-
-  if (!record) return <Typography sx={{ p: 2 }}>載入中...</Typography>;
-
-  const isVoided = record.status === "VOIDED";
+  const isVoided = record?.status === "VOIDED";
 
   // 🛡️ 攔截作廢單據提交
   useEffect(() => {
-    if (isVoided) {
-      const form = document.querySelector('form');
-      if (form) {
-        const handleSubmit = (e: Event) => {
-          e.preventDefault();
-          showAlert({
-            title: "無法編輯",
-            message: "此收款紀錄已作廢，無法進行任何修改。",
-            severity: "warning",
-            hideCancel: true,
-          });
-        };
-        form.addEventListener('submit', handleSubmit, true);
-        return () => form.removeEventListener('submit', handleSubmit, true);
-      }
-    }
-  }, [isVoided, showAlert]);
+    if (!record || !isVoided) return;
+    const form = document.querySelector("form");
+    if (!form) return;
+    const handleSubmit = (e: Event) => {
+      e.preventDefault();
+      showAlert({
+        title: "無法編輯",
+        message: "此收款紀錄已作廢，無法進行任何修改。",
+        severity: "warning",
+        hideCancel: true,
+      });
+    };
+    form.addEventListener("submit", handleSubmit, true);
+    return () => form.removeEventListener("submit", handleSubmit, true);
+  }, [isVoided, record, showAlert]);
+
+  if (!record) return <Typography sx={{ p: 2 }}>載入中...</Typography>;
 
 
   return (
@@ -185,7 +195,7 @@ const ReceiptFormFields: React.FC = () => {
             record.method === "CHECK" ? "支票" : record.method
           }
         />
-        <ReadonlyField label="會計期間" value={(record as any).accountingPeriod || "—"} />
+        <ReadonlyField label="會計期間" value={record.accountingPeriod || "—"} />
       </FormFieldRow>
 
       {/* 備註 (唯一可修改) */}

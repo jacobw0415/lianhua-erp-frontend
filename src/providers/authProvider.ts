@@ -163,6 +163,8 @@ interface LoginResponseContainer {
   token?: unknown;
   accessToken?: unknown;
   access_token?: unknown;
+  refreshToken?: unknown;
+  refresh_token?: unknown;
   type?: unknown;
   tokenType?: unknown;
   token_type?: unknown;
@@ -178,6 +180,7 @@ interface LoginResponseContainer {
   user?: LoginResponseContainer;
   result?: LoginResponseContainer;
   data?: LoginResponseContainer;
+  expiresIn?: unknown;
 }
 
 // --- 工具方法 ---
@@ -189,6 +192,10 @@ function getString(value: unknown): string | undefined {
 
 function getTokenFromContainer(c: LoginResponseContainer): string | undefined {
   return getString(c.token) ?? getString(c.accessToken) ?? getString(c.access_token);
+}
+
+function getRefreshTokenFromContainer(c: LoginResponseContainer): string | undefined {
+  return getString(c.refreshToken) ?? getString(c.refresh_token);
 }
 
 // --- 核心應用邏輯 ---
@@ -203,6 +210,10 @@ export function applyLoginSuccessFromContainer(
 
   localStorage.setItem("token", token);
   localStorage.setItem("tokenType", getString(container.tokenType) ?? "Bearer");
+  const refreshToken = getRefreshTokenFromContainer(container);
+  if (refreshToken) {
+    localStorage.setItem("refreshToken", refreshToken);
+  }
   
   const displayName = getString(container.username) ?? getString(container.userName) ?? usernameForDisplay ?? "";
   if (displayName) localStorage.setItem("username", displayName);
@@ -213,11 +224,35 @@ export function applyLoginSuccessFromContainer(
   const rawRoles = Array.isArray(container.roles) ? container.roles : [];
   localStorage.setItem("authRoles", JSON.stringify(rawRoles.length > 0 ? rawRoles : ["ROLE_USER"]));
 
-  const expiresIn = (container as any).expiresIn;
-  if (expiresIn) {
+  const expiresIn = Number(container.expiresIn);
+  if (Number.isFinite(expiresIn) && expiresIn > 0) {
     localStorage.setItem("tokenExpiresAt", String(Date.now() + expiresIn * 1000));
   }
   if (mfaEnabled) localStorage.setItem("mfaEnabled", "true");
+}
+
+export async function refreshSessionToken(): Promise<boolean> {
+  const refreshToken =
+    typeof localStorage !== "undefined" ? localStorage.getItem("refreshToken") : null;
+  if (!refreshToken) return false;
+
+  const apiUrl = getApiUrl();
+  try {
+    const response = await fetch(`${apiUrl}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok || !json) return false;
+    const payload =
+      (json as { data?: LoginResponseContainer }).data ??
+      (json as LoginResponseContainer);
+    applyLoginSuccessFromContainer(payload);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function applyLoginSuccessWithSse(
@@ -274,7 +309,7 @@ export const authProvider: AuthProvider = {
             Authorization: `${localStorage.getItem("tokenType") || "Bearer"} ${token}`,
           },
         });
-      } catch (e) {
+      } catch {
         console.warn("Logout API failed, but clearing storage anyway.");
       }
     }

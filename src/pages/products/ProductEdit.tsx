@@ -47,6 +47,11 @@ const CategorySelect = () => {
   );
 };
 
+interface ProductRecord {
+  id: number;
+  name: string;
+}
+
 /* -------------------------------------------------------
  * ⭐ 編輯商品頁面
  * ------------------------------------------------------- */
@@ -64,9 +69,10 @@ export const ProductEdit: React.FC = () => {
     <GenericEditPage
       resource="products"
       title="編輯商品"
-      onSuccess={(data: any) => {
+      onSuccess={(data) => {
+        const product = data as ProductRecord;
         showAlert({
-          message: `商品「${data.name}」已成功更新`,
+          message: `商品「${product.name}」已成功更新`,
           severity: "success",
           hideCancel: true,
         });

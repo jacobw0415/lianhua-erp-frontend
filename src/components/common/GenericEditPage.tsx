@@ -34,6 +34,11 @@ interface GenericEditPageProps {
   onDeleteSuccess?: (record: unknown) => void;
 }
 
+export interface GenericEditToolbarActionProps {
+  backAction?: () => void;
+  deleteAction?: () => void;
+}
+
 /* -------------------------------------------------------
  * 🛠️ 預設 Custom Toolbar
  * ------------------------------------------------------- */
@@ -252,10 +257,13 @@ const EditContent: React.FC<EditContentProps> = ({
         onSubmit={onSubmit}
         toolbar={
           toolbar
-            ? React.cloneElement(toolbar as React.ReactElement<{ onBack: () => void; onDelete: () => void }>, {
-                onBack: () => redirect("list", resource),
-                onDelete: () => setOpenDeleteConfirm(true),
-              })
+            ? React.cloneElement(
+                toolbar as React.ReactElement<GenericEditToolbarActionProps>,
+                {
+                  backAction: () => redirect("list", resource),
+                  deleteAction: () => setOpenDeleteConfirm(true),
+                }
+              )
             : (
             <CustomToolbar
               onBack={() => redirect("list", resource)}

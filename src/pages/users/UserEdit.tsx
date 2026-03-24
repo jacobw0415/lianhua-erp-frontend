@@ -81,11 +81,11 @@ export const UserEdit: React.FC = () => {
 
 /** 使用者編輯頁 Toolbar：編輯自己時不顯示「刪除」按鈕（與後端「不可刪除自己」對齊） */
 interface UserEditToolbarProps {
-  onBack?: () => void;
-  onDelete?: () => void;
+  backAction?: () => void;
+  deleteAction?: () => void;
 }
 
-const UserEditToolbar: React.FC<UserEditToolbarProps> = ({ onBack, onDelete }) => {
+const UserEditToolbar: React.FC<UserEditToolbarProps> = ({ backAction, deleteAction }) => {
   const record = useRecordContext<User>();
   const { data: identity } = useGetIdentity();
   const dataProvider = useDataProvider();
@@ -139,7 +139,7 @@ const UserEditToolbar: React.FC<UserEditToolbarProps> = ({ onBack, onDelete }) =
           variant="outlined"
           startIcon={<ArrowBackIcon />}
           color="success"
-          onClick={onBack}
+          onClick={backAction}
         >
           返回
         </Button>
@@ -156,13 +156,13 @@ const UserEditToolbar: React.FC<UserEditToolbarProps> = ({ onBack, onDelete }) =
               強制登出
             </Button>
           )}
-          {!isEditingSelf && onDelete && (
+          {!isEditingSelf && deleteAction && (
             <Button
               variant="contained"
               color="error"
               onClick={(e) => {
                 e.currentTarget.blur();
-                onDelete();
+                deleteAction();
               }}
             >
               刪除

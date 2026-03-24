@@ -11,7 +11,10 @@ import LockIcon from "@mui/icons-material/Lock";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { FormFieldRow } from "@/components/common/FormFieldRow";
-import { GenericEditPage } from "@/components/common/GenericEditPage";
+import {
+  GenericEditPage,
+  type GenericEditToolbarActionProps,
+} from "@/components/common/GenericEditPage";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 
@@ -33,18 +36,22 @@ interface Expense {
 /* -------------------------------------------------------
  * 🛠️ 自定義 Toolbar
  * ------------------------------------------------------- */
-const ExpenseEditToolbar = (props: any) => {
+type ExpenseEditToolbarProps = React.ComponentProps<typeof Toolbar> &
+  GenericEditToolbarActionProps;
+
+const ExpenseEditToolbar: React.FC<ExpenseEditToolbarProps> = (props) => {
+  const { backAction, ...toolbarProps } = props ?? {};
   const record = useRecordContext<Expense>();
   const redirect = useRedirect();
   const isVoided = record?.status === "VOIDED";
 
   return (
-    <Toolbar {...props} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+    <Toolbar {...toolbarProps} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
       <Button
         variant="outlined"
         color="success"
         startIcon={<ArrowBackIcon />}
-        onClick={() => redirect("list", "expenses")}
+        onClick={backAction ?? (() => redirect("list", "expenses"))}
       >
         返回列表
       </Button>
@@ -104,30 +111,27 @@ export const ExpenseEdit: React.FC = () => {
 const ExpenseFormFields: React.FC = () => {
   const record = useRecordContext<Expense>();
   const { showAlert } = useGlobalAlert();
-
-  if (!record) return <Typography sx={{ p: 2 }}>載入中...</Typography>;
-
-  const isVoided = record.status === "VOIDED";
+  const isVoided = record?.status === "VOIDED";
 
   // 🛡️ 攔截表單提交邏輯
   useEffect(() => {
-    if (isVoided) {
-      const form = document.querySelector('form');
-      if (form) {
-        const handleSubmit = (e: Event) => {
-          e.preventDefault();
-          showAlert({
-            title: "無法編輯",
-            message: "此支出紀錄已作廢，無法編輯。如需更正，請建立新紀錄。",
-            severity: "warning",
-            hideCancel: true,
-          });
-        };
-        form.addEventListener('submit', handleSubmit, true);
-        return () => form.removeEventListener('submit', handleSubmit, true);
-      }
-    }
-  }, [isVoided, showAlert]);
+    if (!record || !isVoided) return;
+    const form = document.querySelector("form");
+    if (!form) return;
+    const handleSubmit = (e: Event) => {
+      e.preventDefault();
+      showAlert({
+        title: "無法編輯",
+        message: "此支出紀錄已作廢，無法編輯。如需更正，請建立新紀錄。",
+        severity: "warning",
+        hideCancel: true,
+      });
+    };
+    form.addEventListener("submit", handleSubmit, true);
+    return () => form.removeEventListener("submit", handleSubmit, true);
+  }, [isVoided, record, showAlert]);
+
+  if (!record) return <Typography sx={{ p: 2 }}>載入中...</Typography>;
 
   return (
     <Box sx={{ width: "100%" }}>

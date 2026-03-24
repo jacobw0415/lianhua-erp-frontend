@@ -8,7 +8,7 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import { forceLogoutAndRedirect } from "@/providers/authProvider";
+import { forceLogoutAndRedirect, refreshSessionToken } from "@/providers/authProvider";
 
 /** 閒置逾時時間（毫秒），建置報告建議 15–30 分鐘，此處使用 20 分鐘 */
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
@@ -49,6 +49,7 @@ type AuthBroadcastMessage =
 export const IdleTimer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [warningOpen, setWarningOpen] = useState(false);
   const [warningSecondsLeft, setWarningSecondsLeft] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const warningOpenRef = useRef(false);
   const lastActiveAtRef = useRef<number>(Date.now());
   const lastActivityWriteAtRef = useRef<number>(0);
@@ -305,14 +306,32 @@ export const IdleTimer: React.FC<{ children: React.ReactNode }> = ({ children })
           </Button>
           <Button
             variant="contained"
-            onClick={() => {
+            disabled={isRefreshing}
+            onClick={async () => {
+              if (isRefreshing) return;
+              setIsRefreshing(true);
+              const refreshed = await refreshSessionToken();
               const at = Date.now();
               setLastActiveAt(at, { forceWrite: true });
               setWarningOpenBoth(false);
+              // 若 refresh 失敗且 token 已過期，立即導向登入頁，避免使用者誤以為已延長成功
+              if (!refreshed) {
+                const tokenExpiresAtRaw =
+                  typeof localStorage !== "undefined"
+                    ? localStorage.getItem("tokenExpiresAt")
+                    : null;
+                const tokenExpiresAt = tokenExpiresAtRaw ? Number(tokenExpiresAtRaw) : NaN;
+                if (Number.isFinite(tokenExpiresAt) && tokenExpiresAt <= Date.now()) {
+                  doLogout();
+                  setIsRefreshing(false);
+                  return;
+                }
+              }
               checkIdle();
+              setIsRefreshing(false);
             }}
           >
-            繼續登入
+            {isRefreshing ? "處理中..." : "繼續登入"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,16 +1,22 @@
 import { Toolbar, SaveButton, useRecordContext, useRedirect } from 'react-admin';
+import type { ComponentProps } from "react";
 import { Box, Typography, Button } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import type { GenericEditToolbarActionProps } from "@/components/common/GenericEditPage";
 
-export const PurchaseToolbar = (props: any) => {
+type PurchaseToolbarProps = ComponentProps<typeof Toolbar> &
+    GenericEditToolbarActionProps;
+
+export const PurchaseToolbar = (props: PurchaseToolbarProps) => {
+    const { deleteAction, ...toolbarProps } = props ?? {};
     const record = useRecordContext();
     const redirect = useRedirect();
     // 🚀 判斷狀態是否為作廢
     const isVoided = record?.status === 'VOIDED';
 
     return (
-        <Toolbar {...props} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+        <Toolbar {...toolbarProps} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
             {/* ⬅️ 左側：永遠顯示返回列表按鈕 */}
             <Button
                 variant="outlined"
@@ -36,7 +42,7 @@ export const PurchaseToolbar = (props: any) => {
                         <Button
                             variant="contained"
                             color="error"
-                            onClick={props.onDelete}
+                            onClick={deleteAction}
                         >
                             刪除
                         </Button>

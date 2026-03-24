@@ -110,8 +110,16 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
       const s = String(v).trim();
       if (s !== "") next[k] = s;
     });
-    setLocalInputValues(next);
-  }, [filterAppliedSignature, filterValues]);
+    setLocalInputValues((prev) => {
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (prevKeys.length !== nextKeys.length) return next;
+      for (const key of nextKeys) {
+        if (prev[key] !== next[key]) return next;
+      }
+      return prev;
+    });
+  }, [filterAppliedSignature]);
 
   const resource = useResourceContext() ?? "";
   const createPath = useCreatePath();

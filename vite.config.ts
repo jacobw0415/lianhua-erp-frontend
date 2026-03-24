@@ -16,16 +16,30 @@ export default defineConfig({
     host: true, // 允許透過 IP  訪問前端
     port: 5173,
     proxy: {
+      // 0. SSE 長連線：獨立規則，避免被一般 API timeout 中斷
+      "/api/session/stream": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        // SSE 可能長時間不關閉，這裡提高 timeout 避免代理提前斷線
+        timeout: 0,
+        proxyTimeout: 0,
+        configure: (proxy) => {
+          proxy.on("error", (err) => {
+            console.error("[Vite Proxy SSE Error]:", err.message);
+          });
+        },
+      },
       // 1. 處理一般 API 與 Stream 請求
       "/api": {
         // 建議改為 127.0.0.1，防止某些系統將 localhost 解析為 ::1 (IPv6) 導致後端拒絕連線
         target: "http://127.0.0.1:8080", 
         changeOrigin: true,
-        // 針對 Stream (SSE/流式傳輸) 增加超時時間，避免被 Vite 提前斷開
-        timeout: 60000, 
+        // 一般 API 仍保留合理超時；SSE 由上方專用規則處理
+        timeout: 120000,
+        proxyTimeout: 120000,
         configure: (proxy) => {
           // 錯誤監聽：若轉發失敗，會在 Vite 終端機顯示具體原因
-          proxy.on("error", (err, _req, _res) => {
+          proxy.on("error", (err) => {
             console.error("[Vite Proxy Error]:", err.message);
           });
 

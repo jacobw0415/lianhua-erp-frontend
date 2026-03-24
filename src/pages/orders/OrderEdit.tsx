@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { ComponentProps } from "react";
 import {
   TextInput,
   useRecordContext,
@@ -17,12 +18,20 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import { GenericEditPage } from "@/components/common/GenericEditPage";
+import {
+  GenericEditPage,
+  type GenericEditToolbarActionProps,
+} from "@/components/common/GenericEditPage";
 import { FormFieldRow } from "@/components/common/FormFieldRow";
 import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { CurrencyField } from "@/components/money/CurrencyField";
+
+interface OrderRecord {
+  id: number;
+  orderNo: string;
+}
 
 /* =======================================================
  * 📄 OrderEdit 主頁
@@ -43,10 +52,11 @@ export const OrderEdit = () => {
       title="訂單管理"
       width="970px"
       toolbar={<OrderEditToolbar />}
-      onSuccess={(data: any) => {
+      onSuccess={(data) => {
+        const order = data as OrderRecord;
         showAlert({
           title: "更新成功",
-          message: `已成功更新訂單「${data.orderNo}」`,
+          message: `已成功更新訂單「${order.orderNo}」`,
           severity: "success",
           hideCancel: true,
         });
@@ -223,7 +233,11 @@ const OrderFormFields = () => {
 /* =======================================================
  * 🛠 輔助元件：Toolbar & Skeleton
  * ======================================================= */
-const OrderEditToolbar = (props: any) => {
+type OrderEditToolbarProps = ComponentProps<typeof Toolbar> &
+  GenericEditToolbarActionProps;
+
+const OrderEditToolbar = (props: OrderEditToolbarProps) => {
+  const { backAction, ...toolbarProps } = props ?? {};
   const record = useRecordContext();
   const redirect = useRedirect();
   
@@ -231,12 +245,12 @@ const OrderEditToolbar = (props: any) => {
   const editable = record && record.orderStatus !== "DELIVERED" && !isVoided;
 
   return (
-    <Toolbar {...props} sx={{ display: "flex", justifyContent: "space-between" }}>
+    <Toolbar {...toolbarProps} sx={{ display: "flex", justifyContent: "space-between" }}>
       <Button
         variant="outlined"
         color="success"
         startIcon={<ArrowBackIcon />}
-        onClick={() => redirect("list", "orders")}
+        onClick={backAction ?? (() => redirect("list", "orders"))}
       >
         返回列表
       </Button>

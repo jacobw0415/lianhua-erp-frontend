@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import {
   useListContext,
@@ -92,6 +92,7 @@ export const StyledListWrapper: React.FC<{
   const alert = useGlobalAlert();
   const refresh = useRefresh();
   const [exportPickerOpen, setExportPickerOpen] = useState(false);
+  const wasNoResultRef = useRef(false);
 
   // 偵測裝置尺寸
   const isMobile = useIsMobile();
@@ -136,10 +137,11 @@ export const StyledListWrapper: React.FC<{
 
   /** 查無資料 → 顯示提示 */
   useEffect(() => {
-    if (hasNoResult) {
+    if (hasNoResult && !wasNoResultRef.current) {
       alert.trigger("查無匹配的資料，請重新輸入搜尋條件");
     }
-  }, [hasNoResult, alert]);
+    wasNoResultRef.current = hasNoResult;
+  }, [hasNoResult, alert.trigger]);
 
   /** 刪除成功 → refresh() */
   useEffect(() => {

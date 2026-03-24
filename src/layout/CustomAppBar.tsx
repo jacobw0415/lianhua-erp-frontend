@@ -115,7 +115,7 @@ export const CustomAppBar = (props: AppBarProps) => {
         };
         window.addEventListener('resize', handleForceClose);
         return () => window.removeEventListener('resize', handleForceClose);
-    }, [isMobile, isTablet]);
+    }, []);
 
     /* =====================================================
      * 📏 更新月曆選單寬度
@@ -124,7 +124,7 @@ export const CustomAppBar = (props: AppBarProps) => {
         if (periodMenuAnchor && periodButtonRef.current) {
             setPeriodMenuWidth(periodButtonRef.current.offsetWidth);
         }
-    }, [periodMenuAnchor, accountingPeriod, isMobile]);
+    }, [periodMenuAnchor]);
 
     const handleNotificationClick = useCallback(
         async (noti: any) => {
@@ -132,40 +132,31 @@ export const CustomAppBar = (props: AppBarProps) => {
             const actualId = noti.id || noti.userNotificationId;
             if (!actualId) return;
 
-            // 先處理導頁，讓使用者立刻看到畫面變化
+            // 1. 執行跳轉
             if (noti.targetId) {
-                switch (noti.targetType) {
-                    case "purchases":
-                        redirect(`/purchases/${noti.targetId}/show`);
-                        break;
-                    case "expenses":
-                        redirect(`/expenses/${noti.targetId}/show`);
-                        break;
-                    case "orders":
-                        redirect(`/orders/${noti.targetId}/show`);
-                        break;
-                    default:
-                        console.info("💡 無跳轉目標:", noti.targetType);
-                }
+                const targetPath = `/${noti.targetType}/${noti.targetId}/show`;
+                redirect(targetPath);
             }
 
-            // 標記已讀改為背景執行，避免阻塞當前互動的 INP
-            markAsRead({ ...noti, userNotificationId: actualId }).catch(() => {
-                // ignore 標記失敗，避免影響互動流暢度
-            });
+            // 2. 背景標記已讀，避免阻塞
+            try {
+                await markAsRead({ ...noti, userNotificationId: actualId });
+            } catch (e) {
+                console.warn("Failed to mark as read", e);
+            }
         },
         [markAsRead, redirect]
     );
 
     /* =====================================================
-     * 🔍 搜尋與主題邏輯
+     * 🔍 搜尋邏輯與 Meta 資料
      * ===================================================== */
     const periodOptions = useMemo(() => {
-        const options = [];
+        const res = [];
         for (let i = -6; i <= 3; i++) {
-            options.push(dayjs().add(i, 'month').format("YYYY-MM"));
+            res.push(dayjs().add(i, 'month').format("YYYY-MM"));
         }
-        return options;
+        return res;
     }, []);
 
     const routeMetaMap = useMemo(() => {
@@ -188,11 +179,13 @@ export const CustomAppBar = (props: AppBarProps) => {
     const ActiveIcon = activeMeta?.icon ?? CalendarMonthIcon;
     const activeTitle = activeMeta?.title ?? "Dashboard";
 
+    // 搜尋防抖處理
     useEffect(() => {
-        if (inputValue.trim() === "") {
+        if (!inputValue.trim()) {
             setOptions([]);
             return;
         }
+
         const timer = setTimeout(async () => {
             setLoading(true);
             try {
@@ -213,6 +206,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                 setLoading(false);
             }
         }, 500);
+
         return () => clearTimeout(timer);
     }, [inputValue, accountingPeriod, dataProvider]);
 
@@ -221,13 +215,10 @@ export const CustomAppBar = (props: AppBarProps) => {
         setMode(next);
         setRaTheme(next);
         setMoreMenuAnchor(null);
-    }, [isDark, muiTheme.palette.mode, setMode, setRaTheme, setMoreMenuAnchor]);
+    }, [isDark, setMode, setRaTheme]);
 
     const handleLogout = useCallback(() => {
         setUserAnchor(null);
-        // 透過 react-admin 的 logout 流程：
-        // 1. 呼叫 authProvider.logout 清除 Token
-        // 2. 自動導回登入頁
         logout();
     }, [logout]);
 
@@ -265,22 +256,11 @@ export const CustomAppBar = (props: AppBarProps) => {
                         }
                     }}
                     sx={{
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center",
-                        flexShrink: 0, 
-                        backgroundColor: "rgba(255,255,255,0.22)", 
-                        px: { xs: 1, sm: 1.5 }, 
-                        height: "34px",
-                        borderRadius: 1.5, 
-                        color: "#fff", 
-                        cursor: "pointer", 
-                        transition: "0.2s",
-                        "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" }, 
-                        whiteSpace: "nowrap", 
-                        mr: { xs: 0.5, sm: 0 },
-                        minWidth: { xs: '90px', sm: '110px' },
-                        width: 'fit-content'
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0, backgroundColor: "rgba(255,255,255,0.22)", 
+                        px: { xs: 1, sm: 1.5 }, height: "34px", borderRadius: 1.5, color: "#fff", 
+                        cursor: "pointer", transition: "0.2s", "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" }, 
+                        whiteSpace: "nowrap", mr: { xs: 0.5, sm: 0 }, minWidth: { xs: '90px', sm: '110px' }, width: 'fit-content'
                     }}
                 >
                     <Typography variant="body2" sx={{ mr: 0.5, fontWeight: 500, fontSize: "0.85rem", lineHeight: 1 }}>
@@ -358,19 +338,13 @@ export const CustomAppBar = (props: AppBarProps) => {
                                 </IconButton>
                             </Tooltip>
                             <Tooltip title="重新整理">
-                                <IconButton
-                                    onClick={() => {
-                                        // 先執行 react-admin 的 refresh（輕量重抓資料）
-                                        refresh();
-                                    }}
-                                >
+                                <IconButton onClick={() => refresh()}>
                                     <RefreshIcon sx={{ color: "#fff" }} />
                                 </IconButton>
                             </Tooltip>
                         </>
                     ) : (
                         <IconButton 
-                            ref={(el) => { moreMenuButtonRef.current = el; }}
                             onClick={(e) => {
                                 moreMenuButtonRef.current = e.currentTarget;
                                 setMoreMenuAnchor(e.currentTarget);
@@ -389,7 +363,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                     </Tooltip>
                 </Box>
 
-                {/* --- 🔔 通知中心彈窗 (修正版：強制 Flex 結構與 Scrollbar) --- */}
+                {/* --- 🔔 通知中心彈窗 --- */}
                 <Menu
                     anchorEl={notiAnchor}
                     open={Boolean(notiAnchor)}
@@ -397,55 +371,25 @@ export const CustomAppBar = (props: AppBarProps) => {
                     disableScrollLock 
                     anchorOrigin={{ vertical: 'bottom', horizontal: isMobile ? 'center' : 'right' }}
                     transformOrigin={{ vertical: 'top', horizontal: isMobile ? 'center' : 'right' }}
-                    // 關鍵修復：強制 MenuList 使用 Flex 並移除預設 Padding
-                    sx={{ 
-                        "& .MuiMenu-list": { 
-                            p: 0, 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            maxHeight: 520 // 確保總高度限制
-                        } 
-                    }}
+                    sx={{ "& .MuiMenu-list": { p: 0, display: 'flex', flexDirection: 'column', maxHeight: 520 } }}
                     slotProps={{
                         paper: {
                             sx: {
-                                width: isMobile ? '92vw' : 380,
-                                maxWidth: '420px',
-                                mt: 1.5,
-                                borderRadius: 4,
+                                width: isMobile ? '92vw' : 380, maxWidth: '420px', mt: 1.5, borderRadius: 4,
                                 boxShadow: isDark ? '0px 12px 48px rgba(0,0,0,0.6)' : '0px 12px 32px rgba(0,0,0,0.12)',
-                                overflow: 'hidden', 
-                                backgroundImage: 'none',
-                                backgroundColor: isDark ? '#1e1e1e' : '#fff',
+                                overflow: 'hidden', backgroundImage: 'none', backgroundColor: isDark ? '#1e1e1e' : '#fff',
                                 ...(isMobile && { left: '4vw !important', right: '4vw !important' }),
                             }
                         }
                     }}
                 >
-                    {/* 1. 固定標題區 */}
-                    <Box sx={{ 
-                        p: 2.5, 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50', 
-                        flexShrink: 0 
-                    }}>
+                    <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50', flexShrink: 0 }}>
                         <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>通知中心</Typography>
-                        {unreadCount > 0 && (
-                            <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { position: 'relative', transform: 'none' } }} />
-                        )}
+                        {unreadCount > 0 && <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { position: 'relative', transform: 'none' } }} />}
                     </Box>
                     <Divider />
 
-                    {/* 2. ✨ 加回的捲動內容區 ✨ */}
-                    <Box sx={{ 
-                        flexGrow: 1, 
-                        overflowY: 'auto', 
-                        maxHeight: 340, // 限制中間捲動區高度
-                        p: 1.5,
-                        ...getScrollbarStyles(muiTheme) // 注入 Scrollbar 樣式
-                    }}>
+                    <Box sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 340, p: 1.5, ...getScrollbarStyles(muiTheme) }}>
                         {notifications.length === 0 ? (
                             <Box sx={{ p: 6, textAlign: 'center' }}>
                                 <NotificationsIcon sx={{ fontSize: 56, color: 'grey.300', mb: 2, opacity: 0.4 }} />
@@ -454,36 +398,21 @@ export const CustomAppBar = (props: AppBarProps) => {
                         ) : (
                             notifications.map((n) => {
                                 const isUnread = !n.read;
-
-                                // 單號 / 金額 / 原因 各自一行，移除多餘空白行
-                                const rawContent = (n.content || "")
-                                    .replace(/(金額)/g, "\n$1")
-                                    .replace(/(原因)/g, "\n$1");
-                                const formattedContent = rawContent
-                                    .split(/\r?\n/)
-                                    .map((line) => line.trim())
-                                    .filter((line) => line.length > 0)
-                                    .join("\n");
+                                
+                                // ✅ 關鍵修改：直接使用內容，不再手動插入標籤與換行，交給 CSS pre-line
+                                const contentText = n.content || "";
 
                                 return (
                                     <MenuItem
                                         key={n.id || n.userNotificationId}
                                         onClick={() => handleNotificationClick(n)}
                                         sx={{
-                                            whiteSpace: 'normal', 
-                                            p: 2, 
-                                            mb: 1.5, 
-                                            borderRadius: 3, 
-                                            display: 'flex',
-                                            alignItems: 'flex-start',
+                                            whiteSpace: 'normal', p: 2, mb: 1.5, borderRadius: 3, display: 'flex', alignItems: 'flex-start',
                                             backgroundColor: isUnread 
                                                 ? (isDark ? alpha(muiTheme.palette.primary.main, 0.08) : '#f1f8e9')
                                                 : (isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02)),
                                             borderLeft: isUnread ? `4px solid ${muiTheme.palette.success.main}` : '4px solid transparent',
-                                            transition: '0.2s',
-                                            '&:hover': { 
-                                                backgroundColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.05),
-                                            }
+                                            transition: '0.2s', '&:hover': { backgroundColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.05) }
                                         }}
                                     >
                                         <Box sx={{ width: '100%' }}>
@@ -494,9 +423,9 @@ export const CustomAppBar = (props: AppBarProps) => {
                                             <Typography
                                                 variant="body2"
                                                 color="text.secondary"
-                                                sx={{ whiteSpace: 'pre-line' }}
+                                                sx={{ whiteSpace: 'pre-line', wordBreak: 'break-word' }}
                                             >
-                                                {formattedContent}
+                                                {contentText}
                                             </Typography>
                                             <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.disabled' }}>
                                                 {dayjs(n.createdAt).format("YYYY-MM-DD HH:mm")}
@@ -509,28 +438,16 @@ export const CustomAppBar = (props: AppBarProps) => {
                     </Box>
 
                     <Divider />
-                    
-                    {/* 3. ✨ 加回的固定底部按鈕 ✨ */}
                     <Box sx={{ p: 1, flexShrink: 0, bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50' }}>
-                        <MenuItem 
-                            sx={{ justifyContent: 'center', borderRadius: 2 }} 
-                            onClick={() => { setNotiAnchor(null); redirect('/notifications'); }}
-                        >
-                            <Typography variant="button" color="success.main" sx={{ fontWeight: 800 }}>
-                                查看全部通知
-                            </Typography>
+                        <MenuItem sx={{ justifyContent: 'center', borderRadius: 2 }} onClick={() => { setNotiAnchor(null); redirect('/notifications'); }}>
+                            <Typography variant="button" color="success.main" sx={{ fontWeight: 800 }}>查看全部通知</Typography>
                         </MenuItem>
                     </Box>
                 </Menu>
 
                 {/* --- 其他選單 --- */}
                 <Menu anchorEl={moreMenuAnchor} open={Boolean(moreMenuAnchor)} onClose={() => setMoreMenuAnchor(null)} PaperProps={{ sx: { width: 180, mt: 1, borderRadius: 3 } }}>
-                    <MenuItem onClick={() => { 
-                        if (moreMenuButtonRef.current) {
-                            setNotiAnchor(moreMenuButtonRef.current);
-                        }
-                        setMoreMenuAnchor(null); 
-                    }}>
+                    <MenuItem onClick={() => { if (moreMenuButtonRef.current) setNotiAnchor(moreMenuButtonRef.current); setMoreMenuAnchor(null); }}>
                         <ListItemIcon><Badge badgeContent={unreadCount} color="error"><NotificationsIcon fontSize="small" /></Badge></ListItemIcon>
                         <ListItemText>通知中心</ListItemText>
                     </MenuItem>
@@ -538,12 +455,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                         <ListItemIcon>{isDark ? <Brightness7Icon fontSize="small" /> : <Brightness4Icon fontSize="small" />}</ListItemIcon>
                         <ListItemText>{isDark ? '淺色模式' : '深色模式'}</ListItemText>
                     </MenuItem>
-                    <MenuItem
-                        onClick={() => {
-                            refresh();
-                            setMoreMenuAnchor(null);
-                        }}
-                    >
+                    <MenuItem onClick={() => { refresh(); setMoreMenuAnchor(null); }}>
                         <ListItemIcon><RefreshIcon fontSize="small" /></ListItemIcon>
                         <ListItemText>重新整理</ListItemText>
                     </MenuItem>
@@ -556,41 +468,22 @@ export const CustomAppBar = (props: AppBarProps) => {
                     slotProps={{
                         paper: { 
                             sx: { 
-                                mt: 1, 
-                                borderRadius: 3, 
+                                mt: 1, borderRadius: 3, 
                                 width: periodMenuWidth ? `${periodMenuWidth}px` : { xs: '120px', sm: '150px' },
-                                minWidth: periodMenuWidth ? `${periodMenuWidth}px` : { xs: '120px', sm: '150px' },
-                                maxHeight: 300,
-                                ...getScrollbarStyles(muiTheme) 
+                                maxHeight: 300, ...getScrollbarStyles(muiTheme) 
                             } 
-                        }
-                    }}
-                    sx={{
-                        '& .MuiMenu-list': {
-                            p: 0
                         }
                     }}
                 >
                     {periodOptions.map((p) => (
                         <MenuItem 
-                            key={p} 
-                            selected={p === accountingPeriod} 
+                            key={p} selected={p === accountingPeriod} 
                             onClick={() => { setAccountingPeriod(p); setPeriodMenuAnchor(null); }}
                             sx={{
-                                minHeight: '34px',
-                                height: '34px',
-                                py: 0,
-                                px: { xs: 1, sm: 1.5 },
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                minHeight: '34px', height: '34px', py: 0, px: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                 '&.Mui-selected': {
-                                    backgroundColor: muiTheme.palette.mode === 'dark' 
-                                        ? alpha(muiTheme.palette.primary.main, 0.2)
-                                        : alpha(muiTheme.palette.primary.main, 0.1),
-                                    '&:hover': {
-                                        backgroundColor: muiTheme.palette.mode === 'dark' 
-                                            ? alpha(muiTheme.palette.primary.main, 0.3)
-                                            : alpha(muiTheme.palette.primary.main, 0.15),
-                                    }
+                                    backgroundColor: alpha(muiTheme.palette.primary.main, isDark ? 0.2 : 0.1),
+                                    '&:hover': { backgroundColor: alpha(muiTheme.palette.primary.main, isDark ? 0.3 : 0.15) }
                                 }
                             }}
                         >
@@ -599,36 +492,21 @@ export const CustomAppBar = (props: AppBarProps) => {
                     ))}
                 </Menu>
 
-                <Menu
-                    anchorEl={userAnchor}
-                    open={Boolean(userAnchor)}
-                    onClose={() => setUserAnchor(null)}
+                <Menu 
+                    anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)}
                     PaperProps={{ sx: { mt: 1, borderRadius: 3, minWidth: 180 } }}
                 >
                     {identity && (
                         <MenuItem sx={{ py: 1.5, cursor: "default" }} disabled>
                             <Box sx={{ display: "flex", flexDirection: "column" }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {identity.fullName || identity.id}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    已登入
-                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>{identity.fullName || identity.id}</Typography>
+                                <Typography variant="caption" color="text.secondary">已登入</Typography>
                             </Box>
                         </MenuItem>
                     )}
                     {identity && <Divider />}
-                    <MenuItem
-                        onClick={handleLogout}
-                        sx={{
-                            py: 1.5,
-                            color: "error.main",
-                            "&:hover": { backgroundColor: "action.hover" },
-                        }}
-                    >
-                        <ListItemIcon sx={{ color: "error.main", minWidth: 36 }}>
-                            <LogoutIcon fontSize="small" />
-                        </ListItemIcon>
+                    <MenuItem onClick={handleLogout} sx={{ py: 1.5, color: "error.main", "&:hover": { backgroundColor: "action.hover" } }}>
+                        <ListItemIcon sx={{ color: "error.main", minWidth: 36 }}><LogoutIcon fontSize="small" /></ListItemIcon>
                         <ListItemText primary="登出系統" />
                     </MenuItem>
                 </Menu>
