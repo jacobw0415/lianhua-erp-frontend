@@ -87,6 +87,7 @@ import { UserList } from "@/pages/users/UserList";
 import { UserCreate } from "@/pages/users/UserCreate";
 import { UserEdit } from "@/pages/users/UserEdit";
 import { RoleList } from "@/pages/roles/RoleList";
+import { ActivityAuditLogList } from "@/pages/activityAuditLogs/ActivityAuditLogList";
 import ProfilePage from "@/pages/account/ProfilePage";
 import ChangePasswordPage from "@/pages/account/ChangePasswordPage";
 
@@ -286,6 +287,8 @@ const App = () => {
       />
       {/* 角色由系統預定義，僅供檢視，不開放新增/編輯 */}
       <Resource name="roles" list={RoleList} />
+      {/* 全系統活動稽核：僅 SUPER_ADMIN；列表內另做路由守護 */}
+      <Resource name="admin/activity-audit-logs" list={ActivityAuditLogList} />
       <Resource
         name="reports/cashflow"
         list={CashFlowReport}

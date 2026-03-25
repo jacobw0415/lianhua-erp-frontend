@@ -9,6 +9,7 @@ const backendSendColumnsPolicy: Record<string, boolean> = {
   purchases: false,
   receipts: false,
   suppliers: false,
+  "admin/activity-audit-logs": false,
 };
 
 /** 取得 resource 的 columns 傳送策略（未設定時預設 true） */

@@ -44,6 +44,7 @@ const allowedSortFields = [
   "userNotificationId",
   "notification.createdAt",
   "read",
+  "occurredAt",
 ];
 
 const defaultSortByResource: Record<
@@ -63,6 +64,7 @@ const defaultSortByResource: Record<
   users: { field: "createdAt", order: "DESC" },
   roles: { field: "createdAt", order: "DESC" },
   notifications: { field: "notification.createdAt", order: "DESC" },
+  "admin/activity-audit-logs": { field: "occurredAt", order: "DESC" },
 };
 
 /**
@@ -106,7 +108,16 @@ export function buildListQueryParams(
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== "" && value !== undefined && value !== null) {
       const backendKey = mapping[key] ?? key;
-      query.append(backendKey, String(value));
+      let outVal = String(value);
+      if (resource === "admin/activity-audit-logs") {
+        if (backendKey === "from" && /^\d{4}-\d{2}-\d{2}$/.test(outVal)) {
+          outVal = `${outVal}T00:00:00.000Z`;
+        }
+        if (backendKey === "to" && /^\d{4}-\d{2}-\d{2}$/.test(outVal)) {
+          outVal = `${outVal}T23:59:59.999Z`;
+        }
+      }
+      query.append(backendKey, outVal);
     }
   });
 

@@ -22,6 +22,14 @@ import { useLocation } from "react-router-dom";
 import { menuGroups, type MenuItem } from "./menuConfig";
 import { useAuthAuthority } from "@/hooks/useAuthAuthority";
 
+/** 與 hasRoleSuperAdmin 一致，避免 JWT 角色字串格式差異導致選單誤隱藏 */
+function isSuperAdminMenuRole(roles: string[]): boolean {
+    return roles.some((x) => {
+        const code = String(x).trim().toUpperCase();
+        return code === "ROLE_SUPER_ADMIN" || code === "SUPER_ADMIN" || code.endsWith("SUPER_ADMIN");
+    });
+}
+
 /** RBAC：依 getPermissions() 與 requiredAuthorities 過濾選單項目 */
 function filterItemsByRole(
     items: MenuItem[],
@@ -33,6 +41,9 @@ function filterItemsByRole(
     const roles = Array.isArray(permissions) ? permissions : [permissions];
     return items.filter((item) => {
         if (!item.requiredRole && !(item.requiredAuthorities?.length)) return true;
+        if (item.requiredRole === "ROLE_SUPER_ADMIN") {
+            return isSuperAdminMenuRole(roles);
+        }
         // ROLE_SUPER_ADMIN 視同具備 ROLE_ADMIN，可看到所有管理員選單
         if (item.requiredRole) {
             if (roles.includes(item.requiredRole)) return true;

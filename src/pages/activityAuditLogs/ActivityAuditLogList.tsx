@@ -1,0 +1,110 @@
+import * as React from "react";
+import {
+  Box,
+} from "@mui/material";
+import {
+  List,
+  useRedirect,
+} from "react-admin";
+import { useTheme } from "@mui/material";
+
+import { StyledListWrapper } from "@/components/common/StyledListWrapper";
+import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
+import { hasRoleSuperAdmin } from "@/utils/authStorage";
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { ActivityAuditLogDatagrid } from "@/pages/activityAuditLogs/components/ActivityAuditLogDatagrid";
+import {
+  ACTION_LABELS,
+  RESOURCE_TYPE_LABELS,
+} from "@/pages/activityAuditLogs/auditFormatters";
+
+/**
+ * 全系統活動稽核（SUPER_ADMIN）— GET /api/admin/activity-audit-logs
+ */
+export const ActivityAuditLogList = () => {
+  const redirect = useRedirect();
+  const allowed = hasRoleSuperAdmin();
+  const theme = useTheme();
+
+  React.useEffect(() => {
+    const cleanup = applyBodyScrollbarStyles(theme);
+    return cleanup;
+  }, [theme]);
+
+  React.useEffect(() => {
+    if (!allowed) {
+      redirect("/forbidden");
+    }
+  }, [allowed, redirect]);
+
+  if (!allowed) {
+    return null;
+  }
+
+  return (
+    <List
+      title="審計中心（全系統活動稽核）"
+      actions={false}
+      empty={false}
+      pagination={<CustomPaginationBar showPerPage />}
+      perPage={20}
+      sort={{ field: "occurredAt", order: "DESC" }}
+    >
+      <StyledListWrapper
+        disableCreate
+        quickFilters={[
+          { type: "text", source: "operatorUsername", label: "操作者" },
+          {
+            type: "select",
+            source: "action",
+            label: "動作",
+            choices: Object.entries(ACTION_LABELS).map(([id, name]) => ({
+              id,
+              name,
+            })),
+          },
+          {
+            type: "select",
+            source: "resourceType",
+            label: "資源類型",
+            choices: Object.entries(RESOURCE_TYPE_LABELS).map(([id, name]) => ({
+              id,
+              name,
+            })),
+          },
+        ]}
+        advancedFilters={[
+          {
+            type: "dateRange",
+            source: "occurred",
+            label: "發生時間（起訖）",
+          },
+        ]}
+        exportConfig={{
+          filename: "activity_audit_export",
+          format: "excel",
+          exportPickerTitle: "匯出活動稽核",
+          exportColumnPicker: false,
+          backendExport: {
+            resource: "admin/activity-audit-logs",
+            defaultFormat: "xlsx",
+            defaultScope: "all",
+            sendColumns: false,
+            queryStrategy: "scoped",
+          },
+          backendExportDateFilter: {
+            label: "發生時間",
+            listRangeFilterKeys: { from: "occurredStart", to: "occurredEnd" },
+          },
+          columns: [],
+        }}
+      >
+        <Box sx={{ width: "100%" }}>
+          <ActivityAuditLogDatagrid />
+        </Box>
+      </StyledListWrapper>
+    </List>
+  );
+};
+
+ActivityAuditLogList.displayName = "ActivityAuditLogList";

@@ -22,7 +22,10 @@ import {
 import { exportExcel } from "@/utils/exportExcel";
 import { exportCsv } from "@/utils/exportCsv";
 import { filterRecordsByExportDateRange } from "@/utils/exportDateFilter";
-import { downloadResourceExport } from "@/api/resourceExportDownload";
+import {
+  downloadResourceExport,
+  downloadFilterOnlyResourceExport,
+} from "@/api/resourceExportDownload";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { LIST_WRAPPER_CONTENT_SX, LIST_CONTENT_AREA_SX, LIST_MIN_HEIGHT } from "@/constants/layoutConstants";
 import type { ExportEnumMapKey } from "@/utils/exportCellValue";
@@ -49,6 +52,11 @@ interface ExportConfig {
     defaultScope?: "page" | "all";
     /** 是否送出 columns query（預設 true） */
     sendColumns?: boolean;
+    /**
+     * scoped：GET `/{resource}/export` 帶 format、scope、分頁條件（預設）。
+     * filterOnly：GET `/{resource}/export` 僅帶 format 與篩選（無 scope／分頁），用於全系統活動稽核等 API。
+     */
+    queryStrategy?: "scoped" | "filterOnly";
   };
   /**
    * 後端匯出對話框內可選日期區間（`listRangeFilterKeys` 對應列表 filter，會經 filterMapping 轉成 API 參數）。
@@ -142,6 +150,7 @@ export const StyledListWrapper: React.FC<{
       alert.trigger("查無匹配的資料，請重新輸入搜尋條件");
     }
     wasNoResultRef.current = hasNoResult;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 僅依 hasNoResult 觸發；alert 整包依賴會導致每 render 重跑
   }, [hasNoResult, alert.trigger]);
 
   /** 刪除成功 → refresh() */
@@ -221,28 +230,37 @@ export const StyledListWrapper: React.FC<{
           delete filter[rangeKeys.to];
         }
       }
+      const listParams = {
+        pagination: {
+          page: raListCtx.page,
+          perPage: raListCtx.perPage,
+        },
+        sort: raListCtx.sort,
+        filter,
+      };
+
       try {
-        await downloadResourceExport(
-          resource,
-          {
-            pagination: {
-              page: raListCtx.page,
-              perPage: raListCtx.perPage,
-            },
-            sort: raListCtx.sort,
-            filter,
-          },
-          {
-            scope,
-            format,
-            columns:
-              shouldSendColumns === false
-                ? undefined
-                : columnKeys && columnKeys.length > 0
-                  ? columnKeys
-                  : undefined,
-          }
-        );
+        const strategy =
+          exportConfig?.backendExport?.queryStrategy ?? "scoped";
+        if (strategy === "filterOnly") {
+          const fmt = format.toLowerCase() === "csv" ? "csv" : "xlsx";
+          await downloadFilterOnlyResourceExport(resource, listParams, fmt);
+        } else {
+          await downloadResourceExport(
+            resource,
+            listParams,
+            {
+              scope,
+              format,
+              columns:
+                shouldSendColumns === false
+                  ? undefined
+                  : columnKeys && columnKeys.length > 0
+                    ? columnKeys
+                    : undefined,
+            }
+          );
+        }
         setExportSuccessOpen(true);
       } catch (e: unknown) {
         if (e instanceof Error && e.message === "SESSION_EXPIRED") {
@@ -256,6 +274,8 @@ export const StyledListWrapper: React.FC<{
     [
       alert,
       exportConfig?.backendExport?.resource,
+      exportConfig?.backendExport?.queryStrategy,
+      exportConfig?.backendExport?.sendColumns,
       exportConfig?.backendExportDateFilter?.listRangeFilterKeys,
       filterValues,
       raListCtx.page,
@@ -364,6 +384,9 @@ export const StyledListWrapper: React.FC<{
           dateFilter={exportConfig.exportDateFilter}
           backendDateFilter={exportConfig.backendExportDateFilter}
           listDatePrefill={listDatePrefill}
+          backendHideScope={
+            exportConfig.backendExport?.queryStrategy === "filterOnly"
+          }
           onClose={() => setExportPickerOpen(false)}
           onConfirm={handleExportPickerConfirm}
         />
@@ -396,7 +419,7 @@ export const StyledListWrapper: React.FC<{
             severity="success"
             sx={{ width: "100%" }}
           >
-            Excel 檔案匯出成功！
+            匯出成功！
           </Alert>
         </Snackbar>
       )}

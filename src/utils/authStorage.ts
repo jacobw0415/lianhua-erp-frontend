@@ -38,6 +38,18 @@ export function hasRoleAdmin(roles?: string[]): boolean {
 }
 
 /**
+ * 是否為超級管理員（全系統活動稽核等僅 ROLE_SUPER_ADMIN 可存取之功能）。
+ * 不含 admin:manage，與 canManageAdmin 區隔。
+ */
+export function hasRoleSuperAdmin(roles?: string[]): boolean {
+  const r = roles ?? getStoredAuthRoles();
+  return r.some((x) => {
+    const code = String(x).trim().toUpperCase();
+    return code === "ROLE_SUPER_ADMIN" || code === "SUPER_ADMIN" || code.endsWith("SUPER_ADMIN");
+  });
+}
+
+/**
  * 當前使用者是否具「管理其他管理員」權限（ROLE_SUPER_ADMIN 或 admin:manage）。
  * 用於：使用者列表僅超級管理員可顯示編輯/刪除管理員列、建立/編輯使用者時是否顯示管理員角色選項。
  */

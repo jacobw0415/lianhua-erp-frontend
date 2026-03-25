@@ -90,4 +90,9 @@ export const apiRules: Record<string, ApiRule> = {
     list: true,
     detail: true,
   },
+  "admin/activity-audit-logs": {
+    search: false,
+    list: true,
+    detail: false,
+  },
 };

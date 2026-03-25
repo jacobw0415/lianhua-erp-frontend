@@ -2,6 +2,7 @@ import { getApiUrl } from "@/config/apiUrl";
 import {
   type BuildListQueryParamsInput,
   buildExportQueryParams,
+  buildListQueryParams,
 } from "@/providers/listQueryParams";
 
 function parseExportErrorMessage(response: Response, bodyText: string): string {
@@ -91,6 +92,71 @@ export async function downloadResourceExport(
   );
   const ext = options.format.toLowerCase() === "csv" ? "csv" : "xlsx";
   const fallback = `${resource}_export_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${ext}`;
+  const filename = fromHeader || fallback;
+
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(blobUrl);
+}
+
+/**
+ * GET `/{resource}/export`：僅帶與列表相同之篩選與 `format`，無 `scope`／分頁／sort（後端一次匯出符合條件之資料）。
+ */
+export async function downloadFilterOnlyResourceExport(
+  resource: string,
+  listParams: BuildListQueryParamsInput,
+  format: "xlsx" | "csv"
+): Promise<void> {
+  const query = buildListQueryParams(resource, listParams);
+  query.delete("page");
+  query.delete("size");
+  query.delete("sort");
+  query.set("format", format);
+  const url = `${getApiUrl()}/${resource}/export?${query.toString()}`;
+
+  const token =
+    typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
+  const tokenType =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem("tokenType") || "Bearer"
+      : "Bearer";
+
+  const headers = new Headers();
+  if (token) {
+    headers.set("Authorization", `${tokenType} ${token}`);
+  }
+  headers.set("Accept", "application/octet-stream,application/json;q=0.1,*/*");
+
+  const response = await fetch(url, { method: "GET", headers });
+
+  const contentType = response.headers.get("Content-Type") || "";
+
+  if (!response.ok) {
+    const text = await response.text();
+    const message = parseExportErrorMessage(response, text);
+    if (response.status === 401) {
+      throw new Error("SESSION_EXPIRED");
+    }
+    throw new Error(message);
+  }
+
+  if (contentType.includes("application/json")) {
+    const text = await response.text();
+    throw new Error(parseExportErrorMessage(response, text));
+  }
+
+  const blob = await response.blob();
+  const fromHeader = parseFilenameFromContentDisposition(
+    response.headers.get("Content-Disposition")
+  );
+  const ext = format === "csv" ? "csv" : "xlsx";
+  const slug = resource.replace(/\//g, "_");
+  const fallback = `${slug}_export_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${ext}`;
   const filename = fromHeader || fallback;
 
   const blobUrl = URL.createObjectURL(blob);

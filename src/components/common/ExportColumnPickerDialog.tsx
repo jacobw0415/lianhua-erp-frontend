@@ -90,6 +90,10 @@ export interface ExportColumnPickerDialogProps {
   backendDateFilter?: ExportDateFilterConfig;
   /** 由列表目前 filter 帶入的起迄（YYYY-MM-DD） */
   listDatePrefill?: { from?: string; to?: string };
+  /**
+   * 後端 API 不支援「本頁／全部」scope 時隱藏「匯出範圍」（例如全系統活動稽核 export）。
+   */
+  backendHideScope?: boolean;
   onClose: () => void;
   onConfirm: (payload: ExportOptionsConfirm) => void;
 }
@@ -105,6 +109,7 @@ export const ExportColumnPickerDialog: React.FC<ExportColumnPickerDialogProps> =
   dateFilter,
   backendDateFilter,
   listDatePrefill,
+  backendHideScope = false,
   onClose,
   onConfirm,
 }) => {
@@ -255,7 +260,9 @@ export const ExportColumnPickerDialog: React.FC<ExportColumnPickerDialogProps> =
           >
             <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              匯出條件與目前列表搜尋一致（含排序）；另可選擇僅本頁或符合條件之全部資料。
+              {backendHideScope
+                ? "匯出條件與目前列表篩選一致；後端依條件產出完整檔案（不分頁）。"
+                : "匯出條件與目前列表搜尋一致（含排序）；另可選擇僅本頁或符合條件之全部資料。"}
             </Typography>
             {backendDateFilter && (
               <Typography variant="body2" color="text.secondary">
@@ -316,26 +323,28 @@ export const ExportColumnPickerDialog: React.FC<ExportColumnPickerDialogProps> =
                 </Stack>
               </LocalizationProvider>
             )}
-            <FormControl component="fieldset" variant="standard">
-              <FormLabel component="legend">匯出範圍</FormLabel>
-              <RadioGroup
-                value={exportScope}
-                onChange={(e) =>
-                  setExportScope(e.target.value as "page" | "all")
-                }
-              >
-                <FormControlLabel
-                  value="page"
-                  control={<Radio size="small" />}
-                  label="目前篩選＋本頁"
-                />
-                <FormControlLabel
-                  value="all"
-                  control={<Radio size="small" />}
-                  label="符合篩選之全部"
-                />
-              </RadioGroup>
-            </FormControl>
+            {!backendHideScope && (
+              <FormControl component="fieldset" variant="standard">
+                <FormLabel component="legend">匯出範圍</FormLabel>
+                <RadioGroup
+                  value={exportScope}
+                  onChange={(e) =>
+                    setExportScope(e.target.value as "page" | "all")
+                  }
+                >
+                  <FormControlLabel
+                    value="page"
+                    control={<Radio size="small" />}
+                    label="目前篩選＋本頁"
+                  />
+                  <FormControlLabel
+                    value="all"
+                    control={<Radio size="small" />}
+                    label="符合篩選之全部"
+                  />
+                </RadioGroup>
+              </FormControl>
+            )}
             <FormControl size="small" fullWidth>
               <InputLabel id="export-format-label">檔案格式</InputLabel>
               <Select

@@ -148,4 +148,12 @@ export const filterMapping: Record<string, Record<string, string>> = {
         email: "email",
         active: "active",
     },
+
+    "admin/activity-audit-logs": {
+        operatorUsername: "operatorUsername",
+        action: "action",
+        resourceType: "resourceType",
+        occurredStart: "from",
+        occurredEnd: "to",
+    },
 };

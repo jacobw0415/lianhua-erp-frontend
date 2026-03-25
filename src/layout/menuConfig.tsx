@@ -58,6 +58,7 @@ import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 import ShoppingCartCheckoutTwoToneIcon from '@mui/icons-material/ShoppingCartCheckoutTwoTone';
 import StoreMallDirectoryTwoToneIcon from '@mui/icons-material/StoreMallDirectoryTwoTone';
 import NotificationIcon from '@mui/icons-material/Notifications';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 
 // ---------------------
 // Menu Groups
@@ -131,6 +132,7 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["user:view"] },
       { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["role:view"] },
+      { label: "查核中心", to: "/admin/activity-audit-logs", icon: <FactCheckIcon />, requiredRole: "ROLE_SUPER_ADMIN" },
       { label: "個人資料", to: "/profile", icon: <AccountCircleIcon /> },
       { label: "修改密碼", to: "/change-password", icon: <PasswordIcon /> },
       // 通知中心僅限管理員以上角色檢視，一般使用者不顯示
