@@ -4,6 +4,18 @@ import {
   buildExportQueryParams,
 } from "@/providers/listQueryParams";
 
+function parseExportErrorMessage(response: Response, bodyText: string): string {
+  let message = `匯出失敗（${response.status}）`;
+  try {
+    const j = JSON.parse(bodyText) as { message?: string; error?: string };
+    if (j.message) message = j.message;
+    else if (j.error) message = j.error;
+  } catch {
+    if (bodyText && bodyText.length < 500) message = bodyText;
+  }
+  return message;
+}
+
 function parseFilenameFromContentDisposition(header: string | null): string | null {
   if (!header) return null;
   const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header);
@@ -52,24 +64,25 @@ export async function downloadResourceExport(
   if (token) {
     headers.set("Authorization", `${tokenType} ${token}`);
   }
-  headers.set("Accept", "application/octet-stream,*/*");
+  headers.set("Accept", "application/octet-stream,application/json;q=0.1,*/*");
 
   const response = await fetch(url, { method: "GET", headers });
 
+  const contentType = response.headers.get("Content-Type") || "";
+
   if (!response.ok) {
     const text = await response.text();
-    let message = `匯出失敗（${response.status}）`;
-    try {
-      const j = JSON.parse(text) as { message?: string; error?: string };
-      if (j.message) message = j.message;
-      else if (j.error) message = j.error;
-    } catch {
-      if (text && text.length < 500) message = text;
-    }
+    const message = parseExportErrorMessage(response, text);
     if (response.status === 401) {
       throw new Error("SESSION_EXPIRED");
     }
     throw new Error(message);
+  }
+
+  // 與 reportExportDownload 一致：勿將錯誤 JSON 當成檔案下載
+  if (contentType.includes("application/json")) {
+    const text = await response.text();
+    throw new Error(parseExportErrorMessage(response, text));
   }
 
   const blob = await response.blob();

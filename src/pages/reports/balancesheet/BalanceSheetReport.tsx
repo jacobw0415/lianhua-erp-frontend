@@ -9,7 +9,10 @@ import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-tw";
 import { useBalanceSheetReport } from "@/hooks/useBalanceSheetReport";
 import type { BalanceSheetQueryParams } from "@/hooks/useBalanceSheetReport";
-import { exportExcel } from "@/utils/exportExcel";
+import {
+  downloadReportExport,
+  REPORT_EXPORT_KEYS,
+} from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { QueryControls } from "./components/QueryControls";
 import { BalanceSheetTable } from "./components/BalanceSheetTable";
@@ -123,7 +126,7 @@ export const BalanceSheetReport = () => {
     refresh();
   }, [refresh]);
 
-  // Excel 匯出
+  // Excel / CSV 匯出（後端 GET /api/reports/balance_sheet/export，條件與畫面查詢一致）
   const handleExport = useCallback(async () => {
     if (!data || data.length === 0) {
       setExportError("沒有數據可供匯出");
@@ -135,66 +138,34 @@ export const BalanceSheetReport = () => {
     setExportSuccess(false);
 
     try {
-      const reportData = data.filter(
-        (item) => !item.accountingPeriod.includes("合計")
-      );
-
-      const exportData = reportData.map((row) => ({
-        會計期間: row.accountingPeriod,
-        應收帳款: row.accountsReceivable,
-        現金: row.cash,
-        應付帳款: row.accountsPayable,
-        總資產: row.totalAssets,
-        總負債: row.totalLiabilities,
-        業主權益: row.equity,
-      }));
-
-      const totalRow = data.find((item) => item.accountingPeriod.includes("合計"));
-      if (totalRow) {
-        exportData.push({
-          會計期間: totalRow.accountingPeriod,
-          應收帳款: totalRow.accountsReceivable,
-          現金: totalRow.cash,
-          應付帳款: totalRow.accountsPayable,
-          總資產: totalRow.totalAssets,
-          總負債: totalRow.totalLiabilities,
-          業主權益: totalRow.equity,
-        });
-      }
-
-      let filename = "資產負債表";
+      const filter: {
+        periods?: string[];
+        period?: string;
+        endDate?: string;
+      } = {};
       if (activeQueryParams.periods && activeQueryParams.periods.length > 0) {
-        const sorted = [...activeQueryParams.periods].sort();
-        const rangeLabel =
-          sorted.length > 1
-            ? `${sorted[0]}-${sorted[sorted.length - 1]}`
-            : sorted[0];
-        filename += `_${rangeLabel}`;
+        filter.periods = activeQueryParams.periods;
+        filter.periodsCsv = activeQueryParams.periods.join(",");
       } else if (activeQueryParams.period) {
-        filename += `_${activeQueryParams.period}`;
+        filter.period = activeQueryParams.period;
       } else if (activeQueryParams.endDate) {
-        filename += `_${activeQueryParams.endDate}`;
+        filter.endDate = activeQueryParams.endDate;
       }
-      filename += `_${dayjs().format("YYYY-MM-DD_HH-mm-ss")}`;
 
-      const columns = [
-        { header: "會計期間", key: "會計期間", width: 20 },
-        { header: "應收帳款", key: "應收帳款", width: 18 },
-        { header: "現金", key: "現金", width: 18 },
-        { header: "應付帳款", key: "應付帳款", width: 18 },
-        { header: "總資產", key: "總資產", width: 18 },
-        { header: "總負債", key: "總負債", width: 18 },
-        { header: "業主權益", key: "業主權益", width: 18 },
-      ];
-
-      await exportExcel(exportData, filename, columns);
+      await downloadReportExport(REPORT_EXPORT_KEYS.balance_sheet, filter, {
+        format: "xlsx",
+        scope: "all",
+      });
       setExportSuccess(true);
     } catch (error) {
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
+        return;
+      }
       console.error("匯出失敗：", error);
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "匯出 Excel 檔案時發生錯誤";
+          : "匯出檔案時發生錯誤";
       setExportError(errorMessage);
     } finally {
       setExporting(false);

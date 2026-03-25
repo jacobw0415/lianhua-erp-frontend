@@ -6,7 +6,10 @@ import quarterOfYear from "dayjs/plugin/quarterOfYear";
 
 import { useCashFlowReport } from "@/hooks/useCashFlowReport";
 import type { CashFlowQueryParams } from "@/hooks/useCashFlowReport";
-import { exportExcel } from "@/utils/exportExcel";
+import {
+  downloadReportExport,
+  REPORT_EXPORT_KEYS,
+} from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { QueryControls } from "./components/QueryControls";
 import { CashFlowTable } from "./components/CashFlowTable";
@@ -250,7 +253,7 @@ export const CashFlowReport = () => {
     refresh();
   }, [refresh]);
 
-  // Excel 匯出
+  // Excel / CSV 匯出（後端 GET /api/reports/cash_flow_reports/export；無參數時與 GET 全量一致）
   const handleExport = useCallback(async () => {
     if (!data || data.length === 0) {
       setExportError("沒有數據可供匯出");
@@ -262,44 +265,32 @@ export const CashFlowReport = () => {
     setExportSuccess(false);
 
     try {
-      const exportData = data.map((row) => ({
-        會計期間: row.accountingPeriod,
-        零售收入: row.totalSales,
-        訂單收款: row.totalReceipts,
-        採購付款: row.totalPayments,
-        營運費用: row.totalExpenses,
-        總流入: row.totalInflow,
-        總流出: row.totalOutflow,
-        淨現金流: row.netCashFlow,
-      }));
-
-      let filename = "現金流量表";
+      const filter: {
+        period?: string;
+        startDate?: string;
+        endDate?: string;
+      } = {};
       if (activeQueryParams.period) {
-        filename += `_${activeQueryParams.period}`;
+        filter.period = activeQueryParams.period;
       } else if (activeQueryParams.startDate && activeQueryParams.endDate) {
-        filename += `_${activeQueryParams.startDate}_${activeQueryParams.endDate}`;
+        filter.startDate = activeQueryParams.startDate;
+        filter.endDate = activeQueryParams.endDate;
       }
-      filename += `_${dayjs().format("YYYY-MM-DD_HH-mm-ss")}`;
 
-      const columns = [
-        { header: "會計期間", key: "會計期間", width: 20 },
-        { header: "零售收入", key: "零售收入", width: 18 },
-        { header: "訂單收款", key: "訂單收款", width: 18 },
-        { header: "採購付款", key: "採購付款", width: 18 },
-        { header: "營運費用", key: "營運費用", width: 18 },
-        { header: "總流入", key: "總流入", width: 18 },
-        { header: "總流出", key: "總流出", width: 18 },
-        { header: "淨現金流", key: "淨現金流", width: 18 },
-      ];
-
-      await exportExcel(exportData, filename, columns);
+      await downloadReportExport(REPORT_EXPORT_KEYS.cash_flow_reports, filter, {
+        format: "xlsx",
+        scope: "all",
+      });
       setExportSuccess(true);
     } catch (error) {
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
+        return;
+      }
       console.error("匯出失敗：", error);
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "匯出 Excel 檔案時發生錯誤";
+          : "匯出檔案時發生錯誤";
       setExportError(errorMessage);
     } finally {
       setExporting(false);

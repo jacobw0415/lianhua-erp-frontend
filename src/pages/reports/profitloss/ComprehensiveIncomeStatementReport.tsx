@@ -6,7 +6,10 @@ import quarterOfYear from "dayjs/plugin/quarterOfYear";
 
 import { useComprehensiveIncomeStatement } from "@/hooks/useComprehensiveIncomeStatement";
 import type { ComprehensiveIncomeStatementQueryParams } from "@/hooks/useComprehensiveIncomeStatement";
-import { exportExcel } from "@/utils/exportExcel";
+import {
+  downloadReportExport,
+  REPORT_EXPORT_KEYS,
+} from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { QueryControls } from "./components/QueryControls";
 import { ComprehensiveIncomeStatementTable } from "./components/ComprehensiveIncomeStatementTable";
@@ -207,7 +210,7 @@ export const ComprehensiveIncomeStatementReport = () => {
     refresh();
   }, [refresh]);
 
-  // Excel 匯出
+  // Excel / CSV 匯出（後端 GET /api/reports/comprehensive_income_statement/export）
   const handleExport = useCallback(async () => {
     if (!data || data.length === 0) {
       setExportError("沒有數據可供匯出");
@@ -219,50 +222,36 @@ export const ComprehensiveIncomeStatementReport = () => {
     setExportSuccess(false);
 
     try {
-      const exportData = data.map((row) => ({
-        會計期間: row.accountingPeriod,
-        零售銷售: row.retailSales,
-        訂單銷售: row.orderSales,
-        營業收入: row.totalRevenue,
-        營業成本: row.costOfGoodsSold,
-        毛利益: row.grossProfit,
-        營業費用: row.totalOperatingExpenses,
-        營業利益: row.operatingProfit,
-        本期淨利: row.netProfit,
-        綜合損益: row.comprehensiveIncome,
-      }));
-
-      let filename = "綜合損益表";
+      const filter: {
+        periods?: string[];
+        period?: string;
+        startDate?: string;
+        endDate?: string;
+      } = {};
       if (activeQueryParams.periods && activeQueryParams.periods.length > 0) {
-        filename += `_${activeQueryParams.periods.join("-")}`;
+        filter.periods = activeQueryParams.periods;
       } else if (activeQueryParams.period) {
-        filename += `_${activeQueryParams.period}`;
+        filter.period = activeQueryParams.period;
       } else if (activeQueryParams.startDate && activeQueryParams.endDate) {
-        filename += `_${activeQueryParams.startDate}_${activeQueryParams.endDate}`;
+        filter.startDate = activeQueryParams.startDate;
+        filter.endDate = activeQueryParams.endDate;
       }
-      filename += `_${dayjs().format("YYYY-MM-DD_HH-mm-ss")}`;
 
-      const columns = [
-        { header: "會計期間", key: "會計期間", width: 20 },
-        { header: "零售銷售", key: "零售銷售", width: 18 },
-        { header: "訂單銷售", key: "訂單銷售", width: 18 },
-        { header: "營業收入", key: "營業收入", width: 18 },
-        { header: "營業成本", key: "營業成本", width: 18 },
-        { header: "毛利益", key: "毛利益", width: 18 },
-        { header: "營業費用", key: "營業費用", width: 18 },
-        { header: "營業利益", key: "營業利益", width: 18 },
-        { header: "本期淨利", key: "本期淨利", width: 18 },
-        { header: "綜合損益", key: "綜合損益", width: 18 },
-      ];
-
-      await exportExcel(exportData, filename, columns);
+      await downloadReportExport(
+        REPORT_EXPORT_KEYS.comprehensive_income_statement,
+        filter,
+        { format: "xlsx", scope: "all" }
+      );
       setExportSuccess(true);
     } catch (error) {
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
+        return;
+      }
       console.error("匯出失敗：", error);
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "匯出 Excel 檔案時發生錯誤";
+          : "匯出檔案時發生錯誤";
       setExportError(errorMessage);
     } finally {
       setExporting(false);

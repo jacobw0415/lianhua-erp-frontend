@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box } from "@mui/material";
+import { Alert, Box, Snackbar } from "@mui/material";
 import {
   useListContext,
   useListFilterContext,
@@ -92,6 +92,7 @@ export const StyledListWrapper: React.FC<{
   const alert = useGlobalAlert();
   const refresh = useRefresh();
   const [exportPickerOpen, setExportPickerOpen] = useState(false);
+  const [exportSuccessOpen, setExportSuccessOpen] = useState(false);
   const wasNoResultRef = useRef(false);
 
   // 偵測裝置尺寸
@@ -177,10 +178,17 @@ export const StyledListWrapper: React.FC<{
         return;
       }
 
-      if (outputFormat === "excel") {
-        await exportExcel(rows, filename, columns);
-      } else {
-        exportCsv(rows, filename, columns);
+      try {
+        if (outputFormat === "excel") {
+          await exportExcel(rows, filename, columns);
+        } else {
+          exportCsv(rows, filename, columns);
+        }
+        setExportSuccessOpen(true);
+      } catch (e: unknown) {
+        const msg =
+          e instanceof Error ? e.message : "匯出失敗，請稍後再試";
+        alert.trigger(msg);
       }
     },
     [alert, exportConfig, raListCtx.data]
@@ -235,6 +243,7 @@ export const StyledListWrapper: React.FC<{
                   : undefined,
           }
         );
+        setExportSuccessOpen(true);
       } catch (e: unknown) {
         if (e instanceof Error && e.message === "SESSION_EXPIRED") {
           return;
@@ -374,6 +383,23 @@ export const StyledListWrapper: React.FC<{
         }}
         onConfirm={alert.onConfirm}
       />
+
+      {exportConfig && (
+        <Snackbar
+          open={exportSuccessOpen}
+          autoHideDuration={3000}
+          onClose={() => setExportSuccessOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert
+            onClose={() => setExportSuccessOpen(false)}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            Excel 檔案匯出成功！
+          </Alert>
+        </Snackbar>
+      )}
     </Box>
   );
 };

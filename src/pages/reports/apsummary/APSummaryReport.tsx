@@ -10,7 +10,10 @@ import "dayjs/locale/zh-tw";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
 import { useAPSummaryReport } from "@/hooks/useAPSummaryReport";
 import type { APSummaryQueryParams } from "@/hooks/useAPSummaryReport";
-import { exportExcel } from "@/utils/exportExcel";
+import {
+  downloadReportExport,
+  REPORT_EXPORT_KEYS,
+} from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { APSummaryQueryControls } from "./components/QueryControls";
 import { APSummaryReportTable } from "./components/APSummaryReportTable";
@@ -123,7 +126,7 @@ export const APSummaryReport = () => {
     refresh();
   }, [refresh]);
 
-  // 執行 Excel 匯出
+  // Excel / CSV 匯出（後端 GET /api/reports/ap_summary/export）
   const handleExport = useCallback(async () => {
     if (!data || data.length === 0) {
       setExportError("沒有數據可供匯出");
@@ -135,37 +138,32 @@ export const APSummaryReport = () => {
     setExportSuccess(false);
 
     try {
-      // 準備匯出數據
-      const exportData = data.map((row) => ({
-        會計期間: row.accountingPeriod,
-        總應付金額: row.totalPayable,
-        已付金額: row.totalPaid,
-        未付餘額: row.totalOutstanding,
-      }));
-
-      // 生成檔名
-      let filename = "應付帳款總表";
+      const filter: {
+        periods?: string[];
+        period?: string;
+        endDate?: string;
+      } = {};
       if (activeQueryParams.periods && activeQueryParams.periods.length > 0) {
-        filename += `_多月趨勢`;
-      } else if (activeQueryParams.endDate) {
-        filename += `_截至_${activeQueryParams.endDate}`;
+        filter.periods = activeQueryParams.periods;
       } else if (activeQueryParams.period) {
-        filename += `_${activeQueryParams.period}`;
+        filter.period = activeQueryParams.period;
+        if (activeQueryParams.endDate) {
+          filter.endDate = activeQueryParams.endDate;
+        }
       }
-      filename += `_${dayjs().format("YYYY-MM-DD_HH-mm")}`;
 
-      const columns = [
-        { header: "會計期間", key: "會計期間", width: 25 },
-        { header: "總應付金額", key: "總應付金額", width: 20 },
-        { header: "已付金額", key: "已付金額", width: 20 },
-        { header: "未付餘額", key: "未付餘額", width: 20 },
-      ];
-
-      await exportExcel(exportData, filename, columns);
+      await downloadReportExport(REPORT_EXPORT_KEYS.ap_summary, filter, {
+        format: "xlsx",
+        scope: "all",
+      });
       setExportSuccess(true);
     } catch (error) {
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
+        return;
+      }
       console.error("匯出失敗：", error);
-      const errorMessage = error instanceof Error ? error.message : "匯出 Excel 檔案時發生錯誤";
+      const errorMessage =
+        error instanceof Error ? error.message : "匯出檔案時發生錯誤";
       setExportError(errorMessage);
     } finally {
       setExporting(false);
