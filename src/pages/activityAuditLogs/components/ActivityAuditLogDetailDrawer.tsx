@@ -26,6 +26,7 @@ import {
   getOperatorDisplay,
   getResourceTypeLabel,
   getStatusColor,
+  getHttpMethodChipLabel,
   getHttpStatusChipLabel,
   getHttpStatusResultText,
   getHttpStatusTooltip,
@@ -156,7 +157,7 @@ export const ActivityAuditLogDetailDrawer: React.FC<{
                 title={getHttpStatusTooltip(parsed?.httpStatus)}
               />
               <Chip
-                label={`請求方式 ${((record as Record<string, unknown>).httpMethod != null) ? String((record as Record<string, unknown>).httpMethod) : "—"}`}
+                label={getHttpMethodChipLabel((record as Record<string, unknown>).httpMethod)}
                 size="small"
                 variant="outlined"
               />
@@ -276,7 +277,6 @@ export const ActivityAuditLogDetailDrawer: React.FC<{
                     bgcolor: "action.hover",
                     fontSize: 12,
                     overflow: "auto",
-                    maxHeight: 280,
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
                     ...getDrawerScrollableStyles(theme, 280, true),

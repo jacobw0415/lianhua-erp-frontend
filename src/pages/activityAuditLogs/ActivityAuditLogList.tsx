@@ -46,8 +46,8 @@ export const ActivityAuditLogList = () => {
       title="審計中心（全系統活動稽核）"
       actions={false}
       empty={false}
-      pagination={<CustomPaginationBar showPerPage />}
-      perPage={20}
+      pagination={<CustomPaginationBar showPerPage={true} />}
+      perPage={10}
       sort={{ field: "occurredAt", order: "DESC" }}
     >
       <StyledListWrapper

@@ -61,6 +61,58 @@ export function getResourceTypeLabel(resourceTypeCode: unknown): string {
   return RESOURCE_TYPE_LABELS[k] ?? (k ? k : "—");
 }
 
+const HTTP_METHOD_ZH: Record<string, string> = {
+  GET: "讀取",
+  POST: "建立",
+  PUT: "更新",
+  PATCH: "部分更新",
+  DELETE: "刪除",
+  HEAD: "檢查",
+  OPTIONS: "選項",
+};
+
+/**
+ * HTTP 方法中文語意（列表／摘要用）；無資料時為「—」。
+ */
+export function getHttpMethodLabel(httpMethod: unknown): string {
+  const m =
+    httpMethod == null || httpMethod === ""
+      ? ""
+      : String(httpMethod).trim().toUpperCase();
+  if (!m) return "—";
+  return HTTP_METHOD_ZH[m] ?? m;
+}
+
+/**
+ * 明細 Chip：請求方式：讀取（GET）；未知方法僅顯示代碼。
+ */
+export function getHttpMethodChipLabel(httpMethod: unknown): string {
+  const m =
+    httpMethod == null || httpMethod === ""
+      ? ""
+      : String(httpMethod).trim().toUpperCase();
+  if (!m) return "請求方式：—";
+  const zh = getHttpMethodLabel(m);
+  if (zh === "—") return "請求方式：—";
+  if (zh === m) return `請求方式：${m}`;
+  return `請求方式：${zh}（${m}）`;
+}
+
+/**
+ * 列表欄位：讀取（GET）；無資料為「—」。
+ */
+export function getHttpMethodListDisplay(httpMethod: unknown): string {
+  const m =
+    httpMethod == null || httpMethod === ""
+      ? ""
+      : String(httpMethod).trim().toUpperCase();
+  if (!m) return "—";
+  const zh = getHttpMethodLabel(m);
+  if (zh === "—") return "—";
+  if (zh === m) return m;
+  return `${zh}（${m}）`;
+}
+
 export function safeParseDetails(details: unknown): ParsedAuditDetails | null {
   if (details == null || details === "") return null;
 
@@ -112,7 +164,7 @@ export function getHttpStatusTooltip(httpStatus: unknown): string {
     httpStatus == null || httpStatus === ""
       ? undefined
       : Number(String(httpStatus));
-  if (n == null || !Number.isFinite(n)) return "—";
+  if (n == null || !Number.isFinite(n)) return "未記錄回應狀態碼";
 
   if (n >= 200 && n < 300) return `${n}：成功（200-299）`;
   if (n >= 300 && n < 400) return `${n}：重新導向/導流（300-399）`;
@@ -126,8 +178,12 @@ export function getHttpStatusChipLabel(httpStatus: unknown): string {
     httpStatus == null || httpStatus === ""
       ? undefined
       : Number(String(httpStatus));
-  if (n == null || !Number.isFinite(n)) return "回應狀態 —";
-  return `回應狀態 ${n}`;
+  if (n == null || !Number.isFinite(n)) return "未記錄";
+  if (n >= 200 && n < 300) return `成功（${n}）`;
+  if (n >= 300 && n < 400) return `重導/導流（${n}）`;
+  if (n >= 400 && n < 500) return `請求失敗（${n}）`;
+  if (n >= 500 && n < 600) return `伺服器錯誤（${n}）`;
+  return `未知（${n}）`;
 }
 
 export function getHttpStatusResultText(httpStatus: unknown): string {
@@ -135,7 +191,7 @@ export function getHttpStatusResultText(httpStatus: unknown): string {
     httpStatus == null || httpStatus === ""
       ? undefined
       : Number(String(httpStatus));
-  if (n == null || !Number.isFinite(n)) return "結果：—";
+  if (n == null || !Number.isFinite(n)) return "結果：未記錄";
   if (n >= 200 && n < 300) return "結果：成功";
   if (n >= 300 && n < 400) return "結果：已重導/導流";
   if (n >= 400 && n < 500) return "結果：請求失敗";

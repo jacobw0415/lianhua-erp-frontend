@@ -140,6 +140,7 @@ export const BalanceSheetReport = () => {
     try {
       const filter: {
         periods?: string[];
+        periodsCsv?: string;
         period?: string;
         endDate?: string;
       } = {};

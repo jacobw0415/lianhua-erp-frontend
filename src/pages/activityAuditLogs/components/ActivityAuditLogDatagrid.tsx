@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Chip } from "@mui/material";
-import { FunctionField, TextField, type RaRecord } from "react-admin";
+import { FunctionField, type RaRecord } from "react-admin";
 
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { ActivityAuditLogDetailDialog } from "@/pages/activityAuditLogs/components/ActivityAuditLogDetailDialog";
@@ -11,6 +11,7 @@ import {
   getOperatorDisplay,
   getResourceTypeLabel,
   getStatusColor,
+  getHttpMethodListDisplay,
   getHttpStatusChipLabel,
   getHttpStatusTooltip,
   safeParseDetails,
@@ -63,14 +64,18 @@ export const ActivityAuditLogDatagrid: React.FC = () => {
         sortable={false}
         render={(record: RaRecord) => getResourceTypeLabel(record.resourceType)}
       />
-      <TextField source="httpMethod" label="請求方式" sortable={false} />
+      <FunctionField
+        label="請求方式"
+        sortable={false}
+        render={(record: RaRecord) =>
+          getHttpMethodListDisplay((record as Record<string, unknown>)?.httpMethod)
+        }
+      />
       <FunctionField
         label="回應狀態"
         sortable={false}
         render={(record: RaRecord) => {
           const parsed = getParsedFromRecord(record);
-          const status = parsed?.httpStatus != null ? String(parsed.httpStatus) : null;
-          if (!status) return "—";
           return (
             <Chip
               label={getHttpStatusChipLabel(parsed?.httpStatus)}
