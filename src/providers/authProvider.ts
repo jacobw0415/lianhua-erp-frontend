@@ -1,5 +1,4 @@
 import type { AuthProvider } from "react-admin";
-
 import { getApiUrl } from "@/config/apiUrl";
 import { clearAppCache } from "@/utils/appCache";
 import { clearProfileCache } from "@/utils/profileCache";
@@ -9,6 +8,7 @@ const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_U
 
 /** SSE 事件來源 */
 let sessionEventSource: EventSource | null = null;
+let loginRedirectInProgress = false;
 
 function closeSessionEventSource(): void {
   try {
@@ -71,14 +71,59 @@ const AUTH_STORAGE_KEYS = [
   "authRoles",
 ] as const;
 
-/** 集中清除前端登入狀態 */
+export const AUTH_LOGOUT_IN_PROGRESS_KEY = "auth_logout_in_progress";
+
+export function beginLogoutSession(): void {
+  try {
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(AUTH_LOGOUT_IN_PROGRESS_KEY, "1");
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function clearLogoutSessionFlag(): void {
+  try {
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem(AUTH_LOGOUT_IN_PROGRESS_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function isLogoutInProgress(): boolean {
+  if (typeof sessionStorage === "undefined") return false;
+  try {
+    return sessionStorage.getItem(AUTH_LOGOUT_IN_PROGRESS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function clearStaleAuthTokensForMfaPendingLogin(options?: {
+  closeSessionStream?: boolean;
+}): void {
+  if (typeof localStorage === "undefined") return;
+  const closeSse = options?.closeSessionStream !== false;
+  if (closeSse) closeSessionEventSource();
+  clearProfileCache();
+  AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  localStorage.removeItem("mfaEnabled");
+  try {
+    localStorage.removeItem("idle_last_active_at");
+    localStorage.removeItem("idle_force_logout_at");
+  } catch {
+    // ignore
+  }
+}
+
 function clearAuthStorage(): void {
-  // 1. 【核心新增】優先通知 WebSocket 斷開連線，避免 Token 清除後產生 401 錯誤
+  beginLogoutSession();
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("auth:logout"));
   }
-
-  // 2. 清除本地存儲
   AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
   localStorage.removeItem("mfaEnabled");
   try {
@@ -144,20 +189,14 @@ function hasValidToken(): boolean {
 
 function redirectToLogin(): void {
   if (typeof window === "undefined") return;
+  if (loginRedirectInProgress) return;
+  loginRedirectInProgress = true;
   const basePath = BASE_PATH.replace(/\/$/, "") || "";
   const path = `${basePath}/login`;
-
-  if (window.history && typeof window.history.pushState === "function") {
-    window.history.pushState(null, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-    return;
-  }
-
   const base = window.location.origin;
-  if (base) window.location.href = `${base}${path}`;
+  if (base) window.location.replace(`${base}${path}`);
 }
 
-// --- 輔助介面 ---
 interface LoginResponseContainer {
   id?: unknown;
   token?: unknown;
@@ -170,20 +209,12 @@ interface LoginResponseContainer {
   token_type?: unknown;
   username?: unknown;
   userName?: unknown;
-  account?: unknown;
-  email?: unknown;
-  fullName?: unknown;
-  role?: unknown;
-  roles?: unknown[];
-  authorities?: unknown[];
-  roleNames?: unknown[];
-  user?: LoginResponseContainer;
-  result?: LoginResponseContainer;
-  data?: LoginResponseContainer;
   expiresIn?: unknown;
+  roles?: unknown[];
+  mfaRequired?: boolean;
+  pendingToken?: string;
 }
 
-// --- 工具方法 ---
 function getString(value: unknown): string | undefined {
   if (value == null) return undefined;
   const str = String(value).trim();
@@ -198,42 +229,114 @@ function getRefreshTokenFromContainer(c: LoginResponseContainer): string | undef
   return getString(c.refreshToken) ?? getString(c.refresh_token);
 }
 
-// --- 核心應用邏輯 ---
+export function unwrapAuthLoginPayload(json: unknown): LoginResponseContainer | null {
+  if (!json || typeof json !== "object" || Array.isArray(json)) return null;
+
+  const hasTokenLikeField = (obj: Record<string, unknown>): boolean => {
+    return Boolean(
+      getString(obj.token) ?? getString(obj.accessToken) ?? getString(obj.access_token)
+    );
+  };
+
+  const visited = new Set<object>();
+  const queue: Record<string, unknown>[] = [json as Record<string, unknown>];
+
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+
+    if (hasTokenLikeField(cur)) {
+      return cur as LoginResponseContainer;
+    }
+
+    for (const key of ["data", "result", "user"] as const) {
+      const next = cur[key];
+      if (next && typeof next === "object" && !Array.isArray(next)) {
+        queue.push(next as Record<string, unknown>);
+      }
+    }
+  }
+
+  return json as LoginResponseContainer;
+}
+
+function extractMfaPendingFromLoginResponse(json: unknown): {
+  mfaRequired: boolean;
+  pendingToken?: string;
+} {
+  if (!json || typeof json !== "object") {
+    return { mfaRequired: false, pendingToken: undefined };
+  }
+  const root = json as Record<string, unknown>;
+  const candidates: Record<string, unknown>[] = [root];
+  for (const key of ["data", "result"] as const) {
+    const v = root[key];
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      candidates.push(v as Record<string, unknown>);
+    }
+  }
+  let mfaRequired = false;
+  let pendingToken: string | undefined;
+  for (const c of candidates) {
+    if (Boolean(c.mfaRequired ?? c.mfa_required)) mfaRequired = true;
+    const pt = getString(c.pendingToken) ?? getString(c.pending_token);
+    if (pt) pendingToken = pt;
+  }
+  return { mfaRequired, pendingToken };
+}
+
+/**
+ * 將登入資訊寫入 Storage
+ */
 export function applyLoginSuccessFromContainer(
   container: LoginResponseContainer,
   usernameForDisplay?: string,
   mfaEnabled?: boolean
 ): void {
+  clearLogoutSessionFlag();
   clearProfileCache();
+  
   const token = getTokenFromContainer(container);
   if (!token) throw new Error("後端未回傳 token");
 
+  // 1. 優先寫入權限，確保 React-Admin getPermissions 抓到最新值
+  const rawRoles = Array.isArray(container.roles) ? container.roles : [];
+  const finalRoles = rawRoles.length > 0 ? rawRoles : ["ROLE_USER"];
+  localStorage.setItem("authRoles", JSON.stringify(finalRoles));
+
+  // 2. 寫入 Token 與標記
   localStorage.setItem("token", token);
   localStorage.setItem("tokenType", getString(container.tokenType) ?? "Bearer");
+  
   const refreshToken = getRefreshTokenFromContainer(container);
   if (refreshToken) {
     localStorage.setItem("refreshToken", refreshToken);
   }
-  
+
+  // 3. 寫入使用者資訊
   const displayName = getString(container.username) ?? getString(container.userName) ?? usernameForDisplay ?? "";
   if (displayName) localStorage.setItem("username", displayName);
-  
+
   const userId = getString(container.id);
   if (userId) localStorage.setItem("userId", userId);
 
-  const rawRoles = Array.isArray(container.roles) ? container.roles : [];
-  localStorage.setItem("authRoles", JSON.stringify(rawRoles.length > 0 ? rawRoles : ["ROLE_USER"]));
-
+  // 4. 處理有效期限
   const expiresIn = Number(container.expiresIn);
   if (Number.isFinite(expiresIn) && expiresIn > 0) {
     localStorage.setItem("tokenExpiresAt", String(Date.now() + expiresIn * 1000));
+  } else {
+    localStorage.removeItem("tokenExpiresAt");
   }
+  
   if (mfaEnabled) localStorage.setItem("mfaEnabled", "true");
 }
 
+/**
+ * 補回 IdleTimer 需要的 refreshSessionToken
+ */
 export async function refreshSessionToken(): Promise<boolean> {
-  const refreshToken =
-    typeof localStorage !== "undefined" ? localStorage.getItem("refreshToken") : null;
+  const refreshToken = typeof localStorage !== "undefined" ? localStorage.getItem("refreshToken") : null;
   if (!refreshToken) return false;
 
   const apiUrl = getApiUrl();
@@ -245,31 +348,39 @@ export async function refreshSessionToken(): Promise<boolean> {
     });
     const json = await response.json().catch(() => null);
     if (!response.ok || !json) return false;
-    const payload =
-      (json as { data?: LoginResponseContainer }).data ??
-      (json as LoginResponseContainer);
+    const payload = unwrapAuthLoginPayload(json);
+    if (!payload) return false;
     applyLoginSuccessFromContainer(payload);
     return true;
-  } catch {
+  } catch (err) {
+    console.error("Refresh token failed:", err);
     return false;
   }
 }
 
+/**
+ * 成功登入後的處理（包含延遲啟動 SSE）
+ */
 export function applyLoginSuccessWithSse(
   container: LoginResponseContainer,
   usernameForDisplay?: string,
   mfaEnabled?: boolean
 ): void {
+  // 同步執行資料寫入
   applyLoginSuccessFromContainer(container, usernameForDisplay, mfaEnabled);
+  
   const token = getTokenFromContainer(container);
   if (token) {
-    startSessionEventSource(token);
-    // 【核心新增】通知 WebSocket Provider：資料已備齊，可以上線了
-    if (typeof window !== "undefined") {
-      setTimeout(() => {
+    // 🌟 關鍵修正：延遲 300ms 啟動 SSE 與事件通知
+    // 給予頁面跳轉與後端事務 (Transaction) 完成的緩衝時間
+    setTimeout(() => {
+      startSessionEventSource(token);
+      
+      if (typeof window !== "undefined") {
+        // 通知全域 Context 更新（例如 OnlineUsersContext）
         window.dispatchEvent(new CustomEvent("auth:login"));
-      }, 0);
-    }
+      }
+    }, 300);
   }
 }
 
@@ -282,23 +393,34 @@ export const authProvider: AuthProvider = {
       headers: { "Content-Type": "application/json" },
     });
 
+    const json = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || "帳號或密碼錯誤");
+      throw new Error(json.message || "帳號或密碼錯誤");
     }
 
-    const json = await response.json();
-    // 檢查是否有 MFA
-    const data = json.data || json;
-    if (data.mfaRequired) {
-        sessionStorage.setItem("mfa_pending_token", data.pendingToken);
-        throw { message: "MFA_REQUIRED", code: "MFA_REQUIRED" };
+    const data = unwrapAuthLoginPayload(json) ?? (json as LoginResponseContainer);
+    const { mfaRequired, pendingToken } = extractMfaPendingFromLoginResponse(json);
+
+    if (mfaRequired) {
+      if (!pendingToken) {
+        throw new Error("後端未回傳 MFA pending token，請聯絡系統管理員");
+      }
+      clearStaleAuthTokensForMfaPendingLogin();
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem("mfa_pending_token", pendingToken);
+        sessionStorage.setItem("mfa_username", username);
+      }
+      // 必須 reject 才能讓 LoginPage 進入 catch 塊
+      return Promise.reject({ message: "MFA_REQUIRED", code: "MFA_REQUIRED" });
     }
 
     applyLoginSuccessWithSse(data, username);
+    return Promise.resolve();
   },
 
   logout: async () => {
+    beginLogoutSession();
     const apiUrl = getApiUrl();
     const token = localStorage.getItem("token");
     if (token) {
@@ -310,7 +432,7 @@ export const authProvider: AuthProvider = {
           },
         });
       } catch {
-        console.warn("Logout API failed, but clearing storage anyway.");
+        console.warn("Logout API failed.");
       }
     }
     closeSessionEventSource();
@@ -326,11 +448,24 @@ export const authProvider: AuthProvider = {
 
   getPermissions: () => {
     const stored = localStorage.getItem("authRoles");
-    return Promise.resolve(stored ? JSON.parse(stored) : ["ROLE_USER"]);
+    const roles = stored ? JSON.parse(stored) : ["ROLE_USER"];
+    if (import.meta.env.DEV) {
+      console.log("[AuthProvider] getPermissions called:", roles);
+    }
+    return Promise.resolve(roles);
   },
 
-  checkError: (error) => {
-    if (error?.status === 401) {
+  checkError: (error: any) => {
+    const status = error?.status ?? error?.body?.status;
+    if (status === 401) {
+      const hasToken = typeof localStorage !== "undefined" && Boolean(localStorage.getItem("token"));
+      const hasMfaPending = typeof sessionStorage !== "undefined" && Boolean(sessionStorage.getItem("mfa_pending_token"));
+
+      // MFA 驗證期間不應觸發全域登出
+      if (!hasToken && hasMfaPending) {
+        return Promise.reject();
+      }
+
       forceLogoutAndRedirect();
       return Promise.reject();
     }
@@ -339,10 +474,8 @@ export const authProvider: AuthProvider = {
 
   getIdentity: () => {
     const username = localStorage.getItem("username");
-    if (!username) {
-      return Promise.reject();
-    }
-    const id: string = (localStorage.getItem("userId") ?? username) as string;
+    if (!username) return Promise.reject();
+    const id = localStorage.getItem("userId") ?? username;
     return Promise.resolve({ id, fullName: username });
   },
 };

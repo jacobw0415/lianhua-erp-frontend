@@ -3,27 +3,96 @@ import type { AuthProvider } from "react-admin";
 
 import { getApiUrl } from "@/config/apiUrl";
 import { apiRules } from "@/config/apiRules";
-import { applyLoginSuccessFromContainer } from "@/providers/authProvider";
+import {
+  applyLoginSuccessFromContainer,
+  isLogoutInProgress,
+  unwrapAuthLoginPayload,
+} from "@/providers/authProvider";
 import { buildListQueryParams } from "@/providers/listQueryParams";
 
 /* ========================================================
- * 🔐 與 ErrorHandlerContext 對齊的最小 ApiError
+ * 📝 型別擴充定義
  * ======================================================== */
+
+/** 擴充 React-Admin 原生 Options 以支援自定義 meta 欄位 */
+interface ExtendedOptions extends fetchUtils.Options {
+  meta?: {
+    _tokenSnapshot?: string;
+    _retryWithRefresh?: boolean;
+    endpoint?: string;
+    [key: string]: any;
+  };
+}
+
+/** 與 ErrorHandlerContext 對齊的 ApiError 型別 */
 type ApiError =
   | {
-    message?: string;
-    body?: {
       message?: string;
-      error?: string;
-    };
-    status?: number;
-  }
-  | unknown;
+      body?: {
+        message?: string;
+        error?: string;
+      };
+      status?: number;
+    }
+  | any;
 
 const apiUrl = getApiUrl();
 
+/** 判定是否應抑制報錯（登出中、Token 失效後的殘留請求） */
+function shouldSuppressStaleAuthGet(
+  error: ApiError,
+  options: ExtendedOptions
+): boolean {
+  const status = error?.status ? Number(error.status) : undefined;
+  if (status !== 401 && status !== 403) return false;
+
+  const method = (options.method || "GET").toUpperCase();
+  if (method !== "GET") return false;
+
+  // 1. 正在登出流程中
+  if (isLogoutInProgress()) return true;
+
+  // 2. 請求快照與當前 Token 不符（代表這是過時的會話請求）
+  const tokenSnapshot = options.meta?._tokenSnapshot;
+  const currentToken =
+    typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
+
+  // 2-a. 請求發出時無 token，回來時已經有 token（典型：登入前殘留 GET）
+  if (!tokenSnapshot && currentToken) {
+    return true;
+  }
+
+  // 2-b. 請求快照與當前 token 不一致（舊 token 請求）
+  if (
+    tokenSnapshot &&
+    currentToken &&
+    currentToken !== tokenSnapshot
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function getQueryString(url: string): string {
+  const q = url.indexOf("?");
+  return q === -1 ? "" : url.slice(q + 1);
+}
+
+/** 依 URL 回傳合成空資料，避免前端 React-Admin 元件 Crash */
+function syntheticJsonForAbortedGet(url: string): Record<string, any> {
+  const params = new URLSearchParams(getQueryString(url));
+  if (params.has("page") || params.has("size")) {
+    return { data: { content: [], totalElements: 0 } };
+  }
+  if (params.has("id") || params.has("ids") || params.getAll("id").length > 0) {
+    return { data: [] };
+  }
+  return { data: {} };
+}
+
 /* ========================================================
- * ⭐ 注入 handleApiError、authProvider（401 時觸發被動登出）
+ * ⭐ createDataProvider
  * ======================================================== */
 export const createDataProvider = ({
   handleApiError,
@@ -31,448 +100,229 @@ export const createDataProvider = ({
 }: {
   handleApiError: (error: ApiError) => void;
   authProvider: AuthProvider;
-}): DataProvider => {
-  /* ========================================================
-   * 原始 httpClient（只處理 header 與 fetch）
-   * ======================================================== */
-  const httpClient = (url: string, options: fetchUtils.Options = {}) => {
-    const opts = options as fetchUtils.Options & { meta?: Record<string, unknown> };
-    const headers = new Headers(opts.headers || {});
+}): DataProvider & {
+  // 明確宣告自定義 get 方法的型別，解決 (resource, options) => any 的問題
+  get: (resource: string, options?: { meta?: Record<string, any> }) => Promise<{ data: any }>;
+} => {
+
+  /* ===================== 核心 HttpClient ===================== */
+  const httpClient = (url: string, options: ExtendedOptions = {}) => {
+    const headers = new Headers(options.headers || {});
     headers.set("Accept", "application/json");
 
-    const hasBody = opts.body != null;
-    const isFormData =
-      typeof FormData !== "undefined" && opts.body instanceof FormData;
+    const hasBody = options.body != null;
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
 
     if (hasBody && !isFormData && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
 
-    // ========================================================
-    // 🔐 所有 API 請求帶入 Authorization: Bearer <TOKEN>（RFC 6750 / Stateless）
-    //    並記錄此次請求使用的 token 快照，供 401 處理時判斷是否為「舊會話請求」
-    // ========================================================
-    const token =
-      typeof localStorage !== "undefined"
-        ? localStorage.getItem("token")
-        : null;
-    const tokenType =
-      typeof localStorage !== "undefined"
-        ? localStorage.getItem("tokenType") || "Bearer"
-        : "Bearer";
+    const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
+    const tokenType = typeof localStorage !== "undefined" ? localStorage.getItem("tokenType") || "Bearer" : "Bearer";
 
     if (token) {
       headers.set("Authorization", `${tokenType} ${token}`);
-      opts.meta = {
-        ...(opts.meta || {}),
-        _tokenSnapshot: token,
-      };
+      // 寫入快照，供 401/403 判斷使用
+      options.meta = { ...(options.meta || {}), _tokenSnapshot: token };
     }
 
-    return fetchUtils.fetchJson(url, { ...opts, headers });
+    return fetchUtils.fetchJson(url, { ...options, headers });
   };
 
-  /* ========================================================
-   * httpClientSafe（⭐ 全域錯誤處理）
-   * ======================================================== */
-  const httpClientSafe = async (
-    url: string,
-    options: fetchUtils.Options = {}
-  ) => {
+  /* ===================== 安全包裝層 (錯誤攔截) ===================== */
+  const httpClientSafe = async (url: string, options: ExtendedOptions = {}) => {
+    const method = (options.method || "GET").toUpperCase();
+
+    // 登出中直接短路，不發送真實 fetch 以消滅 Console 紅字
+    if (method === "GET" && isLogoutInProgress()) {
+      return { json: syntheticJsonForAbortedGet(url) };
+    }
+
     try {
-      const result = await httpClient(url, options);
-      return result;
+      return await httpClient(url, options);
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      const status =
-        apiError && typeof apiError === "object" && "status" in apiError
-          ? Number((apiError as { status?: number }).status)
-          : undefined;
+      const status = apiError?.status ? Number(apiError.status) : undefined;
 
-      /* --------------------------------------------
-       * 401：優先嘗試使用 refreshToken 換發，再重試原本請求
-       * -------------------------------------------- */
+      // 1. 抑制舊會話或登出競爭狀態下的洗版
+      if (shouldSuppressStaleAuthGet(apiError, options)) {
+        return { json: syntheticJsonForAbortedGet(url) };
+      }
+
+      // 2. 處理 401 (Refresh Token)
       if (status === 401) {
-        const meta = (options as { meta?: Record<string, unknown> }).meta;
-        const alreadyRetried = Boolean(
-          meta && (meta as { _retryWithRefresh?: boolean })._retryWithRefresh
-        );
-
-        // 若此次請求使用的 token 與目前 localStorage 中的 token 不同，代表是「舊會話」的 401，僅視為單次請求失敗
-        const tokenSnapshot =
-          meta && (meta as { _tokenSnapshot?: unknown })._tokenSnapshot;
+        const tokenSnapshot = options.meta?._tokenSnapshot;
         const currentToken =
-          typeof localStorage !== "undefined"
-            ? localStorage.getItem("token")
-            : null;
+          typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
+
+        // 舊請求在新會話建立後才返回 401，忽略以避免誤觸發全域登出
         if (
-          typeof tokenSnapshot === "string" &&
-          tokenSnapshot &&
+          method === "GET" &&
           currentToken &&
-          tokenSnapshot !== currentToken
+          (!tokenSnapshot || tokenSnapshot !== currentToken)
         ) {
-          throw error;
+          return { json: syntheticJsonForAbortedGet(url) };
         }
 
-        const refreshToken =
-          typeof localStorage !== "undefined"
-            ? localStorage.getItem("refreshToken")
-            : null;
+        if (!options.meta?._retryWithRefresh) {
+          const refreshToken = typeof localStorage !== "undefined" ? localStorage.getItem("refreshToken") : null;
+          if (refreshToken) {
+            try {
+              const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken }),
+              });
+              const refreshJson = await refreshResponse.json().catch(() => null);
 
-        if (!alreadyRetried && refreshToken) {
-          try {
-            const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
-              method: "POST",
-              headers: new Headers({ "Content-Type": "application/json" }),
-              body: JSON.stringify({ refreshToken }),
-            });
-
-            const refreshJson = await refreshResponse.json().catch(() => null);
-
-            if (refreshResponse.ok && refreshJson) {
-              // 使用 refresh 成功回應更新 token 與 refreshToken
-              try {
-                applyLoginSuccessFromContainer(
-                  refreshJson as unknown as Record<string, unknown>
-                );
-              } catch {
-                // 解析失敗時，仍嘗試使用原 token；實際會在後續請求被 401 擋下
-              }
-
-              const retryOptions: fetchUtils.Options & {
-                meta?: Record<string, unknown>;
-              } = {
-                ...options,
-                meta: {
-                  ...(meta || {}),
-                  _retryWithRefresh: true,
-                },
-              };
-              return await httpClient(url, retryOptions);
-            }
-
-            // refresh 401/400：視為 refresh 失敗 → 登出
-            if (
-              refreshResponse.status === 400 ||
-              refreshResponse.status === 401
-            ) {
-              authProvider
-                .checkError({ status: 401 } as ApiError)
-                .catch(() => {
-                  // ignore rejection – SESSION_EXPIRED will be thrown below
+              if (refreshResponse.ok && refreshJson) {
+                const payload = unwrapAuthLoginPayload(refreshJson);
+                if (!payload) {
+                  throw new Error("refresh payload missing auth fields");
+                }
+                applyLoginSuccessFromContainer(payload);
+                // 重試原始請求
+                return await httpClient(url, { 
+                  ...options, 
+                  meta: { ...options.meta, _retryWithRefresh: true } 
                 });
-              throw new Error("SESSION_EXPIRED");
-            }
-          } catch {
-            // 換發過程本身失敗（網路等）：落到下方被動登出邏輯
+              }
+            } catch (e) { /* silent fail */ }
           }
         }
-
-        // 無 refreshToken 或已嘗試換發仍失敗 → 被動登出
         authProvider
-          .checkError({ status: 401 } as ApiError)
-          .catch(() => {
-            // ignore rejection – SESSION_EXPIRED will be thrown below
-          });
+          .checkError({ status: 401, url, method })
+          .catch(() => {});
         throw new Error("SESSION_EXPIRED");
       }
 
-      /* --------------------------------------------
-       * 403 權限不足：觸發 authProvider.checkError，導向無權限頁
-       * -------------------------------------------- */
+      // 3. 處理 403 (Forbidden) - ⭐ 消滅洗版關鍵
       if (status === 403) {
-        authProvider.checkError(apiError).catch(() => {
-          // ignore rejection – 原始錯誤仍會丟給 React-Admin
-        });
-        throw error;
+        authProvider.checkError(apiError).catch(() => {});
+        if (method === "GET") {
+          // GET 請求返回合成資料，不再向外 throw，確保 UI 不噴紅字
+          return { json: syntheticJsonForAbortedGet(url) };
+        }
+        throw error; // 非 GET 請求仍需報錯以提示使用者操作失敗
       }
 
-      /* --------------------------------------------
-       * 429 請求過於頻繁：交由全域錯誤處理顯示友善提示（避免誤認為系統壞掉）
-       * -------------------------------------------- */
+      // 4. 處理 429
       if (status === 429) {
         handleApiError(apiError);
         throw error;
       }
 
-      let msg = "";
-      if (apiError && typeof apiError === "object") {
-        if (
-          "body" in apiError &&
-          apiError.body &&
-          typeof apiError.body === "object" &&
-          "message" in apiError.body
-        ) {
-          msg = String(apiError.body.message || "");
-        } else if ("message" in apiError) {
-          msg = String(apiError.message || "");
-        }
+      // 5. 業務邏輯特例
+      const msg = apiError?.body?.message || apiError?.message || "";
+      if (typeof msg === "string" && msg.includes("查無匹配")) {
+        return { json: { data: { content: [], totalElements: 0 } } };
       }
 
-      /* --------------------------------------------
-       * ⭐ 特例：查無匹配 → 視為空資料（非錯誤）
-       * -------------------------------------------- */
-      if (msg.includes("查無匹配")) {
-        return {
-          json: {
-            data: {
-              content: [],
-              totalElements: 0,
-            },
-          },
-        };
-      }
-
-      /* --------------------------------------------
-       * ⭐ 關鍵：交給全域錯誤處理
-       * -------------------------------------------- */
-      handleApiError(error);
-
-      /* React-Admin 仍然要接到錯誤 */
+      // 6. 全域錯誤彈窗
+      handleApiError(apiError);
       throw error;
     }
   };
 
-  /* ========================================================
-   * 共用：List Response 正規化
-   * - 支援以下回傳格式：
-   *   1. { data: [...], total: number }
-   *   2. { data: { content: [...], totalElements: number } }
-   *   3. [...]
-   * ======================================================== */
-  const normalizeListResponse = (json: unknown) => {
-    const root = (json as { data?: unknown }) ?? {};
-    const payload = root.data ?? json;
-
-    const data = Array.isArray(payload)
-      ? payload
-      : Array.isArray(
-        (payload as { content?: unknown }).content
-      )
-        ? (payload as { content: unknown[] }).content
-        : [];
-
-    const total = Array.isArray(payload)
-      ? payload.length
-      : typeof (payload as { totalElements?: unknown }).totalElements ===
-        "number"
-        ? (payload as { totalElements: number }).totalElements
-        : data.length;
-
+  const normalizeListResponse = (json: any) => {
+    const payload = json?.data ?? json;
+    const data = Array.isArray(payload) ? payload : (payload?.content ?? []);
+    const total = typeof payload?.totalElements === "number" ? payload.totalElements : data.length;
     return { data, total };
   };
 
-  /* ========================================================
-   * DataProvider 主體
-   * ======================================================== */
+  /* ===================== DataProvider Methods ===================== */
   return {
-    /* ===================== getList ===================== */
-    getList(resource, params) {
+    getList: (resource, params) => {
       const rules = apiRules[resource] ?? {};
-      const filters = params.filter || {};
-
-      const query = buildListQueryParams(resource as string, {
-        pagination: params.pagination,
-        sort: params.sort,
-        filter: params.filter,
-      });
-
-      const hasFilter = Object.values(filters).some(
-        (v) => v !== "" && v !== undefined && v !== null
-      );
-
-      let basePath = `${apiUrl}/${resource}`;
-      if (hasFilter && rules.search === true) {
-        basePath = `${apiUrl}/${resource}/search`;
-      }
-
-      return httpClientSafe(`${basePath}?${query}`).then(({ json }) =>
-        normalizeListResponse(json)
-      );
+      const query = buildListQueryParams(resource, params);
+      const hasFilter = Object.values(params.filter || {}).some(v => v != null && v !== "");
+      const basePath = (hasFilter && rules.search) ? `${apiUrl}/${resource}/search` : `${apiUrl}/${resource}`;
+      return httpClientSafe(`${basePath}?${query}`).then(({ json }) => normalizeListResponse(json));
     },
 
-    /* ===================== getOne ===================== */
     getOne: (resource, params) =>
-      httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => {
-        const data = json?.data ?? json;
-        if (resource === "users" && data && typeof data === "object") {
-          const user = data as Record<string, unknown>;
-          if (
-            (user.roleNames === undefined || user.roleNames === null) &&
-            (user.roles !== undefined && user.roles !== null)
-          ) {
-            const roles = user.roles;
-            user.roleNames = Array.isArray(roles)
-              ? roles
-              : typeof roles === "string"
-                ? [roles]
-                : [];
-          }
-        }
-        return { data };
-      }),
-
-    /* ===================== getMany (優化：合併請求，但前端需要處理分頁) ===================== */
-    getMany: (resource, params) => {
-      // 將 ids 轉為 query string，例如 ?id=1&id=2 或使用逗號分隔 ?ids=1,2,3
-      const query = new URLSearchParams();
-      params.ids.forEach(id => query.append('id', String(id))); 
-
-      return httpClientSafe(`${apiUrl}/${resource}?${query}`).then(({ json }) => {
-        const data = json?.data ?? json;
-        // 確保回傳格式為 { data: [...] }
-        return { data: Array.isArray(data) ? data : data.content ?? [] };
-      });
-    },
-
-    /* ================= getManyReference (優化：交給後端分頁) ===================== */
-    getManyReference: async (resource, params) => {
-      const { page, perPage } = params.pagination;
-      const { field, order } = params.sort;
-      const query = new URLSearchParams();
-      
-      query.set("page", String(page - 1));
-      query.set("size", String(perPage));
-      query.set("sort", `${field},${order.toLowerCase()}`);
-      
-      // 核心：將 target 欄位作為過期條件傳給後端
-      // 例如：找某一供應商的所有產品，target 是 supplierId
-      query.set(params.target, String(params.id));
-
-      return httpClientSafe(`${apiUrl}/${resource}?${query}`).then(
-        ({ json }) => normalizeListResponse(json)
-      );
-    },
-
-    /* ===================== update ===================== */
-    update: (resource, params) => {
-      const endpoint = params.meta?.endpoint;
-
-      if (endpoint === "activate") {
-        return httpClientSafe(`${apiUrl}/${resource}/${params.id}/activate`, {
-          method: "PUT",
-        }).then(({ json }) => ({ data: json?.data ?? json }));
-      }
-
-      if (endpoint === "deactivate") {
-        return httpClientSafe(`${apiUrl}/${resource}/${params.id}/deactivate`, {
-          method: "PUT",
-        }).then(({ json }) => ({ data: json?.data ?? json }));
-      }
-
-      if (endpoint === "read") {
-        return httpClientSafe(`${apiUrl}/${resource}/${params.id}/read`, {
-          method: "PATCH",
-        }).then(({ json }) => ({ data: json?.data ?? json }));
-      }
-
-      if (endpoint === "void") {
-        const voidUrl = `${apiUrl}/${resource}/${params.id}/void`;
-        const voidMethod = "POST";
-        const reason = params.data?.reason;
-
-        if (import.meta.env.DEV) {
-          console.log('🔍 調用 void 端點:', {
-            url: voidUrl,
-            method: voidMethod,
-            resource,
-            id: params.id,
-            reason,
-          });
-        }
-
-        const body = reason !== undefined && reason !== null
-          ? JSON.stringify({ reason: String(reason) })
-          : JSON.stringify({});
-
-        return httpClientSafe(voidUrl, {
-          method: voidMethod,
-          body,
-        }).then(({ json }) => ({ data: json?.data ?? json }));
-      }
-
-      if (endpoint === "forceLogout") {
-        return httpClientSafe(
-          `${apiUrl}/${resource}/${params.id}/force_logout`,
-          {
-            method: "POST",
-          }
-        ).then(() => ({
-          // 後端回傳 204 無內容即可，前端保留原本資料避免 UI 閃動
-          data: params.previousData ?? params.data,
-        }));
-      }
-
-      return httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {
-        method: "PUT",
-        body: JSON.stringify(params.data),
-      }).then(({ json }) => ({ data: json?.data ?? json }));
-    },
-
-    /* ===================== updateMany ===================== */
-    updateMany: (resource, params) =>
-      Promise.all(
-        params.ids.map((id) =>
-          httpClientSafe(`${apiUrl}/${resource}/${id}`, {
-            method: "PUT",
-            body: JSON.stringify(params.data),
-          }).then(() => id)
-        )
-      ).then((ids) => ({ data: ids })),
-
-    /* ===================== create ===================== */
-    create: (resource, params) =>
-      httpClientSafe(`${apiUrl}/${resource}`, {
-        method: "POST",
-        body: JSON.stringify(params.data),
-      }).then(({ json }) => ({ data: json?.data ?? json })),
-
-    /* ===================== delete ===================== */
-    delete: (resource, params) =>
-      httpClientSafe(`${apiUrl}/${resource}/${params.id}`, {
-        method: "DELETE",
-      }).then(({ json }) => ({
-        data: json?.data ?? params.previousData,
+      httpClientSafe(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
+        data: json?.data ?? json
       })),
 
-    /* ===================== deleteMany ===================== */
-    deleteMany: (resource, params) =>
-      Promise.all(
-        params.ids.map((id) =>
-          httpClientSafe(`${apiUrl}/${resource}/${id}`, {
-            method: "DELETE",
-          }).then(() => id)
-        )
-      ).then((ids) => ({ data: ids })),
+    getMany: (resource, params) => {
+      const query = new URLSearchParams();
+      params.ids.forEach(id => query.append("id", String(id)));
+      return httpClientSafe(`${apiUrl}/${resource}?${query}`).then(({ json }) => {
+        const payload = json?.data ?? json;
+        return { data: Array.isArray(payload) ? payload : (payload?.content ?? []) };
+      });
+    },
 
-    /* ===================== get (custom) ===================== */
-    get(resource: string, options?: { meta?: Record<string, unknown> }) {
-      let url = `${apiUrl}/${resource}`;
+    getManyReference: (resource, params) => {
+      const { page, perPage } = params.pagination;
+      const { field, order } = params.sort;
+      const query = new URLSearchParams({
+        page: String(page - 1),
+        size: String(perPage),
+        sort: `${field},${order.toLowerCase()}`,
+        [params.target]: String(params.id),
+      });
+      return httpClientSafe(`${apiUrl}/${resource}?${query}`).then(({ json }) => normalizeListResponse(json));
+    },
 
-      // 如果有 meta 參數，將其轉換為查詢參數
-      if (options?.meta) {
-        const query = new URLSearchParams();
-        Object.entries(options.meta).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            // 處理陣列參數：將每個元素分別 append（後端可接受多個同名參數或逗號分隔）
-            if (Array.isArray(value)) {
-              // 如果後端支援逗號分隔，使用逗號分隔；否則每個元素分別 append
-              // 這裡使用逗號分隔，因為 hook 中註釋說明後端支援逗號分隔
-              query.append(key, value.join(","));
-            } else {
-              query.append(key, String(value));
-            }
-          }
-        });
-        const queryString = query.toString();
-        if (queryString) {
-          url += `?${queryString}`;
-        }
+    update: (resource, params) => {
+      // 解決 Object Literal 型別檢查報錯：先賦值給 ExtendedOptions
+      const updateOptions: ExtendedOptions = {
+        method: "PUT",
+        body: JSON.stringify(params.data),
+        meta: params.meta
+      };
+
+      const { endpoint } = params.meta ?? {};
+      let url = `${apiUrl}/${resource}/${params.id}`;
+
+      if (endpoint === "activate") url += "/activate";
+      else if (endpoint === "deactivate") url += "/deactivate";
+      else if (endpoint === "read") { url += "/read"; updateOptions.method = "PATCH"; }
+      else if (endpoint === "void") {
+        url += "/void";
+        updateOptions.method = "POST";
+        updateOptions.body = JSON.stringify({ reason: params.data?.reason ?? "" });
+      } else if (endpoint === "forceLogout") {
+        url += "/force_logout";
+        updateOptions.method = "POST";
       }
 
-      return httpClientSafe(url).then(({ json }) => ({
-        data: json?.data ?? json,
+      return httpClientSafe(url, updateOptions).then(({ json }) => ({
+        data: endpoint === "forceLogout" ? (params.previousData ?? params.data) : (json?.data ?? json)
       }));
+    },
+
+    updateMany: (resource, params) =>
+      Promise.all(params.ids.map(id =>
+        httpClientSafe(`${apiUrl}/${resource}/${id}`, { method: "PUT", body: JSON.stringify(params.data) })
+      )).then(() => ({ data: params.ids })),
+
+    create: (resource, params) =>
+      httpClientSafe(`${apiUrl}/${resource}`, { method: "POST", body: JSON.stringify(params.data) })
+        .then(({ json }) => ({ data: json?.data ?? json })),
+
+    delete: (resource, params) =>
+      httpClientSafe(`${apiUrl}/${resource}/${params.id}`, { method: "DELETE" })
+        .then(({ json }) => ({ data: json?.data ?? params.previousData })),
+
+    deleteMany: (resource, params) =>
+      Promise.all(params.ids.map(id =>
+        httpClientSafe(`${apiUrl}/${resource}/${id}`, { method: "DELETE" })
+      )).then(() => ({ data: params.ids })),
+
+    // 自定義 get 方法，明確標註參數型別
+    get: (resource: string, options?: { meta?: Record<string, any> }) => {
+      const query = new URLSearchParams();
+      if (options?.meta) {
+        Object.entries(options.meta).forEach(([k, v]) => {
+          if (v != null) query.append(k, Array.isArray(v) ? v.join(",") : String(v));
+        });
+      }
+      const url = query.toString() ? `${apiUrl}/${resource}?${query.toString()}` : `${apiUrl}/${resource}`;
+      return httpClientSafe(url).then(({ json }) => ({ data: json?.data ?? json }));
     },
   };
 };

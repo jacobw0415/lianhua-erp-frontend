@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useColorMode } from "@/contexts/useColorMode";
 import {
@@ -16,10 +16,9 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { getApiUrl } from "@/config/apiUrl";
-import { applyLoginSuccessWithSse } from "@/providers/authProvider";
+import { applyLoginSuccessFromContainer } from "@/providers/authProvider";
 
 const apiUrl = getApiUrl();
-
 const TITLE = "MFA 驗證碼";
 const SUBTITLE = "請輸入 6 碼驗證碼以完成登入";
 
@@ -30,116 +29,103 @@ export const MfaVerifyPage = () => {
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
+  // 🌟 物理鎖與掛載狀態
+  const submitLock = useRef(false);
+  const isReady = useRef(false);
+
   const navigate = useNavigate();
   const { mode } = useColorMode();
   const isDark = mode === "dark";
 
-  // 讀取登入第一階段暫存的 pendingToken 與 username
+  // 1. 初始化與冷卻鎖（解決 LoginPage Enter 鍵漂移問題）
   useEffect(() => {
-    if (typeof sessionStorage === "undefined") return;
-    const token = sessionStorage.getItem("mfa_pending_token");
-    const name = sessionStorage.getItem("mfa_username");
-    setPendingToken(token);
-    setUsername(name);
+    // 延遲 500ms 讓頁面穩定後才允許提交
+    const timer = setTimeout(() => {
+      isReady.current = true;
+      console.log("[MFA] 頁面已就緒，開始接收輸入");
+    }, 500);
+
+    if (typeof sessionStorage !== "undefined") {
+      setPendingToken(sessionStorage.getItem("mfa_pending_token"));
+      setUsername(sessionStorage.getItem("mfa_username"));
+    }
+
+    return () => {
+      clearTimeout(timer);
+      isReady.current = false;
+    };
   }, []);
 
-  // 與登入頁同步：鎖定 body/html 不捲動，背景與頁面一致（亮/暗主題）
+  // 2. 樣式處理
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevHtmlHeight = html.style.height;
-    const prevBodyOverflow = body.style.overflow;
-    const prevBodyHeight = body.style.height;
-    const prevBodyBackground = body.style.background;
+    const prevStyle = { overflow: html.style.overflow, background: body.style.background };
     html.style.overflow = "hidden";
-    html.style.height = "100vh";
-    body.style.overflow = "hidden";
-    body.style.height = "100vh";
     body.style.background = isDark
       ? "linear-gradient(135deg, #0d1f0e 0%, #1b2e1c 50%, #0d1f0e 100%)"
       : "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)";
     return () => {
-      html.style.overflow = prevHtmlOverflow;
-      html.style.height = prevHtmlHeight;
-      body.style.overflow = prevBodyOverflow;
-      body.style.height = prevBodyHeight;
-      body.style.background = prevBodyBackground;
+      html.style.overflow = prevStyle.overflow;
+      body.style.background = prevStyle.background;
     };
   }, [isDark]);
 
   const handleBackToLogin = () => {
-    if (typeof window !== "undefined") {
-      const base = window.location.origin;
-      const basePath =
-        (typeof import.meta !== "undefined" &&
-          (import.meta.env?.BASE_URL as string | undefined)) ||
-        "";
-      const path = `${basePath.replace(/\/$/, "") || ""}/login`;
-      window.location.href = `${base}${path}`;
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("mfa_pending_token");
+      sessionStorage.removeItem("mfa_username");
     }
+    navigate("/login", { replace: true });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * 🌟 核心驗證執行邏輯（解決 409 競爭與權限同步版）
+   */
+  const performVerify = async () => {
+    // 同步攔截：未就緒、已上鎖、長度不足
+    if (!isReady.current || submitLock.current || code.length !== 6) return;
+
+    submitLock.current = true;
+    setIsSubmitting(true);
     setError(null);
 
-    const trimmedCode = code.trim();
-    if (!trimmedCode || trimmedCode.length !== 6) {
-      setError("請輸入 6 碼驗證碼");
-      return;
-    }
-    if (!pendingToken) {
-      setError("MFA 驗證階段已失效，請重新登入");
-      return;
-    }
+    // 🌟 關鍵：手動增加 300ms 延遲，確保後端之前的登入事務完全 Commit
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    setIsSubmitting(true);
+    console.log("[MFA] 正在發送單次驗證請求...");
+
     try {
       const res = await fetch(`${apiUrl}/auth/mfa/verify`, {
         method: "POST",
-        headers: new Headers({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          pendingToken,
-          code: trimmedCode,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pendingToken, code: code.trim() }),
       });
 
       const text = await res.text();
-      let message = "";
-      let jsonBody: unknown = null;
-      if (text) {
-        try {
-          jsonBody = JSON.parse(text);
-          const body = jsonBody as { message?: string };
-          if (body.message) message = body.message;
-        } catch {
-          // ignore
-        }
-      }
+      let jsonBody: any = null;
+      try { jsonBody = text ? JSON.parse(text) : null; } catch (e) {}
 
       if (!res.ok) {
-        if (res.status === 400) {
-          setError("驗證碼錯誤或已過期，請再試一次或返回登入頁。");
-          return;
+        submitLock.current = false;
+        setIsSubmitting(false);
+
+        if (res.status === 409) {
+          setError("系統狀態衝突，請嘗試重新輸入或重新整理頁面。");
+        } else if (res.status === 400) {
+          setError("驗證碼錯誤，請重新確認。");
+        } else {
+          setError(jsonBody?.message || "驗證失敗");
         }
-        setError(
-          message || "驗證失敗，請稍後再試或聯絡系統管理員。"
-        );
         return;
       }
 
-      // 成功：後端回傳 JwtResponse，直接寫入 localStorage 並啟動 SSE（與一般登入相同）；標記 MFA 已啟用供個人資料頁顯示
-      try {
-        if (jsonBody && typeof jsonBody === "object") {
-          applyLoginSuccessWithSse(
-            jsonBody as Record<string, unknown>,
-            username ?? undefined,
-            true // 剛以 MFA 驗證登入，個人資料頁應顯示「MFA 已啟用」
-          );
-        }
-      } catch {
-        // 若寫入失敗，不阻擋導向主畫面，實際權限仍由後端 401 控制
+      // 驗證成功處理
+      console.log("[MFA] 驗證成功，正在同步權限並導向...");
+      
+      if (jsonBody?.data) {
+        // 同步寫入權限與 Token 到 localStorage
+        applyLoginSuccessFromContainer(jsonBody.data, username ?? undefined, true);
       }
 
       if (typeof sessionStorage !== "undefined") {
@@ -147,146 +133,78 @@ export const MfaVerifyPage = () => {
         sessionStorage.removeItem("mfa_username");
       }
 
-      navigate("/", { replace: true });
-    } catch {
-      setError("無法連線，請檢查網路後再試");
-    } finally {
+      // 🌟 修正權限延遲的終極方案：使用瀏覽器強導向
+      // 這會強迫整個 React App 重新載入，確保 AuthProvider 讀取到最新的超級使用者權限
+      setTimeout(() => {
+        // 發送登入事件供背景組件監聽
+        window.dispatchEvent(new CustomEvent("auth:login"));
+        
+        const basePath = import.meta.env.BASE_URL || "/";
+        window.location.replace(window.location.origin + basePath);
+      }, 300);
+
+    } catch (err) {
+      submitLock.current = false;
       setIsSubmitting(false);
+      setError("連線失敗，請檢查網路");
     }
   };
 
-  const cardBg = isDark ? alpha("#1e1e1e", 0.95) : alpha("#ffffff", 0.98);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (code.length === 6 && isReady.current && !isSubmitting) {
+        performVerify();
+      }
+    }
+  };
+
   const accentColor = isDark ? "#4CAF50" : "#388E3C";
 
-  const pageBoxSx = {
-    minHeight: "100vh",
-    height: "100vh",
-    overflow: "hidden" as const,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: isDark
-      ? "linear-gradient(135deg, #0d1f0e 0%, #1b2e1c 50%, #0d1f0e 100%)"
-      : "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)",
-    p: 2,
-  };
-
-  const cardSx = {
-    width: "100%",
-    maxWidth: 420,
-    borderRadius: 4,
-    overflow: "hidden",
-    backgroundColor: cardBg,
-    border: isDark ? "1px solid rgba(255,255,255,0.08)" : "none",
-  };
-
-  const hasPending = !!pendingToken;
-
   return (
-    <Box sx={pageBoxSx}>
-      <Card elevation={isDark ? 8 : 4} sx={cardSx}>
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}>
+      <Card elevation={isDark ? 8 : 4} sx={{ width: "100%", maxWidth: 420, borderRadius: 4, bgcolor: isDark ? alpha("#1e1e1e", 0.95) : alpha("#ffffff", 0.98) }}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: "50%",
-                bgcolor: alpha(accentColor, 0.15),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-              }}
-            >
+            <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: alpha(accentColor, 0.15), display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
               <LockOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
             </Box>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "text.primary" }}
-            >
-              {TITLE}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.5 }}
-            >
-              {username
-                ? `${SUBTITLE}（帳號：${username}）`
-                : SUBTITLE}
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>{TITLE}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {username ? `${SUBTITLE}（${username}）` : SUBTITLE}
             </Typography>
           </Box>
 
-          {!hasPending && (
-            <Alert
-              severity="warning"
-              sx={{ mb: 2, borderRadius: 2 }}
-            >
-              找不到有效的 MFA 驗證流程，可能已逾時或瀏覽器資料已被清除。請返回登入頁重新登入。
-            </Alert>
-          )}
+          {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>}
 
-          {error && (
-            <Alert
-              severity="error"
-              onClose={() => setError(null)}
-              sx={{ mb: 2, borderRadius: 2 }}
-            >
-              {error}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Box onKeyDown={handleKeyDown}>
             <TextField
               fullWidth
               label="6 碼驗證碼"
-              placeholder="請輸入 Authenticator 顯示的 6 碼"
               value={code}
-              onChange={(e) =>
-                setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))
-              }
-              autoComplete="one-time-code"
+              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+              disabled={isSubmitting || !pendingToken}
               autoFocus
-              disabled={isSubmitting || !hasPending}
+              inputProps={{ inputMode: "numeric" }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlinedIcon
-                      sx={{ color: "text.secondary", fontSize: 20 }}
-                    />
+                    <LockOutlinedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
                   </InputAdornment>
                 ),
-              }}
-              inputProps={{
-                inputMode: "numeric",
               }}
               sx={{ mb: 2 }}
             />
             <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={isSubmitting || !hasPending}
-              sx={{
-                py: 1.5,
-                fontWeight: 700,
-                borderRadius: 2,
-                backgroundColor: accentColor,
-                "&:hover": {
-                  backgroundColor: isDark ? "#66BB6A" : "#2E7D32",
-                },
-              }}
+              onClick={performVerify}
+              fullWidth variant="contained" size="large"
+              disabled={isSubmitting || !pendingToken || code.length !== 6}
+              sx={{ py: 1.5, fontWeight: 700, bgcolor: accentColor }}
             >
-              {isSubmitting ? "驗證中…" : "確認驗證碼"}
+              {isSubmitting ? "驗證中..." : "確認驗證碼"}
             </Button>
-            <Button
-              onClick={handleBackToLogin}
-              fullWidth
-              sx={{ mt: 2 }}
-            >
+            <Button onClick={handleBackToLogin} fullWidth sx={{ mt: 2 }} disabled={isSubmitting}>
               返回登入
             </Button>
           </Box>
@@ -295,4 +213,3 @@ export const MfaVerifyPage = () => {
     </Box>
   );
 };
-
