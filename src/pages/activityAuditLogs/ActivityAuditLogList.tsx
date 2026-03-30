@@ -13,10 +13,8 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 import { hasRoleSuperAdmin } from "@/utils/authStorage";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { ActivityAuditLogDatagrid } from "@/pages/activityAuditLogs/components/ActivityAuditLogDatagrid";
-import {
-  ACTION_LABELS,
-  RESOURCE_TYPE_LABELS,
-} from "@/pages/activityAuditLogs/auditFormatters";
+import { getActionLabel, getResourceTypeLabel } from "@/pages/activityAuditLogs/auditFormatters";
+import { useTranslation } from "react-i18next";
 
 /**
  * 全系統活動稽核（SUPER_ADMIN）— GET /api/admin/activity-audit-logs
@@ -25,6 +23,7 @@ export const ActivityAuditLogList = () => {
   const redirect = useRedirect();
   const allowed = hasRoleSuperAdmin();
   const theme = useTheme();
+  const { t } = useTranslation("common");
 
   React.useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -53,23 +52,58 @@ export const ActivityAuditLogList = () => {
       <StyledListWrapper
         disableCreate
         quickFilters={[
-          { type: "text", source: "operatorUsername", label: "操作者" },
+          { type: "text", source: "operatorUsername", label: t("filters.operator") },
           {
             type: "select",
             source: "action",
-            label: "動作",
-            choices: Object.entries(ACTION_LABELS).map(([id, name]) => ({
+            label: t("filters.auditAction"),
+            choices: [
+              "CREATE",
+              "UPDATE",
+              "DELETE",
+              "PATCH",
+              "EXPORT",
+              "LOGIN",
+              "LOGOUT",
+              "VOID",
+            ].map((id) => ({
               id,
-              name,
+              name: getActionLabel(id),
             })),
           },
           {
             type: "select",
             source: "resourceType",
             label: "資源類型",
-            choices: Object.entries(RESOURCE_TYPE_LABELS).map(([id, name]) => ({
+            choices: [
+              "AUTH",
+              "EMPLOYEES",
+              "USERS",
+              "ROLES",
+              "PERMISSIONS",
+              "NOTIFICATIONS",
+              "GLOBAL_SEARCH",
+              "DASHBOARD",
+              "SUPPLIERS",
+              "PRODUCTS",
+              "PRODUCT_CATEGORIES",
+              "EXPENSES",
+              "EXPENSE_CATEGORIES",
+              "ORDERS",
+              "ORDER_CUSTOMERS",
+              "ORDER_ITEMS",
+              "PURCHASES",
+              "PURCHASE_ITEMS",
+              "PAYMENTS",
+              "RECEIPTS",
+              "SALES",
+              "AP",
+              "AR",
+              "REPORTS",
+              "ADMIN",
+            ].map((id) => ({
               id,
-              name,
+              name: getResourceTypeLabel(id),
             })),
           },
         ]}
@@ -77,7 +111,7 @@ export const ActivityAuditLogList = () => {
           {
             type: "dateRange",
             source: "occurred",
-            label: "發生時間（起訖）",
+            label: t("filters.occurredAtRange"),
           },
         ]}
         exportConfig={{
@@ -93,7 +127,7 @@ export const ActivityAuditLogList = () => {
             queryStrategy: "scoped",
           },
           backendExportDateFilter: {
-            label: "發生時間",
+            label: t("filters.occurredAt"),
             listRangeFilterKeys: { from: "occurredStart", to: "occurredEnd" },
           },
           columns: [],

@@ -20,6 +20,8 @@ import {
   useResourceContext,
   useRedirect,
 } from "react-admin";
+import { useTranslate } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 import AddIcon from "@mui/icons-material/Add";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -29,11 +31,12 @@ import SearchIcon from "@mui/icons-material/Search";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import { SearchChipsCompact } from "./SearchChipsCompact";
-import { formatFilters } from "@/utils/formatFilters";
+import { formatFiltersWithTranslator } from "@/utils/formatFilters";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { GlobalAlertDialog } from "@/components/common/GlobalAlertDialog";
 import { MonthPicker } from "./MonthPicker";
 import { useIsMobile, useIsSmallScreen, useIsLargeScreen, useIsTablet } from "@/hooks/useIsMobile";
+import { filterLabelMap } from "@/utils/filterLabelMap";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -74,12 +77,14 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   advancedFilters = [],
   enableCreate = true,
   enableExport = false,
-  createLabel = "新增資料",
+  createLabel,
   disableCreate = false,
   disableButton = false,
   onExport,
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
+  const translate = useTranslate();
+  const { t } = useTranslation("common");
   const theme = useTheme();
   const isMobile = useIsMobile();
   const isSmallScreen = useIsSmallScreen();
@@ -144,6 +149,18 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   // 以移除「一般使用者（ROLE_USER）」的匯出功能。
   const canExport = isAdmin;
 
+  const resolvedCreateLabel = createLabel ?? t("filterBar.create");
+  const resolvedSearchLabel = translate("ra.action.search");
+  const resolvedClearLabel = translate("ra.action.clear_input_value");
+  const resolvedExportLabel = translate("ra.action.export");
+  const resolvedApplyLabel = t("filterBar.apply");
+  const resolvedMoreFiltersLabel = t("filterBar.moreFilters");
+
+  const resolveFilterLabel = (f: FilterOption) => {
+    const labelKey = filterLabelMap[f.source] ?? filterLabelMap[f.label];
+    return labelKey ? t(labelKey) : f.label;
+  };
+
   // 當 isSmallScreen 改變時，清除 anchor 以避免 anchorEl 無效錯誤
   useEffect(() => {
     // 當從 Popover 切換到 Drawer 或反之時，清除 anchor
@@ -190,7 +207,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     const hasAny = Object.keys(validFilters).length > 0;
 
     if (!hasAny) {
-      alert.trigger("請輸入搜尋條件");
+      alert.trigger(t("filterBar.enterSearchCondition"));
       (document.activeElement as HTMLElement)?.blur();
       return;
     }
@@ -213,7 +230,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
 
     return (
       <TextField
-        label={f.label}
+        label={resolveFilterLabel(f)}
         fullWidth
         value={value}
         size="small"
@@ -265,7 +282,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     return (
       <TextField
         select
-        label={f.label}
+        label={resolveFilterLabel(f)}
         fullWidth
         value={localInputValues[key] ?? ""}
         size="small"
@@ -311,7 +328,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     return (
       <Box sx={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
         <MonthPicker
-          label={f.label}
+          label={resolveFilterLabel(f)}
           value={value}
           onChange={(newValue) => {
             setLocalInputValues((prev) => {
@@ -360,7 +377,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
             }}
           />
         }
-        label={f.label}
+        label={resolveFilterLabel(f)}
       />
     );
   };
@@ -380,7 +397,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker
-          label={f.label}
+          label={resolveFilterLabel(f)}
           format="YYYY-MM-DD"
           value={date}
           onChange={(newValue) => {
@@ -551,7 +568,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
   };
 
   /** 🏷 Chips */
-  const chips = formatFilters(filterValues);
+  const chips = formatFiltersWithTranslator(filterValues, t);
 
   const removeFilter = (key: string) => {
     const updated = { ...filterValues };
@@ -680,7 +697,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 }}
                 onClick={handleSearch}
               >
-                搜尋
+                {resolvedSearchLabel}
               </Button>
             )}
 
@@ -701,7 +718,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 }}
                 onClick={clearFilters}
               >
-                清除
+                {resolvedClearLabel}
               </Button>
             )}
           </Stack>
@@ -773,7 +790,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                   padding: { xs: "4px 8px", sm: "6px 16px" },
                 }}
               >
-                {createLabel}
+                {resolvedCreateLabel}
               </Button>
             )}
 
@@ -793,7 +810,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                 }}
                 onClick={onExport}
               >
-                匯出
+                {resolvedExportLabel}
               </Button>
             )}
           </Stack>
@@ -828,7 +845,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           >
             <Box sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                更多篩選條件
+                {resolvedMoreFiltersLabel}
               </Typography>
 
               <Stack spacing={2}>
@@ -851,7 +868,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                     }, 0);
                   }}
                 >
-                  套用
+                  {resolvedApplyLabel}
                 </Button>
                 <Button
                   fullWidth
@@ -867,7 +884,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                     }, 0);
                   }}
                 >
-                  清除
+                  {resolvedClearLabel}
                 </Button>
               </Stack>
             </Box>
@@ -896,7 +913,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
           >
             <Box sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                更多篩選條件
+                {resolvedMoreFiltersLabel}
               </Typography>
 
               <Stack spacing={2}>
@@ -915,7 +932,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                     setAnchor(null);
                   }}
                 >
-                  套用
+                  {resolvedApplyLabel}
                 </Button>
                 <Button
                   fullWidth
@@ -926,7 +943,7 @@ export const GenericFilterBar: React.FC<GenericFilterBarProps> = ({
                     setAnchor(null);
                   }}
                 >
-                  清除
+                  {resolvedClearLabel}
                 </Button>
               </Stack>
             </Box>

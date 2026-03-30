@@ -6,9 +6,11 @@ import {
   useRefresh,
   useGetIdentity,
   useLogout,
+  useTranslate,
 } from "react-admin";
 import type { RaRecord } from "react-admin";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -45,10 +47,20 @@ const resolveErrorMessage = (error: unknown): string => {
     return String((error as { message: unknown }).message);
   }
 
-  return "不可刪除該筆資料，因為具有關聯紀錄。";
+  return "";
 };
 
 export const ActionColumns = () => {
+  const translate = useTranslate();
+  const { t: tCommon } = useTranslation("common");
+
+  const editLabel = translate("ra.action.edit");
+  const deleteLabel = translate("ra.action.delete");
+  const cancelLabel = translate("ra.action.cancel");
+  const confirmDeleteLabel = deleteLabel;
+
+  const deleteWithRelationsErrorFallback = tCommon("deleteWithRelationsError");
+
   const record = useRecordContext<RaRecord>();
   const { resource } = useListContext();
   const refresh = useRefresh();
@@ -141,7 +153,9 @@ export const ActionColumns = () => {
         refresh();
       }, 800);
     } catch (error: unknown) {
-      setErrorMessage(resolveErrorMessage(error));
+      setErrorMessage(
+        resolveErrorMessage(error) || deleteWithRelationsErrorFallback
+      );
       setOpenErrorDialog(true);
     }
   };
@@ -167,7 +181,7 @@ export const ActionColumns = () => {
             }}
             sx={{ minWidth: "60px", textTransform: "none" }}
           >
-            編輯
+            {editLabel}
           </Button>
         )}
         {canDelete && (
@@ -184,7 +198,7 @@ export const ActionColumns = () => {
             }}
             sx={{ minWidth: "60px", textTransform: "none" }}
           >
-            刪除
+            {deleteLabel}
           </Button>
         )}
       </Stack>
@@ -192,11 +206,11 @@ export const ActionColumns = () => {
       {/* 🟥 刪除確認 */}
       <GlobalAlertDialog
         open={openConfirm}
-        title="確認刪除"
-        description={`確定要刪除「${displayName}」嗎？`}
+        title={translate("ra.message.are_you_sure")}
+        description={translate("ra.message.delete_content", { name: displayName })}
         severity="error"
-        confirmLabel="刪除"
-        cancelLabel="取消"
+        confirmLabel={confirmDeleteLabel}
+        cancelLabel={cancelLabel}
         onClose={() => {
           buttonTarget?.blur();
           setButtonTarget(null);
@@ -213,18 +227,18 @@ export const ActionColumns = () => {
       {/* ❗ 錯誤彈窗（單按鈕） */}
       <GlobalAlertDialog
         open={openErrorDialog}
-        title="操作失敗"
+        title={translate("ra.page.error")}
         description={errorMessage}
         severity="warning"
-        confirmLabel="確定"
+        confirmLabel={translate("ra.action.confirm")}
         onClose={() => setOpenErrorDialog(false)}
       />
 
       {/* ✅ 成功彈窗（自動關閉） */}
       <GlobalAlertDialog
         open={openSuccessDialog}
-        title="刪除成功"
-        description={`「${displayName}」已成功刪除`}
+        title={translate("ra.notification.deleted", { smart_count: 1 })}
+        description={translate("ra.notification.deleted", { smart_count: 1 })}
         severity="success"
         hideButtons
         onClose={() => { }}

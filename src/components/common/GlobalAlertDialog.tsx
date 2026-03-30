@@ -6,6 +6,7 @@ import {
   Button,
   Typography,
 } from "@mui/material";
+import { useTranslate } from "react-admin";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 interface GlobalAlertDialogProps {
@@ -27,17 +28,22 @@ interface GlobalAlertDialogProps {
 export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
   open,
   message,
-  title = "提示",
+  title,
   severity = "info",
   description,
-  confirmLabel = "確定",
-  cancelLabel = "取消",
+  confirmLabel,
+  cancelLabel,
   hideCancel,
   hideButtons,
   showCheckIcon,
   onClose,
   onConfirm,
 }) => {
+  const translate = useTranslate();
+
+  const resolvedTitle = title ?? translate("ra.action.confirm");
+  const resolvedConfirmLabel = confirmLabel ?? translate("ra.action.confirm");
+  const resolvedCancelLabel = cancelLabel ?? translate("ra.action.cancel");
 
   /** 🔥 Enter 觸發 */
   useEffect(() => {
@@ -135,7 +141,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
           variant="h6"
           sx={{ mb: 1.5, fontWeight: 700, color: "white" }}
         >
-          {title}
+          {resolvedTitle}
         </Typography>
 
         <Typography variant="body1" sx={{ opacity: 0.9, color: "#ddd" }}>
@@ -163,7 +169,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
                   minWidth: 90,
                 }}
               >
-                {cancelLabel}
+                {resolvedCancelLabel}
               </Button>
             )}
 
@@ -180,7 +186,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
                 ...confirmButtonColor,
               }}
             >
-              {confirmLabel}
+              {resolvedConfirmLabel}
             </Button>
           </DialogActions>
         ) : (
@@ -194,7 +200,7 @@ export const GlobalAlertDialog: React.FC<GlobalAlertDialogProps> = ({
                 ...confirmButtonColor,
               }}
             >
-              確定
+              {resolvedConfirmLabel}
             </Button>
           </DialogActions>
         )

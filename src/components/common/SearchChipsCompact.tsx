@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box, Chip, Popover, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 interface ChipItem {
   key: string;
@@ -17,6 +18,7 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
    * ========================================================= */
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const { t } = useTranslation("common");
 
   /* =========================================================
    * 🛡 防呆處理（放在 Hooks 之後）
@@ -76,7 +78,7 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
       {hidden.length > 0 && (
         <>
           <Chip
-            label={`+${hidden.length} 更多`}
+            label={t("filterBar.moreChips", { count: hidden.length })}
             size="small"
             onClick={(e) => setAnchorEl(e.currentTarget)}
             sx={{
@@ -96,7 +98,7 @@ export const SearchChipsCompact: React.FC<Props> = ({ chips, onRemove }) => {
           >
             <Box sx={{ p: 2, maxWidth: 260 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                其他篩選條件
+                {t("filterBar.otherFilters")}
               </Typography>
 
               {hidden.map((chip) => (

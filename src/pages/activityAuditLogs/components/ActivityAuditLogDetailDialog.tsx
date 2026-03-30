@@ -18,6 +18,7 @@ import { useTheme } from "@mui/material";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import type { RaRecord } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
 import {
@@ -44,6 +45,8 @@ export const ActivityAuditLogDetailDialog: React.FC<{ record: RaRecord }> = ({ r
   const [showFullQuery, setShowFullQuery] = React.useState(false);
   const [showTechnical, setShowTechnical] = React.useState(false);
   const [showFullUserAgent, setShowFullUserAgent] = React.useState(false);
+
+  const { t } = useTranslation("common");
 
   const theme = useTheme();
   const scrollbarStyles = getScrollbarStyles(theme);
@@ -102,15 +105,15 @@ export const ActivityAuditLogDetailDialog: React.FC<{ record: RaRecord }> = ({ r
 
             <Stack spacing={1}>
               <Typography variant="body2">
-                <strong>發生時間：</strong>
+                <strong>{t("filters.occurredAt")}：</strong>
                 {formatOccurredAtUTC((record as Record<string, unknown>).occurredAt)}
               </Typography>
               <Typography variant="body2">
-                <strong>操作者：</strong>
+                <strong>{t("filters.operator")}：</strong>
                 {operatorDisplay}
               </Typography>
               <Typography variant="body2">
-                <strong>動作：</strong>
+                <strong>{t("filters.auditAction")}：</strong>
                 {getActionLabel((record as Record<string, unknown>).action)}
               </Typography>
               <Typography variant="body2">

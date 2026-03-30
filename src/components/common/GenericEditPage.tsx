@@ -8,6 +8,7 @@ import {
   useUpdate,
   useRecordContext,
   useDataProvider,
+  useTranslate,
   type RaRecord,
 } from "react-admin";
 
@@ -45,9 +46,15 @@ export interface GenericEditToolbarActionProps {
 const CustomToolbar = ({
   onBack,
   onDelete,
+  backLabel,
+  deleteLabel,
+  saveLabel,
 }: {
   onBack: () => void;
   onDelete: () => void;
+  backLabel: string;
+  deleteLabel: string;
+  saveLabel: string;
 }) => (
   <Toolbar
     sx={{
@@ -63,7 +70,7 @@ const CustomToolbar = ({
       color="success"
       onClick={onBack}
     >
-      返回
+      {backLabel}
     </Button>
 
     <Box sx={{ display: "flex", gap: 2 }}>
@@ -75,10 +82,10 @@ const CustomToolbar = ({
           onDelete();
         }}
       >
-        刪除
+        {deleteLabel}
       </Button>
 
-      <SaveButton label="儲存" color="success" />
+      <SaveButton label={saveLabel} color="success" />
     </Box>
   </Toolbar>
 );
@@ -231,9 +238,22 @@ const EditContent: React.FC<EditContentProps> = ({
 }) => {
   const redirect = useRedirect();
   const dataProvider = useDataProvider();
+  const translate = useTranslate();
   const record = useRecordContext<RaRecord>();
 
   if (!record) return null;
+
+  const displayName =
+    (record as any).purchaseNo ??
+    (record as any).orderNo ??
+    (record as any).name ??
+    (record as any).title ??
+    `#${record.id}`;
+
+  const backLabel = translate("ra.action.back");
+  const deleteLabel = translate("ra.action.delete");
+  const cancelLabel = translate("ra.action.cancel");
+  const saveLabel = translate("ra.action.save");
 
   const handleDelete = async () => {
     try {
@@ -268,6 +288,9 @@ const EditContent: React.FC<EditContentProps> = ({
             <CustomToolbar
               onBack={() => redirect("list", resource)}
               onDelete={() => setOpenDeleteConfirm(true)}
+              backLabel={backLabel}
+              deleteLabel={deleteLabel}
+              saveLabel={saveLabel}
             />
           )
         }
@@ -277,16 +300,11 @@ const EditContent: React.FC<EditContentProps> = ({
 
       <GlobalAlertDialog
         open={openDeleteConfirm}
-        title="確認刪除"
-        description={`確定要刪除「${(record as any).purchaseNo ??
-          (record as any).orderNo ??
-          (record as any).name ??
-          (record as any).title ??
-          "這筆資料"
-          }」嗎？`}
+        title={translate("ra.message.are_you_sure")}
+        description={translate("ra.message.delete_content", { name: displayName })}
         severity="error"
-        confirmLabel="刪除"
-        cancelLabel="取消"
+        confirmLabel={deleteLabel}
+        cancelLabel={cancelLabel}
         onClose={() => setOpenDeleteConfirm(false)}
         onConfirm={() => {
           setOpenDeleteConfirm(false);

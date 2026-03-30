@@ -14,6 +14,7 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { IconButton } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { ARAgingDetailDrawer } from "./ARAgingDetailDrawer";
 
@@ -47,6 +48,7 @@ interface ARAgingSummaryRow {
 
 export const ARList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -152,7 +154,7 @@ export const ARList = () => {
                     e.stopPropagation();
                     handleOpen(record);
                   }}
-                  title="查看未收訂單明細"
+                  title={t("filters.viewUnreceivedOrderDetails")}
                 >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>

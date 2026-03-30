@@ -4,6 +4,7 @@ import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
 import { List, TextField, DateField, FunctionField } from "react-admin";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useTranslation } from "react-i18next";
 
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
@@ -40,6 +41,7 @@ type SelectedOrder = OrderListRow;
  * ================================ */
 export const OrderList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -181,7 +183,7 @@ export const OrderList = () => {
                     e.stopPropagation();
                     openDetails(record);
                   }}
-                  title="查看訂單明細"
+                  title={t("filters.viewOrderDetails")}
                 >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>

@@ -6,6 +6,7 @@ import {
   TextField,
   FunctionField,
 } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 import { StyledListWrapper } from "@/components/common/StyledListWrapper";
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
@@ -14,23 +15,6 @@ import { ActionColumns } from "@/components/common/ActionColumns";
 import { ActiveStatusField } from "@/components/common/ActiveStatusField";
 import { ExpenseCategoryStatusToggle } from "./ExpenseCategoryStatusToggle";
 
-/* -------------------------------------------------------
- * 🔐 頻率類型顯示函數
- * ------------------------------------------------------- */
-const getFrequencyTypeLabel = (frequencyType?: string) => {
-  switch (frequencyType) {
-    case 'MONTHLY':
-      return '每月一次';
-    case 'BIWEEKLY':
-      return '每兩週一次';
-    case 'DAILY':
-      return '每日一次';
-    case 'UNLIMITED':
-      return '無限制';
-    default:
-      return '每日一次'; // 預設值
-  }
-};
 
 /* =========================================================
  * Component
@@ -38,6 +22,7 @@ const getFrequencyTypeLabel = (frequencyType?: string) => {
 
 export const ExpenseCategoryList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -54,8 +39,8 @@ export const ExpenseCategoryList = () => {
     >
       <StyledListWrapper
         quickFilters={[
-          { type: "text", source: "accountCode", label: "會計科目代碼" },
-          { type: "text", source: "name", label: "費用分類名稱" },
+          { type: "text", source: "accountCode", label: t("filters.accountCode") },
+          { type: "text", source: "name", label: t("filters.expenseCategoryName") },
         ]}
         advancedFilters={[
           {
@@ -73,28 +58,41 @@ export const ExpenseCategoryList = () => {
 
           <TextField source="accountCode" label="會計科目代碼" />
 
-          <TextField source="name" label="費用分類名稱" />
+          <TextField source="name" label={t("filters.expenseCategoryName")} />
 
           <FunctionField
-            label="費用頻率"
+            label={t("filters.feeFrequency")}
             render={(record: { frequencyType?: string }) => 
-              getFrequencyTypeLabel(record.frequencyType)
+              (() => {
+                switch (record.frequencyType) {
+                  case "MONTHLY":
+                    return t("filters.frequencyTypeMonthly");
+                  case "BIWEEKLY":
+                    return t("filters.frequencyTypeBiweekly");
+                  case "DAILY":
+                    return t("filters.frequencyTypeDaily");
+                  case "UNLIMITED":
+                    return t("filters.frequencyTypeUnlimited");
+                  default:
+                    return t("filters.frequencyTypeDaily");
+                }
+              })()
             }
           />
 
           <FunctionField
-            label="狀態"
+            label={t("filters.activeStatus")}
             className="cell-centered"
             render={() => <ActiveStatusField />}
           />
 
           <FunctionField
-            label="切換狀態"
+            label={t("filters.expenseCategoryToggleStatus")}
             className="cell-centered"
             render={() => <ExpenseCategoryStatusToggle />}
           />
 
-          <TextField source="description" label="描述" />
+          <TextField source="description" label={t("filters.description")} />
 
           <FunctionField
             label="操作"

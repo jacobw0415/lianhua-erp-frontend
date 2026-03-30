@@ -14,6 +14,7 @@ import { CustomPaginationBar } from "@/components/pagination/CustomPagination";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { IconButton } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { APAgingDetailDrawer } from "./APAgingDetailDrawer";
 
@@ -47,6 +48,7 @@ interface APAgingSummaryRow {
 
 export const APList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -159,7 +161,7 @@ export const APList = () => {
                     e.stopPropagation();
                     handleOpen(record);
                   }}
-                  title="查看未付進貨明細"
+                  title={t("filters.viewUnpaidPurchaseDetails")}
                 >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Chip } from "@mui/material";
 import { FunctionField, type RaRecord } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 import { ResponsiveListDatagrid } from "@/components/common/ResponsiveListDatagrid";
 import { ActivityAuditLogDetailDialog } from "@/pages/activityAuditLogs/components/ActivityAuditLogDetailDialog";
@@ -38,16 +39,17 @@ function getParsedFromRecord(record: RaRecord): ParsedAuditDetails | null {
 }
 
 export const ActivityAuditLogDatagrid: React.FC = () => {
+  const { t } = useTranslation("common");
   return (
     <ResponsiveListDatagrid tabletLayout="card" rowClick={false}>
       <FunctionField
         source="occurredAt"
-        label="發生時間"
+        label={t("filters.occurredAt")}
         sortBy="occurredAt"
         render={(record: RaRecord) => formatOccurredAtUTC(record?.occurredAt)}
       />
       <FunctionField
-        label="操作者"
+        label={t("filters.operator")}
         sortable={false}
         render={(record: RaRecord) => {
           const parsed = getParsedFromRecord(record);
@@ -55,7 +57,7 @@ export const ActivityAuditLogDatagrid: React.FC = () => {
         }}
       />
       <FunctionField
-        label="動作"
+        label={t("filters.auditAction")}
         sortable={false}
         render={(record: RaRecord) => getActionLabel(record.action)}
       />
@@ -65,7 +67,7 @@ export const ActivityAuditLogDatagrid: React.FC = () => {
         render={(record: RaRecord) => getResourceTypeLabel(record.resourceType)}
       />
       <FunctionField
-        label="請求方式"
+        label={t("filters.requestMethod")}
         sortable={false}
         render={(record: RaRecord) =>
           getHttpMethodListDisplay((record as Record<string, unknown>)?.httpMethod)

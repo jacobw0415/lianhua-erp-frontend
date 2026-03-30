@@ -11,12 +11,14 @@ import {
 } from "react-admin";
 import { useBreakpoint } from "@/hooks/useIsMobile";
 import { canEditResource } from "@/utils/authStorage";
+import { filterLabelMap } from "@/utils/filterLabelMap";
 import { ListCard } from "./ListCard";
 import { EmptyPlaceholder } from "./EmptyPlaceholder";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
 import { logger } from "@/utils/logger";
 import { useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 /**
  * 渲染字段组件并提取值
@@ -105,6 +107,7 @@ export const ResponsiveListDatagrid: React.FC<
   const { data, isLoading } = useListContext();
   const resource = useResourceContext();
   const theme = useTheme();
+  const { t, i18n } = useTranslation("common");
 
   // 無編輯權限時不讓點擊列進入編輯頁（與 ActionColumns 權限一致）
   const canEdit = canEditResource(resource);
@@ -174,23 +177,35 @@ export const ResponsiveListDatagrid: React.FC<
         const element = child as React.ReactElement;
         const props = element.props as { source?: string; label?: string; className?: string };
         const source = props?.source;
-        const label = props?.label || source || "";
+        const hasExplicitLabel = props?.label !== undefined && props?.label !== null;
+        const rawLabel = props?.label ?? source ?? "";
         const className = props?.className || "";
         const isAction =
           className.includes("column-action") || source === "action";
-        const isDetail = label === "明細" || label === "明细";
-        const fieldType = detectFieldType(element, label, source);
+        const isDetail = rawLabel === "明細" || rawLabel === "明细";
+        const fieldType = detectFieldType(element, rawLabel, source);
+
+        // card 版 label 翻譯：切換語系後仍要顯示英文標題
+        // Prefer translating by explicit `label` prop (when provided).
+        // If `label` is already provided (often already translated via t()),
+        // do NOT override it by `source` mapping.
+        const labelKeyFromLabel =
+          hasExplicitLabel && rawLabel ? filterLabelMap[rawLabel] : undefined;
+        const labelKey =
+          labelKeyFromLabel ??
+          (!hasExplicitLabel && source ? filterLabelMap[source] : undefined);
+        const displayLabel = labelKey ? t(labelKey) : rawLabel;
 
         return {
           element,
           source,
-          label,
+          label: displayLabel,
           isAction,
           isDetail,
           fieldType,
         };
       });
-  }, [children]);
+  }, [children, i18n.language, t]);
 
   // 行動端／小螢幕：渲染卡片列表
   if (useCardLayout) {
@@ -265,6 +280,26 @@ export const ResponsiveListDatagrid: React.FC<
       </Box>
     );
   }
+
+  const translatedChildren = React.Children.map(children, (child) => {
+    if (!isValidElement(child)) return child;
+
+    const element = child as React.ReactElement<{ source?: string; label?: string }>;
+    const source = element.props?.source;
+    const labelText = element.props?.label;
+    const hasExplicitLabel = element.props?.label !== undefined && element.props?.label !== null;
+
+    // Prefer translating by explicit `label` prop (when provided),
+    // then fallback to `source` mapping.
+    const labelKeyFromLabel =
+      hasExplicitLabel && labelText ? filterLabelMap[labelText] : undefined;
+    const labelKey =
+      labelKeyFromLabel ??
+      (!hasExplicitLabel && source ? filterLabelMap[source] : undefined);
+
+    if (!labelKey) return child;
+    return cloneElement(element, { label: t(labelKey) });
+  });
 
   // 桌面端：使用原有的表格样式（通过 StyledListDatagrid 处理）
   // 这里直接返回 Datagrid，让 StyledListDatagrid 处理样式
@@ -382,7 +417,7 @@ export const ResponsiveListDatagrid: React.FC<
           }}
           {...rest}
         >
-          {children}
+          {translatedChildren}
         </Datagrid>
       )}
     </Box>

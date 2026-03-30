@@ -1,4 +1,5 @@
 import type { RaRecord } from "react-admin";
+import i18n from "@/i18n/i18n";
 
 export type ParsedAuditDetails = {
   handler?: string;
@@ -17,6 +18,17 @@ export const ACTION_LABELS: Record<string, string> = {
   LOGIN: "登入",
   LOGOUT: "登出",
   VOID: "作廢",
+};
+
+const ACTION_LABELS_EN: Record<string, string> = {
+  CREATE: "Create",
+  UPDATE: "Update",
+  DELETE: "Delete",
+  PATCH: "Partial update",
+  EXPORT: "Export",
+  LOGIN: "Login",
+  LOGOUT: "Logout",
+  VOID: "Void",
 };
 
 export const RESOURCE_TYPE_LABELS: Record<string, string> = {
@@ -47,18 +59,48 @@ export const RESOURCE_TYPE_LABELS: Record<string, string> = {
   ADMIN: "系統活動",
 };
 
+const RESOURCE_TYPE_LABELS_EN: Record<string, string> = {
+  AUTH: "Authentication",
+  EMPLOYEES: "Employees",
+  USERS: "Users",
+  ROLES: "Roles",
+  PERMISSIONS: "Permissions",
+  NOTIFICATIONS: "Notifications",
+  GLOBAL_SEARCH: "Global search",
+  DASHBOARD: "Dashboard",
+  SUPPLIERS: "Suppliers",
+  PRODUCTS: "Products",
+  PRODUCT_CATEGORIES: "Product categories",
+  EXPENSES: "Expenses",
+  EXPENSE_CATEGORIES: "Expense categories",
+  ORDERS: "Orders",
+  ORDER_CUSTOMERS: "Order customers",
+  ORDER_ITEMS: "Order items",
+  PURCHASES: "Purchases",
+  PURCHASE_ITEMS: "Purchase items",
+  PAYMENTS: "Payments",
+  RECEIPTS: "Receipts",
+  SALES: "Sales",
+  AP: "Accounts payable",
+  AR: "Accounts receivable",
+  REPORTS: "Financial reports",
+  ADMIN: "System activity",
+};
+
 function normalizeCode(code: unknown): string {
   return code == null ? "" : String(code).trim().toUpperCase();
 }
 
 export function getActionLabel(actionCode: unknown): string {
   const k = normalizeCode(actionCode);
-  return ACTION_LABELS[k] ?? (k ? k : "—");
+  const isEn = i18n.language === "en";
+  return (isEn ? ACTION_LABELS_EN : ACTION_LABELS)[k] ?? (k ? k : "—");
 }
 
 export function getResourceTypeLabel(resourceTypeCode: unknown): string {
   const k = normalizeCode(resourceTypeCode);
-  return RESOURCE_TYPE_LABELS[k] ?? (k ? k : "—");
+  const isEn = i18n.language === "en";
+  return (isEn ? RESOURCE_TYPE_LABELS_EN : RESOURCE_TYPE_LABELS)[k] ?? (k ? k : "—");
 }
 
 const HTTP_METHOD_ZH: Record<string, string> = {
@@ -71,6 +113,16 @@ const HTTP_METHOD_ZH: Record<string, string> = {
   OPTIONS: "選項",
 };
 
+const HTTP_METHOD_EN: Record<string, string> = {
+  GET: "Read",
+  POST: "Create",
+  PUT: "Update",
+  PATCH: "Partial update",
+  DELETE: "Delete",
+  HEAD: "Check",
+  OPTIONS: "Options",
+};
+
 /**
  * HTTP 方法中文語意（列表／摘要用）；無資料時為「—」。
  */
@@ -80,7 +132,8 @@ export function getHttpMethodLabel(httpMethod: unknown): string {
       ? ""
       : String(httpMethod).trim().toUpperCase();
   if (!m) return "—";
-  return HTTP_METHOD_ZH[m] ?? m;
+  const isEn = i18n.language === "en";
+  return (isEn ? HTTP_METHOD_EN : HTTP_METHOD_ZH)[m] ?? m;
 }
 
 /**
@@ -91,11 +144,17 @@ export function getHttpMethodChipLabel(httpMethod: unknown): string {
     httpMethod == null || httpMethod === ""
       ? ""
       : String(httpMethod).trim().toUpperCase();
-  if (!m) return "請求方式：—";
-  const zh = getHttpMethodLabel(m);
-  if (zh === "—") return "請求方式：—";
-  if (zh === m) return `請求方式：${m}`;
-  return `請求方式：${zh}（${m}）`;
+  const isEn = i18n.language === "en";
+  const prefix = isEn ? "Request method: " : "請求方式：";
+  if (!m) return `${prefix}—`;
+
+  const display = getHttpMethodLabel(m);
+  if (display === "—") return `${prefix}—`;
+
+  if (display === m) return `${prefix}${m}`;
+  return isEn
+    ? `${prefix}${display} (${m})`
+    : `${prefix}${display}（${m}）`;
 }
 
 /**
@@ -107,10 +166,11 @@ export function getHttpMethodListDisplay(httpMethod: unknown): string {
       ? ""
       : String(httpMethod).trim().toUpperCase();
   if (!m) return "—";
-  const zh = getHttpMethodLabel(m);
-  if (zh === "—") return "—";
-  if (zh === m) return m;
-  return `${zh}（${m}）`;
+  const isEn = i18n.language === "en";
+  const display = getHttpMethodLabel(m);
+  if (display === "—") return "—";
+  if (display === m) return m;
+  return isEn ? `${display} (${m})` : `${display}（${m}）`;
 }
 
 export function safeParseDetails(details: unknown): ParsedAuditDetails | null {

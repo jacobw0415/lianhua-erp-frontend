@@ -9,6 +9,7 @@ import {
   FunctionField,
   useRefresh,
 } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 import { IconButton, Box } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -92,6 +93,7 @@ type SelectedPurchase = {
 
 export const PurchaseList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -165,25 +167,25 @@ export const PurchaseList = () => {
       >
         <StyledListWrapper
           quickFilters={[
-            { type: "text", source: "purchaseNo", label: "進貨單號" },
-            { type: "text", source: "supplierName", label: "供應商名稱" },
-            { type: "text", source: "item", label: "品項名稱" },
+            { type: "text", source: "purchaseNo", label: t("filters.purchaseNo") },
+            { type: "text", source: "supplierName", label: t("filters.supplierName") },
+            { type: "text", source: "item", label: t("filters.itemName") },
           ]}
           advancedFilters={[
             {
               type: "select",
               source: "status",
-              label: "狀態",
+              label: t("filters.orderStatus"),
               choices: [
-                { id: "PENDING", name: "未付款" },
-                { id: "PARTIAL", name: "部分付款" },
-                { id: "PAID", name: "已付款" },
+                { id: "PENDING", name: t("filters.unpaid") },
+                { id: "PARTIAL", name: t("filters.partialPaid") },
+                { id: "PAID", name: t("filters.paidAmount") },
               ],
             },
             {
               type: "month",
               source: "accountingPeriod",
-              label: "會計期間 (YYYY-MM)",
+              label: t("filters.accountingPeriod"),
             },
             { type: "text", source: "supplierId", label: "供應商ID（精準）" },
             { type: "date", source: "fromDate", label: "進貨日（起）" },
@@ -213,19 +215,19 @@ export const PurchaseList = () => {
           }}
         >
           <ResponsiveListDatagrid rowClick={false} tabletLayout="card">
-            <TextField source="purchaseNo" label="進貨單號" />
-            <TextField source="supplierName" label="供應商名稱" />
-            <DateField source="purchaseDate" label="進貨日期" />
-            <CurrencyField source="totalAmount" label="總金額" />
-            <CurrencyField source="paidAmount" label="已付款" />
-            <CurrencyField source="balance" label="餘額" />
+            <TextField source="purchaseNo" label={t("filters.purchaseNo")} />
+            <TextField source="supplierName" label={t("filters.supplierName")} />
+            <DateField source="purchaseDate" label={t("filters.purchaseDate")} />
+            <CurrencyField source="totalAmount" label={t("filters.totalAmount")} />
+            <CurrencyField source="paidAmount" label={t("filters.paidAmount")} />
+            <CurrencyField source="balance" label={t("filters.balance")} />
             <FunctionField
-              label="狀態"
+              label={t("filters.orderStatus")}
               render={(record: PurchaseListRow) => {
                 const statusMap: Record<string, string> = {
-                  PENDING: "未付款",
-                  PARTIAL: "部分付款",
-                  PAID: "已付款",
+                  PENDING: t("filters.unpaid"),
+                  PARTIAL: t("filters.partialPaid"),
+                  PAID: t("filters.paidAmount"),
                 };
                 return statusMap[record.status] || record.status;
               }}
@@ -233,7 +235,7 @@ export const PurchaseList = () => {
 
             {/* 📦 明細 */}
             <FunctionField
-              label="明細"
+              label={t("filters.details")}
               render={(record: PurchaseListRow) => (
                 <Box display="flex" gap={0.5} alignItems="center">
                   <IconButton
@@ -242,7 +244,7 @@ export const PurchaseList = () => {
                       e.stopPropagation();
                       openDetails(record);
                     }}
-                    title="查看完整明細"
+                    title={t("filters.viewFullDetails")}
                   >
                     <VisibilityIcon fontSize="small" />
                   </IconButton>
@@ -252,7 +254,7 @@ export const PurchaseList = () => {
                       e.stopPropagation();
                       openItemDetails(record);
                     }}
-                    title="查看進貨項目明細"
+                    title={t("filters.viewPurchaseItemDetails")}
                   >
                     <ListIcon fontSize="small" />
                   </IconButton>
@@ -262,7 +264,7 @@ export const PurchaseList = () => {
 
             {/* 🛠 操作 */}
             <FunctionField
-              label="操作"
+              label={t("filters.actions")}
               source="action"
               className="column-action"
               render={() => <ActionColumns />}

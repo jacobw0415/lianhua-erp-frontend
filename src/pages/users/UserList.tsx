@@ -18,6 +18,7 @@ import { getRoleDisplayName } from "@/constants/userRoles";
 import { useOnlineUsers } from "@/hooks/useOnlineUsers";
 // 確保匯入 OnlineUserDto 型別
 import type { OnlineUserDto } from "@/types/onlineUsers";
+import { useTranslation } from "react-i18next";
 
 /**
  * 使用者列表（/api/users）
@@ -27,6 +28,7 @@ import type { OnlineUserDto } from "@/types/onlineUsers";
  */
 export const UserList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   
   // 從 Context 獲取即時在線名單
   const { onlineUsers } = useOnlineUsers();
@@ -90,7 +92,7 @@ export const UserList = () => {
           <ResponsiveListDatagrid tabletLayout="card" rowClick={false}>
             {/* 上線狀態欄位 */}
             <FunctionField
-              label="上線狀態"
+              label={t("filters.onlineStatus")}
               className="cell-centered"
               render={(record: RaRecord) => {
                 if (!record) return null;

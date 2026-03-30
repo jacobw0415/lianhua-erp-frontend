@@ -18,6 +18,7 @@ import { ExpenseStatusField } from "@/components/common/ExpenseStatusField";
 import { ExpenseActionColumns } from "./ExpenseActionColumns";
 import { ExpenseDetailDrawer, type ExpenseDetail } from "./ExpenseDetailDrawer";
 import { logger } from "@/utils/logger";
+import { useTranslation } from "react-i18next";
 
 /* =========================================================
  * 型別定義（對齊 ExpenseDto）
@@ -41,6 +42,7 @@ export interface ExpenseListRow {
 
 export const ExpenseList = () => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   //  套用 Scrollbar 樣式 (Component Mount 時執行)
   useEffect(() => {
     const cleanup = applyBodyScrollbarStyles(theme);
@@ -174,7 +176,7 @@ export const ExpenseList = () => {
                   e.stopPropagation();
                   openDetails(record);
                 }}
-                title="查看完整明細"
+                title={t("filters.viewFullDetails")}
               >
                 <VisibilityIcon fontSize="small" />
               </IconButton>

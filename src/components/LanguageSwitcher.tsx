@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSetLocale } from "react-admin";
 import {
   IconButton,
   Menu,
@@ -32,6 +33,7 @@ const LOCALES: { code: BackendLocaleTag; labelKey: "lang.zhTW" | "lang.en" }[] =
 export const LanguageSwitcher = () => {
   const { t, i18n } = useTranslation("common");
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  const setLocale = useSetLocale();
 
   const current = i18n.language.startsWith("en") ? "en" : "zh-TW";
 
@@ -59,8 +61,13 @@ export const LanguageSwitcher = () => {
           <MenuItem
             key={code}
             selected={current === code}
-            onClick={() => {
-              void i18n.changeLanguage(code);
+            onClick={async () => {
+              // i18next：切換畫面上的 i18n 文案
+              await i18n.changeLanguage(code);
+
+              // react-admin：切換 List/Edit/Delete 等 ra.* 文案
+              setLocale(code);
+
               setAnchor(null);
             }}
             dense

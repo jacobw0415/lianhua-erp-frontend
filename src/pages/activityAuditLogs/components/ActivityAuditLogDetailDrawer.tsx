@@ -15,6 +15,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import type { RaRecord } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 import { getDrawerScrollableStyles } from "@/theme/LianhuaTheme";
 import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
@@ -43,6 +44,7 @@ export const ActivityAuditLogDetailDrawer: React.FC<{
   record: RaRecord | null;
 }> = ({ open, onClose, record }) => {
   const theme = useTheme();
+  const { t } = useTranslation("common");
   const isMobile = useIsMobile();
   const isSmallScreen = useIsSmallScreen();
 
@@ -172,15 +174,15 @@ export const ActivityAuditLogDetailDrawer: React.FC<{
 
             <Stack spacing={1}>
               <Typography variant="body2">
-                <strong>發生時間：</strong>
+                <strong>{t("filters.occurredAt")}：</strong>
                 {formatOccurredAtUTC((record as Record<string, unknown>).occurredAt)}
               </Typography>
               <Typography variant="body2">
-                <strong>操作者：</strong>
+                <strong>{t("filters.operator")}：</strong>
                 {operatorDisplay}
               </Typography>
               <Typography variant="body2">
-                <strong>動作：</strong>
+                <strong>{t("filters.auditAction")}：</strong>
                 {getActionLabel((record as Record<string, unknown>).action)}
               </Typography>
               <Typography variant="body2">

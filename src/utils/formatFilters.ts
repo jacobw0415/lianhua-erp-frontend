@@ -35,6 +35,15 @@ const valueOnlyKeys = new Set([
 ]);
 
 export const formatFilters = (filters: Record<string, any>) => {
+  return formatFiltersWithTranslator(filters);
+};
+
+type Translator = (key: string) => string;
+
+export const formatFiltersWithTranslator = (
+  filters: Record<string, any>,
+  t?: Translator
+) => {
   const chips: { key: string; display: string }[] = [];
   const used = new Set<string>();
 
@@ -53,7 +62,8 @@ export const formatFilters = (filters: Record<string, any>) => {
     if (used.has(key)) continue;
 
     const value = rawValue;
-    const label = filterLabelMap[key] || "";
+    const labelKey = filterLabelMap[key] || "";
+    const label = t && labelKey ? t(labelKey) : labelKey;
     const showValueOnly = valueOnlyKeys.has(key); // 是否只顯示 value
 
     /* -------------------------
@@ -116,7 +126,7 @@ export const formatFilters = (filters: Record<string, any>) => {
       const map = enumValueMap[key];
       const translated = map[value] || value; // 🛡️ fallback
 
-      chips.push({
+        chips.push({
         key,
         display: showValueOnly ? translated : (label ? `${label}: ${translated}` : translated),
       });
