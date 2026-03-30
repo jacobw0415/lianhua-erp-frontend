@@ -17,6 +17,7 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { getApiUrl } from "@/config/apiUrl";
+import { logger } from "@/utils/logger";
 
 const apiUrl = getApiUrl();
 
@@ -107,15 +108,12 @@ export const ForgotPassPage = () => {
         }
       }
 
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("[ForgotPass] POST /api/auth/forgot-password", {
-          status: res.status,
-          ok: res.ok,
-          bodySent: body,
-          responseText: text.slice(0, 200),
-        });
-      }
+      logger.debug("[ForgotPass] POST /api/auth/forgot-password", {
+        status: res.status,
+        ok: res.ok,
+        bodySent: body,
+        responseText: text.slice(0, 200),
+      });
 
       if (res.ok) {
         setSuccess(true);
@@ -146,10 +144,7 @@ export const ForgotPassPage = () => {
       }
       setError(message || "發送失敗，請稍後再試或聯絡管理員");
     } catch (err) {
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("[ForgotPass] request failed", err);
-      }
+      logger.devError("[ForgotPass] request failed", err);
       setError("無法連線，請檢查網路後再試");
     } finally {
       setIsSubmitting(false);

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Box, Typography, Button } from "@mui/material";
+import { logError } from "@/utils/logger";
 
 interface State {
   hasError: boolean;
@@ -24,9 +25,7 @@ export class AppErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    if (typeof console !== "undefined" && console.error) {
-      console.error("AppErrorBoundary caught:", error, errorInfo);
-    }
+    logError("AppErrorBoundary caught:", error, errorInfo);
   }
 
   render(): React.ReactNode {

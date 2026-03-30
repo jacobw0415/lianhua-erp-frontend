@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { logger } from '@/utils/logger';
 import { useDashboardFilters } from '@/hooks/useDashboardFilters';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
@@ -233,7 +234,7 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
     try {
       await Promise.all([refresh(), refetchAnalytics()]);
     } catch (err) {
-      console.error(err);
+      logger.devError(err);
     } finally {
       setIsRefreshing(false);
     }

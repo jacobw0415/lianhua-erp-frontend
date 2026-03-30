@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義
@@ -36,7 +37,7 @@ export const useActiveOrderCustomers = () => {
         setCustomers(data);
       })
       .catch((error: unknown) => {
-        console.error("❌ 載入客戶列表失敗：", error);
+        logger.devError("❌ 載入客戶列表失敗：", error);
         setCustomers([]);
       })
       .finally(() => setLoading(false));

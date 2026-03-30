@@ -50,6 +50,7 @@ import { menuGroups } from "@/layout/menuConfig";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useIsMobile, useIsSmallScreen } from "@/hooks/useIsMobile";
+import { logger } from "@/utils/logger";
 
 import dayjs from "dayjs";
 import type { ElementType } from "react";
@@ -142,7 +143,7 @@ export const CustomAppBar = (props: AppBarProps) => {
             try {
                 await markAsRead({ ...noti, userNotificationId: actualId });
             } catch (e) {
-                console.warn("Failed to mark as read", e);
+                logger.warn("Failed to mark as read", e);
             }
         },
         [markAsRead, redirect]

@@ -19,6 +19,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import { logger } from "@/utils/logger";
 
 const TITLE = "蓮華 ERP";
 const SUBTITLE = "請登入以繼續使用系統";
@@ -119,7 +120,7 @@ export const LoginPage = () => {
     login({ username: trimmedUsername, password: trimmedPassword })
       .then(() => {
         // 🌟 修正：只有在真正成功且沒有拋出 MFA_REQUIRED 的情況下才導向首頁
-        console.log("[Login] Success, navigating to dashboard");
+        logger.debug("[Login] Success, navigating to dashboard");
         navigate("/", { replace: true });
       })
       .catch((err: any) => {
@@ -131,7 +132,7 @@ export const LoginPage = () => {
 
         // 🌟 核心修正：明確攔截 MFA 需求，防止進入一般錯誤流程
         if (code === "MFA_REQUIRED") {
-          console.log("[Login] MFA Required, redirecting to MFA page...");
+          logger.debug("[Login] MFA Required, redirecting to MFA page...");
           // 確保這裡使用 replace，避免按回退鍵回到已提交的登入表單
           navigate("/mfa", { replace: true });
           return;

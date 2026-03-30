@@ -17,6 +17,7 @@ import { CurrencyField } from "@/components/money/CurrencyField";
 import { ExpenseStatusField } from "@/components/common/ExpenseStatusField";
 import { ExpenseActionColumns } from "./ExpenseActionColumns";
 import { ExpenseDetailDrawer, type ExpenseDetail } from "./ExpenseDetailDrawer";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義（對齊 ExpenseDto）
@@ -147,9 +148,8 @@ export const ExpenseList = () => {
           <FunctionField
             label="狀態"
             render={(record: ExpenseListRow) => {
-              // 調試：在開發環境下輸出記錄數據
-              if (import.meta.env.DEV && record) {
-                console.log('[ExpenseList] 記錄數據:', {
+              if (record) {
+                logger.debug("[ExpenseList] 記錄數據:", {
                   id: record.id,
                   status: record.status,
                   statusType: typeof record.status,

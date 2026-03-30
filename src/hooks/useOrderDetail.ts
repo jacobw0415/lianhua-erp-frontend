@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義
@@ -57,7 +58,7 @@ export const useOrderDetail = (orderId: number | null | undefined) => {
       })
       .catch((err: unknown) => {
         if (!abortController.signal.aborted) {
-          console.error("❌ 載入訂單詳情失敗：", err);
+          logger.devError("❌ 載入訂單詳情失敗：", err);
           setError(err instanceof Error ? err : new Error("載入訂單詳情失敗"));
           setOrder(null);
         }

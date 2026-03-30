@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義
@@ -87,7 +88,7 @@ export const useOrderReceipts = (
       })
       .catch((error: unknown) => {
         if (!abortController.signal.aborted) {
-          console.error("❌ 載入收款記錄失敗：", error);
+          logger.devError("❌ 載入收款記錄失敗：", error);
           setPaidAmount(0);
           setReceipts([]);
         }

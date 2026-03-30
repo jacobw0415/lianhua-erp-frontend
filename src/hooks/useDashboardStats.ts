@@ -1,5 +1,6 @@
 import { useDataProvider } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
+import { logger } from "@/utils/logger";
 
 /**
  * 📊 與後端 DTO 完全對齊的型別定義
@@ -163,7 +164,7 @@ export const useDashboardStats = (
           receiptAmount: Number(point.receiptAmount ?? point.receipt_amount ?? 0),
         }));
       } catch (error) {
-        console.warn('後端 /dashboard/trends 不可用，改用前端聚合營運與收款趨勢', error);
+        logger.warn("後端 /dashboard/trends 不可用，改用前端聚合營運與收款趨勢", error);
       }
 
       // === 2.2 備援：前端聚合 sales + receipts ===

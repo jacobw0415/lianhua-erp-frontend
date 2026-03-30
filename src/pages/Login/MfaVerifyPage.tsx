@@ -17,6 +17,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { getApiUrl } from "@/config/apiUrl";
 import { applyLoginSuccessFromContainer } from "@/providers/authProvider";
+import { logger } from "@/utils/logger";
 
 const apiUrl = getApiUrl();
 const TITLE = "MFA 驗證碼";
@@ -42,7 +43,7 @@ export const MfaVerifyPage = () => {
     // 延遲 500ms 讓頁面穩定後才允許提交
     const timer = setTimeout(() => {
       isReady.current = true;
-      console.log("[MFA] 頁面已就緒，開始接收輸入");
+      logger.debug("[MFA] 頁面已就緒，開始接收輸入");
     }, 500);
 
     if (typeof sessionStorage !== "undefined") {
@@ -93,7 +94,7 @@ export const MfaVerifyPage = () => {
     // 🌟 關鍵：手動增加 300ms 延遲，確保後端之前的登入事務完全 Commit
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    console.log("[MFA] 正在發送單次驗證請求...");
+    logger.debug("[MFA] 正在發送單次驗證請求...");
 
     try {
       const res = await fetch(`${apiUrl}/auth/mfa/verify`, {
@@ -121,7 +122,7 @@ export const MfaVerifyPage = () => {
       }
 
       // 驗證成功處理
-      console.log("[MFA] 驗證成功，正在同步權限並導向...");
+      logger.debug("[MFA] 驗證成功，正在同步權限並導向...");
       
       if (jsonBody?.data) {
         // 同步寫入權限與 Token 到 localStorage

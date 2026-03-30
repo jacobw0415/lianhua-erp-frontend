@@ -15,6 +15,7 @@ import { ListCard } from "./ListCard";
 import { EmptyPlaceholder } from "./EmptyPlaceholder";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
+import { logger } from "@/utils/logger";
 import { useTheme } from "@mui/material";
 
 /**
@@ -32,7 +33,7 @@ const renderFieldValue = (
     try {
       return props.render(record);
     } catch (e) {
-      console.warn("Error rendering field:", e);
+      logger.warn("Error rendering field:", e);
       return "-";
     }
   }

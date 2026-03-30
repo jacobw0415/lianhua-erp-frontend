@@ -15,7 +15,8 @@ import { LhDateInput } from "@/components/inputs/LhDateInput";
 import { useActiveOrders } from "@/hooks/useActiveOrders";
 import { useOrderDetail } from "@/hooks/useOrderDetail";
 import { useOrderReceipts } from "@/hooks/useOrderReceipts";
-import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles"; 
+import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { logger } from "@/utils/logger"; 
 
 /* =========================================================
  * 型別定義
@@ -71,7 +72,7 @@ const ReceiptFormContent: React.FC = () => {
         setOrdersWithReceipts(orderIdsWithReceipts);
       })
       .catch((error: unknown) => {
-        console.error("❌ 載入收款記錄失敗：", error);
+        logger.devError("❌ 載入收款記錄失敗：", error);
         setOrdersWithReceipts(new Set());
       })
       .finally(() => setLoadingReceiptsCheck(false));

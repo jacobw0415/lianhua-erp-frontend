@@ -1,3 +1,5 @@
+import { logger } from "@/utils/logger";
+
 /* =========================================================
  * 🔐 型別定義（最小、只補型別）
  * ========================================================= */
@@ -51,7 +53,7 @@ export const useApiErrorHandler = (globalAlert: GlobalAlertApi) => {
    * ⭐ 主錯誤處理（區分 401 / 403 / 400）
    * -------------------------------------------------------- */
   const handleApiError = (error: ApiError): void => {
-    console.error("🔥 API ERROR:", error);
+    logger.devError("🔥 API ERROR:", error);
 
     const status = typeof error === "object" && error !== null && "status" in error
       ? Number((error as { status?: number }).status)

@@ -15,6 +15,7 @@ import {
   REPORT_EXPORT_KEYS,
 } from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { logger } from "@/utils/logger";
 import { APSummaryQueryControls } from "./components/QueryControls";
 import { APSummaryReportTable } from "./components/APSummaryReportTable";
 import { ReportLayout } from "@/layout/ReportLayout";
@@ -161,7 +162,7 @@ export const APSummaryReport = () => {
       if (error instanceof Error && error.message === "SESSION_EXPIRED") {
         return;
       }
-      console.error("匯出失敗：", error);
+      logger.devError("匯出失敗：", error);
       const errorMessage =
         error instanceof Error ? error.message : "匯出檔案時發生錯誤";
       setExportError(errorMessage);

@@ -14,6 +14,7 @@ import {
   REPORT_EXPORT_KEYS,
 } from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { logger } from "@/utils/logger";
 import { QueryControls } from "./components/QueryControls";
 import { BalanceSheetTable } from "./components/BalanceSheetTable";
 import { ReportLayout } from "@/layout/ReportLayout";
@@ -162,7 +163,7 @@ export const BalanceSheetReport = () => {
       if (error instanceof Error && error.message === "SESSION_EXPIRED") {
         return;
       }
-      console.error("匯出失敗：", error);
+      logger.devError("匯出失敗：", error);
       const errorMessage =
         error instanceof Error
           ? error.message

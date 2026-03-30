@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義
@@ -49,17 +50,16 @@ export const useActiveExpenseCategories = () => {
           active: Boolean(cat.active),
         }));
 
-        // 調試：檢查 isSalary 欄位 (僅在開發模式)
-        if (import.meta.env.DEV && normalizedData.length > 0) {
-          console.log("📋 費用類別資料：", normalizedData);
+        if (normalizedData.length > 0) {
+          logger.debug("📋 費用類別資料：", normalizedData);
           const salaryCats = normalizedData.filter((cat) => cat.isSalary === true);
-          console.log("💰 薪資類別數量：", salaryCats.length, salaryCats);
+          logger.debug("💰 薪資類別數量：", salaryCats.length, salaryCats);
         }
 
         setCategories(normalizedData);
       })
       .catch((error: unknown) => {
-        console.error("❌ 載入啟用費用分類失敗：", error);
+        logger.devError("❌ 載入啟用費用分類失敗：", error);
         if (isMounted) setCategories([]); 
       })
       .finally(() => {

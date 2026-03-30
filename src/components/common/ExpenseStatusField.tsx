@@ -1,5 +1,6 @@
 import React from "react";
 import { Chip } from "@mui/material";
+import { logger } from "@/utils/logger";
 import { useRecordContext } from "react-admin";
 
 type ExpenseStatus = "ACTIVE" | "VOIDED";
@@ -31,10 +32,10 @@ export const ExpenseStatusField: React.FC<ExpenseStatusFieldProps> = ({
     if (upperStatus === "ACTIVE" || upperStatus === "VOIDED") {
       status = upperStatus as ExpenseStatus;
     } else {
-      // 調試：如果狀態值不匹配，在開發環境下輸出
-      if (import.meta.env.DEV) {
-        console.warn(`[ExpenseStatusField] 未知的狀態值: "${statusValue}" (轉換後: "${upperStatus}")`, record);
-      }
+      logger.warn(
+        `[ExpenseStatusField] 未知的狀態值: "${statusValue}" (轉換後: "${upperStatus}")`,
+        record
+      );
     }
   }
 

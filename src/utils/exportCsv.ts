@@ -2,6 +2,7 @@ import {
   formatExportFieldValue,
   type ExportColumnLike,
 } from "@/utils/exportCellValue";
+import { logger } from "@/utils/logger";
 
 /** 避免換行破壞列結構；RFC 4180 允許引號內換行但 Excel 常不易讀 */
 const escapeCsvCell = (text: unknown): string => {
@@ -26,7 +27,7 @@ export const exportCsv = (
   columns?: ExportCsvColumn[]
 ) => {
   if (!data || data.length === 0) {
-    console.warn("沒有資料可匯出");
+    logger.warn("沒有資料可匯出");
     return;
   }
 

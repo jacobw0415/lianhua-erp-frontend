@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchUtils } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /**
  * 自動向後端載入 Reference 選項（支援 Swagger 格式）
@@ -46,7 +47,7 @@ export const useReferenceOptions = (
           );
         }
       } catch (e: unknown) {
-        console.error(`載入 reference (${url}) 失敗：`, e);
+        logger.devError(`載入 reference (${url}) 失敗：`, e);
       } finally {
         if (active) setLoading(false);
       }

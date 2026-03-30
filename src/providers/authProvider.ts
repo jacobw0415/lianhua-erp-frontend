@@ -2,6 +2,7 @@ import type { AuthProvider } from "react-admin";
 import { getApiUrl } from "@/config/apiUrl";
 import { clearAppCache } from "@/utils/appCache";
 import { clearProfileCache } from "@/utils/profileCache";
+import { logger, logError } from "@/utils/logger";
 
 /** 應用基底路徑 */
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
@@ -31,9 +32,7 @@ function startSessionEventSource(token: string): void {
   const es = new EventSource(url);
 
   es.addEventListener("INIT", () => {
-    if (import.meta.env.DEV) {
-      console.log("[SSE] session stream connected");
-    }
+    logger.debug("[SSE] session stream connected");
   });
 
   es.addEventListener("FORCE_LOGOUT", () => {
@@ -353,7 +352,7 @@ export async function refreshSessionToken(): Promise<boolean> {
     applyLoginSuccessFromContainer(payload);
     return true;
   } catch (err) {
-    console.error("Refresh token failed:", err);
+    logError("Refresh token failed:", err);
     return false;
   }
 }
@@ -432,7 +431,7 @@ export const authProvider: AuthProvider = {
           },
         });
       } catch {
-        console.warn("Logout API failed.");
+        logger.warn("Logout API failed.");
       }
     }
     closeSessionEventSource();
@@ -449,9 +448,7 @@ export const authProvider: AuthProvider = {
   getPermissions: () => {
     const stored = localStorage.getItem("authRoles");
     const roles = stored ? JSON.parse(stored) : ["ROLE_USER"];
-    if (import.meta.env.DEV) {
-      console.log("[AuthProvider] getPermissions called:", roles);
-    }
+    logger.debug("[AuthProvider] getPermissions called:", roles);
     return Promise.resolve(roles);
   },
 

@@ -6,6 +6,7 @@ import { useDataProvider } from 'react-admin';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { getDefaultPeriod, getDefaultDateRange, clampRangeToMaxDays, getDefaultCashflowRange } from '@/utils/dashboardDateUtils';
+import { logger } from '@/utils/logger';
 
 const ANALYTICS_BASE = 'dashboard/analytics';
 const CASHFLOW_MAX_DAYS = 365;
@@ -237,10 +238,7 @@ export function useDashboardAnalytics(filters: DashboardAnalyticsFilters = {}) {
           totalAmount: Number(item.totalAmount ?? item.total_amount ?? 0),
         })) as CustomerConcentrationPoint[];
       } catch (error) {
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.warn('⚠️ customer-concentration API 失敗，改以空資料呈現：', error);
-        }
+        logger.warn("⚠️ customer-concentration API 失敗，改以空資料呈現：", error);
         return [] as CustomerConcentrationPoint[];
       }
     },

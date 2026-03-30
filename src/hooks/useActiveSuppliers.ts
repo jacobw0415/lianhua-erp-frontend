@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 export interface Supplier {
   id: number;
@@ -27,7 +28,7 @@ export const useActiveSuppliers = () => {
         setSuppliers(res.data ?? []);
       })
       .catch((error: unknown) => {
-        console.error("❌ 載入啟用供應商失敗：", error);
+        logger.devError("❌ 載入啟用供應商失敗：", error);
         setSuppliers([]); // fallback
       })
       .finally(() => setLoading(false));

@@ -18,6 +18,7 @@ import {
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { getApiUrl, getWsUrl } from "@/config/apiUrl";
+import { logger, logError } from "@/utils/logger";
 import type { OnlineUserDto, UserOnlineEventDto, WsConnectionStatus } from "@/types/onlineUsers";
 
 // 全域單例
@@ -56,10 +57,10 @@ export function OnlineUsersProvider({ children }: { children: ReactNode }) {
       const json = await res.json();
       if (Array.isArray(json?.data)) {
         setOnlineUsers(json.data);
-        console.log("[WS] API 清單已同步", json.data.length, "人在線");
+        logger.debug("[WS] API 清單已同步", json.data.length, "人在線");
       }
     } catch (e) {
-      console.error("[WS] Refresh Error", e);
+      logger.devError("[WS] Refresh Error", e);
     }
   }, []);
 
@@ -68,7 +69,7 @@ export function OnlineUsersProvider({ children }: { children: ReactNode }) {
   // 監聽登入/登出事件
   useEffect(() => {
     const onLogout = async () => {
-      console.log("[WS] 偵測到登出，清理連線");
+      logger.debug("[WS] 偵測到登出，清理連線");
       setHasToken(false);
       setOnlineUsers([]);
       setConnectionStatus("idle");
@@ -83,7 +84,7 @@ export function OnlineUsersProvider({ children }: { children: ReactNode }) {
       //  修正 3：收到登入事件後，延遲 500ms 再啟動連線
       // 這能確保 MfaVerifyPage 的導頁優先完成，且後端 Session 已解鎖
       setTimeout(() => {
-        console.log("[WS] 偵測到登入成功，準備建立連線...");
+        logger.debug("[WS] 偵測到登入成功，準備建立連線...");
         setHasToken(true);
       }, 500); 
     };
@@ -142,7 +143,7 @@ export function OnlineUsersProvider({ children }: { children: ReactNode }) {
                   }
                   return filtered;
                 });
-              } catch (e) { console.error("[WS] Parse Error", e); }
+              } catch (e) { logError("[WS] Parse Error", e); }
             });
 
             // 🌟 修正 5：連線成功後，稍微延遲 API Refresh

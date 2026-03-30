@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義
@@ -32,7 +33,7 @@ export const useActiveProducts = () => {
         setProducts(res.data ?? []);
       })
       .catch((error: unknown) => {
-        console.error("❌ 載入啟用商品分類失敗：", error);
+        logger.devError("❌ 載入啟用商品分類失敗：", error);
         setProducts([]); // fallback
       })
       .finally(() => setLoading(false));

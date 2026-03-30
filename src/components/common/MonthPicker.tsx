@@ -7,6 +7,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-tw";
 import { applyMuiPickersScrollbarStyles } from "@/utils/scrollbarStyles";
+import { logger } from "@/utils/logger";
 
 interface MonthPickerProps {
   label?: string;
@@ -50,19 +51,19 @@ export const MonthPicker = memo(({
     // 驗證月份格式 (YYYY-MM)
     const periodRegex = /^\d{4}-\d{2}$/;
     if (!periodRegex.test(value)) {
-      console.warn(`MonthPicker: 無效的月份格式 "${value}"，應為 YYYY-MM 格式`);
+      logger.warn(`MonthPicker: 無效的月份格式 "${value}"，應為 YYYY-MM 格式`);
       return null;
     }
     const date = dayjs(value);
     // 驗證日期是否有效
     if (!date.isValid()) {
-      console.warn(`MonthPicker: 無效的日期值 "${value}"`);
+      logger.warn(`MonthPicker: 無效的日期值 "${value}"`);
       return null;
     }
     // 驗證月份是否在有效範圍內
     const [year, month] = value.split("-").map(Number);
     if (year < 1900 || year > 2100 || month < 1 || month > 12) {
-      console.warn(`MonthPicker: 月份超出有效範圍 "${value}"`);
+      logger.warn(`MonthPicker: 月份超出有效範圍 "${value}"`);
       return null;
     }
     return date;

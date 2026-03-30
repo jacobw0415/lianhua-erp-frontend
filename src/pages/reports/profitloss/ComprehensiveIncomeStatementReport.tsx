@@ -11,6 +11,7 @@ import {
   REPORT_EXPORT_KEYS,
 } from "@/api/reportExportDownload";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
+import { logger } from "@/utils/logger";
 import { QueryControls } from "./components/QueryControls";
 import { ComprehensiveIncomeStatementTable } from "./components/ComprehensiveIncomeStatementTable";
 import { ReportLayout } from "@/layout/ReportLayout";
@@ -247,7 +248,7 @@ export const ComprehensiveIncomeStatementReport = () => {
       if (error instanceof Error && error.message === "SESSION_EXPIRED") {
         return;
       }
-      console.error("匯出失敗：", error);
+      logger.devError("匯出失敗：", error);
       const errorMessage =
         error instanceof Error
           ? error.message

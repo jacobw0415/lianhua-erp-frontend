@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { getApiUrl } from '@/config/apiUrl';
+import { logger } from '@/utils/logger';
 
 const API_BASE_URL = getApiUrl();
 const TEST_USER_ID = 1;
@@ -82,7 +83,7 @@ export const useNotifications = (refreshInterval = 5000) => {
                     : 0;
             setUnreadCount(Number(count));
         } catch (err) {
-            console.error("❌ 獲取通知失敗:", err);
+            logger.devError("❌ 獲取通知失敗:", err);
         }
     }, []);
 
@@ -90,7 +91,7 @@ export const useNotifications = (refreshInterval = 5000) => {
     const markAsRead = useCallback(async (noti: NotificationItem) => {
         // 🚀 修正 2：防呆檢查，避免傳入無效物件導致崩潰
         if (!noti || !noti.userNotificationId) {
-            console.error("❌ 無效的通知物件，無法標記已讀:", noti);
+            logger.devError("❌ 無效的通知物件，無法標記已讀:", noti);
             return false;
         }
 
@@ -121,7 +122,7 @@ export const useNotifications = (refreshInterval = 5000) => {
             }
             return true;
         } catch (err) {
-            console.error("❌ 已讀請求失敗:", err);
+            logger.devError("❌ 已讀請求失敗:", err);
             // 失敗時回滾：重新從後端抓取正確數據
             fetchNotifications(); 
             return false;

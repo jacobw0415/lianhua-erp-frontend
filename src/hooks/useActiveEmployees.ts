@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDataProvider } from "react-admin";
+import { logger } from "@/utils/logger";
 
 /* =========================================================
  * 型別定義
@@ -55,7 +56,7 @@ export const useActiveEmployees = () => {
 
         // 確保 responseData 是陣列
         if (!Array.isArray(responseData)) {
-          console.warn("⚠️ 員工 API 響應格式異常：", responseData);
+          logger.warn("⚠️ 員工 API 響應格式異常：", responseData);
           setEmployees([]);
           return;
         }
@@ -71,7 +72,7 @@ export const useActiveEmployees = () => {
         setEmployees(mappedEmployees);
       })
       .catch((error: unknown) => {
-        console.error("❌ 載入啟用員工失敗：", error);
+        logger.devError("❌ 載入啟用員工失敗：", error);
         setEmployees([]); // fallback
       })
       .finally(() => setLoading(false));
