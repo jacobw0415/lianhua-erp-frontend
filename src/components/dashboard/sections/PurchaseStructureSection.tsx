@@ -15,6 +15,7 @@ import { PIE_COLORS } from '@/constants/chartColors';
 import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartTooltipStyle';
 import { useTheme } from '@mui/material/styles';
 import type { PurchaseStructureDisplayItem } from '@/hooks/useDashboardDerivedData';
+import { useTranslation } from 'react-i18next';
 
 export interface PurchaseStructureSectionProps {
   data: PurchaseStructureDisplayItem[];
@@ -28,6 +29,7 @@ export const PurchaseStructureSection: React.FC<PurchaseStructureSectionProps> =
   dateRangeLabel,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
 
   const total = React.useMemo(
     () => data.reduce((sum, d) => sum + Number(d.totalAmount), 0),
@@ -82,7 +84,7 @@ export const PurchaseStructureSection: React.FC<PurchaseStructureSectionProps> =
           variant="subtitle1"
           sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}
         >
-          <ShoppingCartIcon fontSize="small" /> 採購結構分析
+          <ShoppingCartIcon fontSize="small" /> {t('charts.purchaseStructure.title')}
         </Typography>
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
@@ -150,7 +152,7 @@ export const PurchaseStructureSection: React.FC<PurchaseStructureSectionProps> =
                 NT$ {total.toLocaleString()}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                採購總計
+                {t('charts.purchaseStructure.total')}
               </Typography>
             </Box>
           </Box>
@@ -159,7 +161,7 @@ export const PurchaseStructureSection: React.FC<PurchaseStructureSectionProps> =
             {isLoading ? (
               <Skeleton variant="circular" width={200} height={200} />
             ) : (
-              <ChartEmptyState message="當前區間無數據" height={260} />
+              <ChartEmptyState message={t('common.noDataInRange')} height={260} />
             )}
           </Box>
         )}

@@ -21,7 +21,7 @@ export const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
   actions,
   loading,
   hasData,
-  emptyMessage = '暫無數據',
+  emptyMessage,
   height = CHART_CARD_HEIGHT,
   children,
 }) => (

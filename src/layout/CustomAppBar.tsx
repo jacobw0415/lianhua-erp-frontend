@@ -46,6 +46,7 @@ import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 import { useColorMode } from "@/contexts/useColorMode";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { menuGroups } from "@/layout/menuConfig";
 import { getScrollbarStyles } from "@/utils/scrollbarStyles";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -54,6 +55,7 @@ import { logger } from "@/utils/logger";
 
 import dayjs from "dayjs";
 import type { ElementType } from "react";
+import { useTranslation } from "react-i18next";
 
 /* =====================================================
  * 🔐 型別定義
@@ -68,6 +70,7 @@ interface SearchResult {
 
 export const CustomAppBar = (props: AppBarProps) => {
     const { alwaysOn, ...restProps } = props;
+    const { t, i18n: i18nInstance } = useTranslation("common");
 
     // --- 🔔 通知 Hook ---
     const { notifications, unreadCount, markAsRead } = useNotifications(5000);
@@ -161,12 +164,12 @@ export const CustomAppBar = (props: AppBarProps) => {
     }, []);
 
     const routeMetaMap = useMemo(() => {
-        const map: Record<string, { title: string; icon: ElementType }> = {};
-        (menuGroups as any[]).forEach((group) => {
-            group.items?.forEach((item: any) => {
+        const map: Record<string, { titleKey: string; icon: ElementType }> = {};
+        menuGroups.forEach((group) => {
+            group.items.forEach((item) => {
                 const resolvedIcon: ElementType =
                     typeof item.icon?.type === "string" ? CalendarMonthIcon : item.icon?.type ?? CalendarMonthIcon;
-                map[item.to] = { title: item.label, icon: resolvedIcon };
+                map[item.to] = { titleKey: item.labelKey, icon: resolvedIcon };
             });
         });
         return map;
@@ -178,7 +181,7 @@ export const CustomAppBar = (props: AppBarProps) => {
 
     const activeMeta = matched ? routeMetaMap[matched] : null;
     const ActiveIcon = activeMeta?.icon ?? CalendarMonthIcon;
-    const activeTitle = activeMeta?.title ?? "Dashboard";
+    const activeTitle = activeMeta ? t(activeMeta.titleKey) : t("menu.fallbackTitle");
 
     // 搜尋防抖處理
     useEffect(() => {
@@ -317,7 +320,10 @@ export const CustomAppBar = (props: AppBarProps) => {
                         <Box component="li" {...props} key={option.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderBottom: '1px solid rgba(0,0,0,0.05)', py: 1 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.title}</Typography>
                             <Typography variant="caption" color="text.secondary">
-                                {option.subTitle} {option.type === "進貨" ? `| ${option.type}` : ""}
+                                {option.subTitle}{" "}
+                                {option.type === "進貨" || option.type === "Purchase"
+                                    ? `| ${t("search.typePurchase")}`
+                                    : ""}
                             </Typography>
                         </Box>
                     )}
@@ -326,19 +332,22 @@ export const CustomAppBar = (props: AppBarProps) => {
                 <Box sx={{ display: "flex", ml: "auto", alignItems: "center", flexShrink: 0 }}>
                     {!isTablet ? (
                         <>
-                            <Tooltip title="通知中心">
+                            <Box sx={{ display: "flex", alignItems: "center", mr: 0.25 }}>
+                                <LanguageSwitcher />
+                            </Box>
+                            <Tooltip title={t("appBar.notifications")}>
                                 <IconButton onClick={(e) => setNotiAnchor(e.currentTarget)}>
                                     <Badge badgeContent={unreadCount} color="error">
                                         <NotificationsIcon sx={{ color: "#fff" }} />
                                     </Badge>
                                 </IconButton>
                             </Tooltip>
-                            <Tooltip title="切換模式">
+                            <Tooltip title={t("appBar.toggleTheme")}>
                                 <IconButton onClick={handleToggleTheme}>
                                     {isDark ? <Brightness7Icon sx={{ color: "#fff" }} /> : <Brightness4Icon sx={{ color: "#fff" }} />}
                                 </IconButton>
                             </Tooltip>
-                            <Tooltip title="重新整理">
+                            <Tooltip title={t("appBar.refresh")}>
                                 <IconButton onClick={() => refresh()}>
                                     <RefreshIcon sx={{ color: "#fff" }} />
                                 </IconButton>
@@ -357,7 +366,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                         </IconButton>
                     )}
 
-                    <Tooltip title="使用者選單">
+                    <Tooltip title={t("appBar.userMenu")}>
                         <IconButton onClick={(e) => setUserAnchor(e.currentTarget)} sx={{ ml: { xs: 0, sm: 1 } }}>
                             <AccountCircleIcon sx={{ color: "#fff" }} />
                         </IconButton>
@@ -385,7 +394,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                     }}
                 >
                     <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50', flexShrink: 0 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>通知中心</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>{t("appBar.notifications")}</Typography>
                         {unreadCount > 0 && <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { position: 'relative', transform: 'none' } }} />}
                     </Box>
                     <Divider />
@@ -394,7 +403,7 @@ export const CustomAppBar = (props: AppBarProps) => {
                         {notifications.length === 0 ? (
                             <Box sx={{ p: 6, textAlign: 'center' }}>
                                 <NotificationsIcon sx={{ fontSize: 56, color: 'grey.300', mb: 2, opacity: 0.4 }} />
-                                <Typography variant="body1" color="text.secondary">暫無任何通知</Typography>
+                                <Typography variant="body1" color="text.secondary">{t("appBar.noNotifications")}</Typography>
                             </Box>
                         ) : (
                             notifications.map((n) => {
@@ -441,24 +450,42 @@ export const CustomAppBar = (props: AppBarProps) => {
                     <Divider />
                     <Box sx={{ p: 1, flexShrink: 0, bgcolor: isDark ? alpha('#fff', 0.02) : 'grey.50' }}>
                         <MenuItem sx={{ justifyContent: 'center', borderRadius: 2 }} onClick={() => { setNotiAnchor(null); redirect('/notifications'); }}>
-                            <Typography variant="button" color="success.main" sx={{ fontWeight: 800 }}>查看全部通知</Typography>
+                            <Typography variant="button" color="success.main" sx={{ fontWeight: 800 }}>{t("appBar.viewAllNotifications")}</Typography>
                         </MenuItem>
                     </Box>
                 </Menu>
 
                 {/* --- 其他選單 --- */}
-                <Menu anchorEl={moreMenuAnchor} open={Boolean(moreMenuAnchor)} onClose={() => setMoreMenuAnchor(null)} PaperProps={{ sx: { width: 180, mt: 1, borderRadius: 3 } }}>
+                <Menu anchorEl={moreMenuAnchor} open={Boolean(moreMenuAnchor)} onClose={() => setMoreMenuAnchor(null)} PaperProps={{ sx: { width: 200, mt: 1, borderRadius: 3 } }}>
                     <MenuItem onClick={() => { if (moreMenuButtonRef.current) setNotiAnchor(moreMenuButtonRef.current); setMoreMenuAnchor(null); }}>
                         <ListItemIcon><Badge badgeContent={unreadCount} color="error"><NotificationsIcon fontSize="small" /></Badge></ListItemIcon>
-                        <ListItemText>通知中心</ListItemText>
+                        <ListItemText>{t("appBar.notifications")}</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            void i18nInstance.changeLanguage("zh-TW");
+                            setMoreMenuAnchor(null);
+                        }}
+                        selected={!i18nInstance.language.startsWith("en")}
+                    >
+                        <ListItemText>{t("lang.zhTW")}</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            void i18nInstance.changeLanguage("en");
+                            setMoreMenuAnchor(null);
+                        }}
+                        selected={i18nInstance.language.startsWith("en")}
+                    >
+                        <ListItemText>{t("lang.en")}</ListItemText>
                     </MenuItem>
                     <MenuItem onClick={handleToggleTheme}>
                         <ListItemIcon>{isDark ? <Brightness7Icon fontSize="small" /> : <Brightness4Icon fontSize="small" />}</ListItemIcon>
-                        <ListItemText>{isDark ? '淺色模式' : '深色模式'}</ListItemText>
+                        <ListItemText>{isDark ? t("appBar.lightMode") : t("appBar.darkMode")}</ListItemText>
                     </MenuItem>
                     <MenuItem onClick={() => { refresh(); setMoreMenuAnchor(null); }}>
                         <ListItemIcon><RefreshIcon fontSize="small" /></ListItemIcon>
-                        <ListItemText>重新整理</ListItemText>
+                        <ListItemText>{t("appBar.refresh")}</ListItemText>
                     </MenuItem>
                 </Menu>
 
@@ -501,14 +528,14 @@ export const CustomAppBar = (props: AppBarProps) => {
                         <MenuItem sx={{ py: 1.5, cursor: "default" }} disabled>
                             <Box sx={{ display: "flex", flexDirection: "column" }}>
                                 <Typography variant="body2" sx={{ fontWeight: 600 }}>{identity.fullName || identity.id}</Typography>
-                                <Typography variant="caption" color="text.secondary">已登入</Typography>
+                                <Typography variant="caption" color="text.secondary">{t("appBar.loggedIn")}</Typography>
                             </Box>
                         </MenuItem>
                     )}
                     {identity && <Divider />}
                     <MenuItem onClick={handleLogout} sx={{ py: 1.5, color: "error.main", "&:hover": { backgroundColor: "action.hover" } }}>
                         <ListItemIcon sx={{ color: "error.main", minWidth: 36 }}><LogoutIcon fontSize="small" /></ListItemIcon>
-                        <ListItemText primary="登出系統" />
+                        <ListItemText primary={t("appBar.logout")} />
                     </MenuItem>
                 </Menu>
             </Toolbar>

@@ -4,6 +4,10 @@ import {
   buildExportQueryParams,
   buildListQueryParams,
 } from "@/providers/listQueryParams";
+import {
+  appendLangQueryIfMissing,
+  applyAcceptLanguageHeader,
+} from "@/utils/apiLocale";
 
 function parseExportErrorMessage(response: Response, bodyText: string): string {
   let message = `匯出失敗（${response.status}）`;
@@ -45,14 +49,19 @@ export async function downloadResourceExport(
     format: string;
     /** 與後端約定之 `columns` query（逗號分隔欄位 key） */
     columns?: string[];
+    /** 匯出表頭語系需與 UI 不同時（後端 `exportLang`） */
+    exportLang?: "zh-TW" | "en";
   }
 ): Promise<void> {
   const query = buildExportQueryParams(resource, listParams, {
     scope: options.scope,
     format: options.format,
     columns: options.columns,
+    exportLang: options.exportLang,
   });
-  const url = `${getApiUrl()}/${resource}/export?${query.toString()}`;
+  const url = appendLangQueryIfMissing(
+    `${getApiUrl()}/${resource}/export?${query.toString()}`
+  );
 
   const token =
     typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
@@ -62,6 +71,7 @@ export async function downloadResourceExport(
       : "Bearer";
 
   const headers = new Headers();
+  applyAcceptLanguageHeader(headers);
   if (token) {
     headers.set("Authorization", `${tokenType} ${token}`);
   }
@@ -110,14 +120,20 @@ export async function downloadResourceExport(
 export async function downloadFilterOnlyResourceExport(
   resource: string,
   listParams: BuildListQueryParamsInput,
-  format: "xlsx" | "csv"
+  format: "xlsx" | "csv",
+  options?: { exportLang?: "zh-TW" | "en" }
 ): Promise<void> {
   const query = buildListQueryParams(resource, listParams);
   query.delete("page");
   query.delete("size");
   query.delete("sort");
   query.set("format", format);
-  const url = `${getApiUrl()}/${resource}/export?${query.toString()}`;
+  if (options?.exportLang) {
+    query.set("exportLang", options.exportLang === "en" ? "en" : "zh-TW");
+  }
+  const url = appendLangQueryIfMissing(
+    `${getApiUrl()}/${resource}/export?${query.toString()}`
+  );
 
   const token =
     typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
@@ -127,6 +143,7 @@ export async function downloadFilterOnlyResourceExport(
       : "Bearer";
 
   const headers = new Headers();
+  applyAcceptLanguageHeader(headers);
   if (token) {
     headers.set("Authorization", `${tokenType} ${token}`);
   }

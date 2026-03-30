@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Box, Snackbar, useTheme, Alert as MuiAlert, Skeleton } from '@mui/material';
 
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -90,6 +91,7 @@ const STAT_TITLE_ICON_MAP: Record<string, React.ReactNode> = {
 const DashboardContent: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t: td, i18n } = useTranslation('dashboard');
   const ctx = useDashboardContext();
 
   const {
@@ -136,33 +138,38 @@ const DashboardContent: React.FC = () => {
     return applyBodyScrollbarStyles(theme);
   }, [theme]);
 
-  const greetingData = useMemo(() => getGreeting(theme.palette), [theme.palette]);
-  const formattedDateStr = useMemo(() => formatDashboardDate(currentTime), [currentTime]);
+  const greetingData = useMemo(() => getGreeting(theme.palette, td), [theme.palette, td]);
+  const formattedDateStr = useMemo(
+    () => formatDashboardDate(currentTime, i18n.language),
+    [currentTime, i18n.language]
+  );
   const formattedTimeStr = useMemo(() => formatDashboardTime(currentTime), [currentTime]);
 
   const alerts = useMemo(() => {
     const list: { label: string; path: string; color: 'warning' | 'error'; icon: React.ReactNode }[] = [];
     if (stats.pendingOrderCount > 0) {
       list.push({
-        label: `待處理訂單 (${stats.pendingOrderCount})`,
+        label: td('alerts.pendingOrders', { count: stats.pendingOrderCount }),
         path: '/orders',
         color: 'warning',
         icon: <WarningIcon />,
       });
     }
     if (stats.accountsPayable > ALERT_AP_WARNING_THRESHOLD) {
-      list.push({ label: '應付帳款偏高', path: '/ap', color: 'error', icon: <MoneyOffIcon /> });
+      list.push({ label: td('alerts.apHigh'), path: '/ap', color: 'error', icon: <MoneyOffIcon /> });
     }
     return list;
-  }, [stats]);
+  }, [stats, td]);
 
   const quickActions = useMemo(
     () =>
       QUICK_ACTIONS_CONFIG.map((config, i) => ({
-        ...config,
+        label: td(config.labelKey),
+        path: config.path,
+        color: config.color,
         icon: [<PointOfSaleIcon key="sales" />, <Inventory2Icon key="purchases" />, <MoneyOffIcon key="expenses" />, <ShoppingBagIcon key="orders" />][i],
       })),
-    []
+    [td]
   );
 
   const alertsForQuick = useMemo(
@@ -179,10 +186,11 @@ const DashboardContent: React.FC = () => {
           loading,
           navigate,
           STAT_ICON_MAP,
-          STAT_TITLE_ICON_MAP
+          STAT_TITLE_ICON_MAP,
+          td
         )
       ),
-    [stats, loading, navigate]
+    [stats, loading, navigate, td]
   );
 
   return (
@@ -206,7 +214,7 @@ const DashboardContent: React.FC = () => {
 
       {statSections.map((section) => (
         <StatSection
-          key={section.title}
+          key={section.id}
           title={section.title}
           titleIcon={section.titleIcon}
           items={section.items}
@@ -225,8 +233,8 @@ const DashboardContent: React.FC = () => {
 
       <Box sx={{ mb: 4 }}>
         <SectionHeader
-          title="營運與收現狀況"
-          subtitle="Operation & Cash Collection Overview"
+          title={td('sections.operationCash.title')}
+          subtitle={td('sections.operationCash.subtitle')}
           icon={<AssessmentIcon color="primary" />}
         />
         <Suspense
@@ -279,14 +287,14 @@ const DashboardContent: React.FC = () => {
 
       {error && (
         <MuiAlert severity="error" sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 2000 }}>
-          載入數據時發生錯誤：{error.message}
+          {td('error.loadFailed', { message: error.message })}
         </MuiAlert>
       )}
       <Snackbar
         open={refreshSuccess}
         autoHideDuration={DASHBOARD_SNACKBAR_DURATION_MS}
         onClose={() => setRefreshSuccess(false)}
-        message="儀表板數據已更新"
+        message={td('snackbar.dataUpdated')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
     </DashboardLayout>

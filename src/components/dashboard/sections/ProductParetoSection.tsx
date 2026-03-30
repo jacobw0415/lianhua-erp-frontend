@@ -20,6 +20,7 @@ import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke } from '@/utils/chartTheme';
 import type { ProductParetoPoint } from '@/hooks/useDashboardAnalytics';
+import { useTranslation } from 'react-i18next';
 
 export interface ProductParetoSectionProps {
   data: ProductParetoPoint[];
@@ -35,6 +36,7 @@ export const ProductParetoSection: React.FC<ProductParetoSectionProps> = ({
   pareto80Threshold,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const gridStroke = getChartGridStroke(theme);
 
   /** 商品貢獻度：自訂 Tooltip，金額使用對應色調 */
@@ -60,7 +62,7 @@ export const ProductParetoSection: React.FC<ProductParetoSectionProps> = ({
           component="span"
           sx={{ display: 'block', color: item.color ?? theme.palette.text.primary }}
         >
-          金額: {item.value != null ? `NT$ ${Number(item.value).toLocaleString()}` : '—'}
+          {t('charts.productPareto.tooltipAmount')}: {item.value != null ? `NT$ ${Number(item.value).toLocaleString()}` : '—'}
         </Typography>
       </Paper>
     );
@@ -70,7 +72,7 @@ export const ProductParetoSection: React.FC<ProductParetoSectionProps> = ({
     <DashboardChartCard
       title={
         <>
-          <PieChartIcon fontSize="small" /> 商品貢獻度分析（80／20 法則）
+          <PieChartIcon fontSize="small" /> {t('charts.productPareto.title')}
         </>
       }
       subtitle={
@@ -123,7 +125,7 @@ export const ProductParetoSection: React.FC<ProductParetoSectionProps> = ({
             )}
             <Bar
               dataKey="totalAmount"
-              name="金額"
+              name={t('charts.productPareto.tooltipAmount')}
               fill={CHART_COLORS.netProfit}
               radius={[0, 6, 6, 0]}
               maxBarSize={24}

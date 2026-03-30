@@ -25,6 +25,7 @@ import { CHART_COLORS } from '@/constants/chartColors';
 import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke } from '@/utils/chartTheme';
+import { useTranslation } from 'react-i18next';
 
 type OrderMetric = 'amount' | 'count';
 
@@ -63,6 +64,7 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
   blockLayout = false,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const gridStroke = getChartGridStroke(theme);
 
   /** 訂單履約進度：自訂 Tooltip，數值使用對應色調 */
@@ -70,7 +72,8 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
     const { active, payload, label } = props;
     if (!active || !payload?.length) return null;
     const item = payload[0];
-    const name = orderFunnelMetric === 'amount' ? '訂單金額' : '訂單筆數';
+    const name =
+      orderFunnelMetric === 'amount' ? t('charts.advanced.orderAmount') : t('charts.advanced.orderCount');
     const displayValue =
       orderFunnelMetric === 'amount'
         ? `NT$ ${Number(item.value).toLocaleString()}`
@@ -134,7 +137,7 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
     <Paper sx={{ p: 3, borderRadius: 2, minHeight: 360, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-          訂單履約進度分析
+          {t('charts.advanced.funnelTitle')}
         </Typography>
         <ToggleButtonGroup
           size="small"
@@ -143,8 +146,8 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
           onChange={(_, v) => v != null && setOrderFunnelMetric(v)}
           sx={{ height: 32 }}
         >
-          <ToggleButton value="amount">金額</ToggleButton>
-          <ToggleButton value="count">筆數</ToggleButton>
+          <ToggleButton value="amount">{t('charts.advanced.amount')}</ToggleButton>
+          <ToggleButton value="count">{t('charts.advanced.count')}</ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Box sx={{ flexGrow: 1, minHeight: 280, minWidth: 0 }}>
@@ -184,7 +187,11 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
                 />
                 <Bar
                   dataKey={orderFunnelMetric === 'amount' ? 'totalAmount' : 'orderCount'}
-                  name={orderFunnelMetric === 'amount' ? '訂單金額' : '訂單筆數'}
+                  name={
+                    orderFunnelMetric === 'amount'
+                      ? t('charts.advanced.orderAmount')
+                      : t('charts.advanced.orderCount')
+                  }
                   fill={CHART_COLORS.secondary}
                   radius={[0, 8, 8, 0]}
                   maxBarSize={28}
@@ -210,7 +217,7 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
   const accountsAgingPaper = (
     <Paper sx={{ p: 3, borderRadius: 2, minHeight: 360, display: 'flex', flexDirection: 'column' }}>
       <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-        應收／應付帳款帳齡分析
+        {t('charts.advanced.agingTitle')}
       </Typography>
       <Box sx={{ flexGrow: 1, minHeight: 280, minWidth: 0 }}>
         {hasMounted && !isAccountsAgingLoading && accountsAging && accountsAging.length > 0 ? (
@@ -240,7 +247,7 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
                 />
                 <Bar
                   dataKey="arAmount"
-                  name="應收帳款"
+                  name={t('charts.advanced.ar')}
                   stackId="amount"
                   fill={CHART_COLORS.revenue}
                   radius={[8, 8, 0, 0]}
@@ -250,7 +257,7 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
                 />
                 <Bar
                   dataKey="apAmount"
-                  name="應付帳款"
+                  name={t('charts.advanced.ap')}
                   stackId="amount"
                   fill={CHART_COLORS.expense}
                   radius={[8, 8, 0, 0]}
@@ -279,7 +286,7 @@ export const AdvancedAnalysisSection: React.FC<AdvancedAnalysisSectionProps> = (
       {!blockLayout && (
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-            進階營運分析
+            {t('charts.advanced.sectionTitle')}
           </Typography>
         </Box>
       )}

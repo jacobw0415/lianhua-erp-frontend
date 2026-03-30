@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
 import { useDashboardFilters } from '@/hooks/useDashboardFilters';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -148,6 +149,7 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
   const [hasMounted, setHasMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const { t: tDashboard } = useTranslation('dashboard');
 
   const filters = useDashboardFilters();
   const {
@@ -225,6 +227,7 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
     retentionDormantOnly,
     stats,
     breakEvenPeriod,
+    t: tDashboard,
   });
 
   const canViewCostStructure = useCanViewCostStructure();

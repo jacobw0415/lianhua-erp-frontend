@@ -18,6 +18,10 @@ import {
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { getApiUrl, getWsUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 import { logger, logError } from "@/utils/logger";
 import type { OnlineUserDto, UserOnlineEventDto, WsConnectionStatus } from "@/types/onlineUsers";
 
@@ -50,8 +54,10 @@ export function OnlineUsersProvider({ children }: { children: ReactNode }) {
     if (!token) return;
 
     try {
-      const res = await fetch(`${getApiUrl()}/users/online`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch(appendLangQueryIfMissing(`${getApiUrl()}/users/online`), {
+        headers: mergeHeadersWithAcceptLanguage({
+          Authorization: `Bearer ${token}`,
+        }),
       });
       if (!res.ok) return;
       const json = await res.json();

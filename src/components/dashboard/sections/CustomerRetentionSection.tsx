@@ -16,6 +16,7 @@ import { ChartEmptyState } from '../ChartEmptyState';
 import { getScrollbarStyles } from '@/utils/scrollbarStyles';
 import { useTheme } from '@mui/material/styles';
 import type { CustomerRetentionPoint } from '@/hooks/useDashboardAnalytics';
+import { useTranslation } from 'react-i18next';
 
 export interface CustomerRetentionSectionProps {
   data: CustomerRetentionPoint[];
@@ -31,6 +32,7 @@ export const CustomerRetentionSection: React.FC<CustomerRetentionSectionProps> =
   onDormantOnlyChange,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const scrollbarStyles = getScrollbarStyles(theme);
   const displayList = data.slice(0, 8);
 
@@ -58,7 +60,7 @@ export const CustomerRetentionSection: React.FC<CustomerRetentionSectionProps> =
           variant="subtitle1"
           sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}
         >
-          <PersonSearchIcon fontSize="small" /> 客戶留存與回購風險分析
+          <PersonSearchIcon fontSize="small" /> {t('charts.customerRetention.title')}
         </Typography>
         <ToggleButtonGroup
           size="small"
@@ -67,8 +69,8 @@ export const CustomerRetentionSection: React.FC<CustomerRetentionSectionProps> =
           onChange={(_, v) => onDormantOnlyChange(v === 'dormant')}
           sx={{ height: 28 }}
         >
-          <ToggleButton value="all">全部</ToggleButton>
-          <ToggleButton value="dormant">沉睡風險 (&gt;60天)</ToggleButton>
+          <ToggleButton value="all">{t('charts.customerRetention.all')}</ToggleButton>
+          <ToggleButton value="dormant">{t('charts.customerRetention.dormant')}</ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Box
@@ -93,7 +95,10 @@ export const CustomerRetentionSection: React.FC<CustomerRetentionSectionProps> =
               >
                 <ListItemText
                   primary={row.customerName}
-                  secondary={`最後訂單 ${row.lastOrderDate} · ${row.daysSinceLastOrder} 天前`}
+                  secondary={t('charts.customerRetention.lastOrder', {
+                    date: row.lastOrderDate,
+                    days: row.daysSinceLastOrder,
+                  })}
                   primaryTypographyProps={{ fontWeight: 600, fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
@@ -107,12 +112,12 @@ export const CustomerRetentionSection: React.FC<CustomerRetentionSectionProps> =
             ))}
             {data.length > 8 && (
               <ListItem>
-                <ListItemText secondary={`共 ${data.length} 筆，僅顯示前 8 筆`} />
+                <ListItemText secondary={t('charts.customerRetention.summary', { total: data.length })} />
               </ListItem>
             )}
           </List>
         ) : (
-          <ChartEmptyState message="暫無數據" height={260} />
+          <ChartEmptyState message={t('common.noData')} height={260} />
         )}
       </Box>
     </Paper>

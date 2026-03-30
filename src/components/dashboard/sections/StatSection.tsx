@@ -31,7 +31,7 @@ export const StatSection: React.FC<StatSectionProps> = ({ title, titleIcon, item
       }}
     >
       {items.map((item) => (
-        <StatCard key={item.title} {...item} />
+        <StatCard key={item.rowKey ?? item.title} {...item} />
       ))}
     </Box>
   </>

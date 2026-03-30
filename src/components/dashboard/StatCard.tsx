@@ -4,6 +4,8 @@ import { Card, CardContent, Box, Typography, Skeleton, alpha } from '@mui/materi
 export interface StatCardProps {
   icon: React.ReactNode;
   title: string;
+  /** 語系切換時穩定的 key，供列表 key 使用 */
+  rowKey?: string;
   value: React.ReactNode;
   iconColor: string;
   loading?: boolean;

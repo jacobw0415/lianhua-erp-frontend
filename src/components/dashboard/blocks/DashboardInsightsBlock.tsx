@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PeopleIcon from '@mui/icons-material/People';
 import { SectionHeader } from '@/components/dashboard/SectionHeader';
@@ -14,6 +15,7 @@ import { DASHBOARD_GRID } from '@/constants/dashboardConstants';
 import { useDashboardContext } from '@/contexts/DashboardContext';
 
 export const DashboardInsightsBlock: React.FC = () => {
+  const { t } = useTranslation('dashboard');
   const {
     canViewCostStructure,
     filters,
@@ -59,8 +61,8 @@ export const DashboardInsightsBlock: React.FC = () => {
     <>
       <Box sx={{ mb: 4 }}>
         <SectionHeader
-          title="成本結構與經營洞察"
-          subtitle="Cost Structure & Business Insights"
+          title={t('sections.costInsights.title')}
+          subtitle={t('sections.costInsights.subtitle')}
           icon={<ReceiptIcon color="primary" />}
         />
         <Box
@@ -106,7 +108,7 @@ export const DashboardInsightsBlock: React.FC = () => {
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                成本結構區塊僅限 OWNER / MANAGER 角色檢視
+                {t('charts.costRestricted')}
               </Typography>
             </Box>
           )}
@@ -138,8 +140,8 @@ export const DashboardInsightsBlock: React.FC = () => {
 
       <Box sx={{ mb: 4 }}>
         <SectionHeader
-          title="客戶關係與營運風險"
-          subtitle="Customer & Operational Risk Management"
+          title={t('sections.customerRisk.title')}
+          subtitle={t('sections.customerRisk.subtitle')}
           icon={<PeopleIcon color="primary" />}
         />
         <Box sx={{ display: 'grid', gridTemplateColumns: DASHBOARD_GRID.columns, gap: DASHBOARD_GRID.gap, alignItems: 'stretch', mb: DASHBOARD_GRID.mb }}>

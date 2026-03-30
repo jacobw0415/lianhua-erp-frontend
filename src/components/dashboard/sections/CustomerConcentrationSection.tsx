@@ -21,6 +21,8 @@ import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartT
 import { useTheme } from '@mui/material/styles';
 import type { CustomerConcentrationDonutItem } from '@/hooks/useDashboardDerivedData';
 import type { CustomerConcentrationPoint } from '@/hooks/useDashboardAnalytics';
+import { useTranslation } from 'react-i18next';
+import 'dayjs/locale/en';
 
 export interface CustomerConcentrationSectionProps {
   donutData: CustomerConcentrationDonutItem[];
@@ -50,6 +52,8 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
   showWarning,
 }) => {
   const theme = useTheme();
+  const { t, i18n } = useTranslation('dashboard');
+  const dayjsLocale = i18n.language.startsWith('en') ? 'en' : 'zh-tw';
   const WARNING_TOP3_COLORS = ['#F57C00', '#FB8C00', '#FFB74D'] as const;
 
   const getSegmentColor = React.useCallback(
@@ -124,12 +128,12 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
           variant="subtitle1"
           sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}
         >
-          <DonutLargeIcon fontSize="small" /> 客戶採購集中度分析
+          <DonutLargeIcon fontSize="small" /> {t('charts.customerConc.title')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'nowrap' }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="zh-tw">
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
             <DatePicker
-              label="開始日期"
+              label={t('charts.customerConc.startDate')}
               value={startDate ? dayjs(startDate) : null}
               onChange={(v) => onStartDateChange(v ? v.format('YYYY-MM-DD') : defaultStart)}
               format="YYYY-MM-DD"
@@ -137,7 +141,7 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
               slotProps={{ textField: { size: 'small', sx: { width: 168 } } }}
             />
             <DatePicker
-              label="結束日期"
+              label={t('charts.customerConc.endDate')}
               value={endDate ? dayjs(endDate) : null}
               onChange={(v) => onEndDateChange(v ? v.format('YYYY-MM-DD') : defaultEnd)}
               format="YYYY-MM-DD"
@@ -156,7 +160,7 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
         <Chip
           size="small"
           icon={<WarningIcon />}
-          label="前三大客戶佔比 > 70%"
+          label={t('charts.customerConc.warningTop3')}
           color="warning"
           sx={{ alignSelf: 'flex-start', mb: 1 }}
         />
@@ -166,7 +170,7 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
         {isLoading ? (
           <Skeleton variant="rectangular" width="100%" height="100%" />
         ) : donutData.length === 0 ? (
-          <ChartEmptyState message="暫無數據" height={260} />
+          <ChartEmptyState message={t('common.noData')} height={260} />
         ) : (
           <>
             <ChartContainer height={260}>
@@ -228,7 +232,7 @@ export const CustomerConcentrationSection: React.FC<CustomerConcentrationSection
                 NT$ {total.toLocaleString()}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                營收總計
+                {t('charts.customerConc.revenueTotal')}
               </Typography>
             </Box>
           </>

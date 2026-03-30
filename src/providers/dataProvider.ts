@@ -9,6 +9,11 @@ import {
   unwrapAuthLoginPayload,
 } from "@/providers/authProvider";
 import { buildListQueryParams } from "@/providers/listQueryParams";
+import {
+  appendLangQueryIfMissing,
+  applyAcceptLanguageHeader,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 
 /* ========================================================
  * 📝 型別擴充定義
@@ -108,6 +113,7 @@ export const createDataProvider = ({
   /* ===================== 核心 HttpClient ===================== */
   const httpClient = (url: string, options: ExtendedOptions = {}) => {
     const headers = new Headers(options.headers || {});
+    applyAcceptLanguageHeader(headers);
     headers.set("Accept", "application/json");
 
     const hasBody = options.body != null;
@@ -126,7 +132,8 @@ export const createDataProvider = ({
       options.meta = { ...(options.meta || {}), _tokenSnapshot: token };
     }
 
-    return fetchUtils.fetchJson(url, { ...options, headers });
+    const urlWithLang = appendLangQueryIfMissing(url);
+    return fetchUtils.fetchJson(urlWithLang, { ...options, headers });
   };
 
   /* ===================== 安全包裝層 (錯誤攔截) ===================== */
@@ -168,11 +175,17 @@ export const createDataProvider = ({
           const refreshToken = typeof localStorage !== "undefined" ? localStorage.getItem("refreshToken") : null;
           if (refreshToken) {
             try {
-              const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refreshToken }),
+              const refreshHeaders = mergeHeadersWithAcceptLanguage({
+                "Content-Type": "application/json",
               });
+              const refreshResponse = await fetch(
+                appendLangQueryIfMissing(`${apiUrl}/auth/refresh`),
+                {
+                  method: "POST",
+                  headers: refreshHeaders,
+                  body: JSON.stringify({ refreshToken }),
+                }
+              );
               const refreshJson = await refreshResponse.json().catch(() => null);
 
               if (refreshResponse.ok && refreshJson) {

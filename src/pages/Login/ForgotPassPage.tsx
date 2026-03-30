@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useColorMode } from "@/contexts/useColorMode";
 import {
   Box,
@@ -17,16 +18,18 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 import { logger } from "@/utils/logger";
 
 const apiUrl = getApiUrl();
 
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
 
-const TITLE = "忘記密碼";
-const SUBTITLE = "輸入您的 Email，我們將寄送重設密碼連結";
-
 export const ForgotPassPage = () => {
+  const { t } = useTranslation("common");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -75,7 +78,7 @@ export const ForgotPassPage = () => {
     setError(null);
     const trimmed = email.trim();
     if (!trimmed) {
-      setError("請輸入 Email");
+      setError(t("forgotPassword.errorEmailRequired"));
       return;
     }
     setIsSubmitting(true);
@@ -91,9 +94,9 @@ export const ForgotPassPage = () => {
         email: trimmed,
         ...(resetLinkBaseUrl ? { resetLinkBaseUrl } : {}),
       };
-      const res = await fetch(`${apiUrl}/auth/forgot-password`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/forgot-password`), {
         method: "POST",
-        headers: new Headers({ "Content-Type": "application/json" }),
+        headers: mergeHeadersWithAcceptLanguage({ "Content-Type": "application/json" }),
         body: JSON.stringify(body),
       });
 
@@ -121,31 +124,29 @@ export const ForgotPassPage = () => {
       }
       // 409：該使用者已有未使用的重設 token（後端唯一約束），引導使用者查信箱或稍後再試
       if (res.status === 409) {
-        setError(
-          "此 Email 已有重設密碼請求，請至信箱（含垃圾郵件）查收先前寄出的連結；若未收到請稍後再試或聯絡管理員。"
-        );
+        setError(t("forgotPassword.error409"));
         return;
       }
       // 400 過於頻繁 / Rate Limit
       if (res.status === 400) {
         const friendly =
-          /頻繁|稍後再試/i.test(message || "") ||
+          /頻繁|稍後再試|frequent|rate|too many/i.test(message || "") ||
           /嘗試過多/i.test(message || "")
-            ? "操作過於頻繁，請稍後再試。"
+            ? t("forgotPassword.errorRateLimit")
             : "";
-        setError(friendly || "操作過於頻繁，請稍後再試。");
+        setError(friendly || t("forgotPassword.errorRateLimit"));
         setCooldown(60);
         return;
       }
       // 500：統一泛用錯誤訊息
       if (res.status >= 500) {
-        setError("系統發生錯誤，請稍後再試或聯絡系統管理員");
+        setError(t("forgotPassword.errorServer"));
         return;
       }
-      setError(message || "發送失敗，請稍後再試或聯絡管理員");
+      setError(message || t("forgotPassword.errorSendFailed"));
     } catch (err) {
       logger.devError("[ForgotPass] request failed", err);
-      setError("無法連線，請檢查網路後再試");
+      setError(t("forgotPassword.errorNetwork"));
     } finally {
       setIsSubmitting(false);
     }
@@ -201,11 +202,11 @@ export const ForgotPassPage = () => {
                 <EmailOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
-                {TITLE}
+                {t("forgotPassword.successTitle")}
               </Typography>
             </Box>
             <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
-              若該 Email 已註冊，系統將寄出重設密碼連結。請至信箱（含垃圾郵件）查收；若未收到請聯絡管理員。
+              {t("forgotPassword.successAlert")}
             </Alert>
             <Box sx={{ mt: 2, textAlign: "center" }}>
               <Link
@@ -219,7 +220,7 @@ export const ForgotPassPage = () => {
                   gap: 4,
                 }}
               >
-                <ArrowBackIcon sx={{ fontSize: 18 }} /> 返回登入
+                <ArrowBackIcon sx={{ fontSize: 18 }} /> {t("forgotPassword.backToLogin")}
               </Link>
             </Box>
           </CardContent>
@@ -249,10 +250,10 @@ export const ForgotPassPage = () => {
               <EmailOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
-              {TITLE}
+              {t("forgotPassword.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {SUBTITLE}
+              {t("forgotPassword.subtitle")}
             </Typography>
           </Box>
 
@@ -303,10 +304,10 @@ export const ForgotPassPage = () => {
               }}
             >
               {isSubmitting
-                ? "發送中…"
+                ? t("forgotPassword.submitting")
                 : cooldown > 0
-                  ? `請 ${cooldown} 秒後再試`
-                  : "發送重設連結"}
+                  ? t("forgotPassword.cooldown", { seconds: cooldown })
+                  : t("forgotPassword.submit")}
             </Button>
             <Box sx={{ mt: 2, textAlign: "center" }}>
               <Link
@@ -321,7 +322,7 @@ export const ForgotPassPage = () => {
                   gap: 4,
                 }}
               >
-                <ArrowBackIcon sx={{ fontSize: 18 }} /> 返回登入
+                <ArrowBackIcon sx={{ fontSize: 18 }} /> {t("forgotPassword.backToLogin")}
               </Link>
             </Box>
           </Box>

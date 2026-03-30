@@ -6,137 +6,144 @@ import React from "react";
 export type MenuRole = "ROLE_SUPER_ADMIN" | "ROLE_ADMIN" | "ROLE_USER";
 
 export interface MenuItem {
-  label: string;
+  /** i18n key，例如 menu.items.suppliers */
+  labelKey: string;
   to: string;
   icon?: React.ReactElement;
-  /** 僅具此角色以上可見；未設則所有人可見 */
   requiredRole?: MenuRole;
-  /** 細部權限：具任一即可見（與後端 @PreAuthorize 對齊，如 user:view、role:view） */
   requiredAuthorities?: string[];
 }
 
 export interface MenuGroup {
-  label: string;
-  icon: React.ReactElement; // ← 同樣改成 ReactElement
+  /** 穩定 id，供側欄展開狀態用 */
+  id: string;
+  labelKey: string;
+  icon: React.ReactElement;
   items: MenuItem[];
 }
 
 // ---------------------
 // Icons
 // ---------------------
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import PaymentIcon from '@mui/icons-material/Payment';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import PaymentIcon from "@mui/icons-material/Payment";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
-import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
-import GroupIcon from '@mui/icons-material/Group';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
+import GroupIcon from "@mui/icons-material/Group";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 
-import CategoryIcon from '@mui/icons-material/Category';
-import InventoryIcon from '@mui/icons-material/Inventory';
+import CategoryIcon from "@mui/icons-material/Category";
+import InventoryIcon from "@mui/icons-material/Inventory";
 
-import SegmentIcon from '@mui/icons-material/Segment';
-import LabelImportantIcon from '@mui/icons-material/LabelImportant';
-import MoneyOffIcon from '@mui/icons-material/MoneyOff';
-import BadgeIcon from '@mui/icons-material/Badge';
+import SegmentIcon from "@mui/icons-material/Segment";
+import LabelImportantIcon from "@mui/icons-material/LabelImportant";
+import MoneyOffIcon from "@mui/icons-material/MoneyOff";
+import BadgeIcon from "@mui/icons-material/Badge";
 
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import InsightsIcon from '@mui/icons-material/Insights';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TableViewIcon from '@mui/icons-material/TableView';
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import InsightsIcon from "@mui/icons-material/Insights";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TableViewIcon from "@mui/icons-material/TableView";
 
-import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
-import SecurityIcon from '@mui/icons-material/Security';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import PasswordIcon from '@mui/icons-material/Password';
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import SecurityIcon from "@mui/icons-material/Security";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import PasswordIcon from "@mui/icons-material/Password";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
-import ShoppingCartCheckoutTwoToneIcon from '@mui/icons-material/ShoppingCartCheckoutTwoTone';
-import StoreMallDirectoryTwoToneIcon from '@mui/icons-material/StoreMallDirectoryTwoTone';
-import NotificationIcon from '@mui/icons-material/Notifications';
-import FactCheckIcon from '@mui/icons-material/FactCheck';
+import ShoppingCartCheckoutTwoToneIcon from "@mui/icons-material/ShoppingCartCheckoutTwoTone";
+import StoreMallDirectoryTwoToneIcon from "@mui/icons-material/StoreMallDirectoryTwoTone";
+import NotificationIcon from "@mui/icons-material/Notifications";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
 
 // ---------------------
 // Menu Groups
 // ---------------------
 export const menuGroups: MenuGroup[] = [
   {
-    label: "儀表板",
+    id: "dashboard",
+    labelKey: "menu.groups.dashboard",
     icon: <SpaceDashboardIcon />,
     items: [
-      { label: "儀表資訊", to: "/", icon: <DashboardCustomizeIcon /> },
+      { labelKey: "menu.items.dashboardOverview", to: "/", icon: <DashboardCustomizeIcon /> },
     ],
   },
 
   {
-    label: "採購管理",
+    id: "procurement",
+    labelKey: "menu.groups.procurement",
     icon: <ShoppingCartCheckoutTwoToneIcon />,
     items: [
-      { label: "廠商名單", to: "/suppliers", icon: <StorefrontIcon /> },
-      { label: "進貨列表", to: "/purchases", icon: <Inventory2Icon /> },
-      { label: "付款紀錄", to: "/payments", icon: <PaymentIcon /> },
-      { label: "應付帳款", to: "/ap", icon: <ReceiptLongIcon /> },
+      { labelKey: "menu.items.suppliers", to: "/suppliers", icon: <StorefrontIcon /> },
+      { labelKey: "menu.items.purchases", to: "/purchases", icon: <Inventory2Icon /> },
+      { labelKey: "menu.items.payments", to: "/payments", icon: <PaymentIcon /> },
+      { labelKey: "menu.items.ap", to: "/ap", icon: <ReceiptLongIcon /> },
     ],
   },
 
   {
-    label: "銷售管理",
+    id: "sales",
+    labelKey: "menu.groups.sales",
     icon: <PointOfSaleIcon />,
     items: [
-      { label: "現場銷售", to: "/sales", icon: <StoreMallDirectoryTwoToneIcon /> },
-      { label: "客戶名單", to: "/order_customers", icon: <GroupIcon /> },
-      { label: "訂單列表", to: "/orders", icon: <ShoppingBagIcon /> },
-      { label: "收款紀錄", to: "/receipts", icon: <AttachMoneyIcon /> },
-      { label: "應收帳款", to: "/ar", icon: <RequestQuoteIcon /> },
+      { labelKey: "menu.items.sales", to: "/sales", icon: <StoreMallDirectoryTwoToneIcon /> },
+      { labelKey: "menu.items.orderCustomers", to: "/order_customers", icon: <GroupIcon /> },
+      { labelKey: "menu.items.orders", to: "/orders", icon: <ShoppingBagIcon /> },
+      { labelKey: "menu.items.receipts", to: "/receipts", icon: <AttachMoneyIcon /> },
+      { labelKey: "menu.items.ar", to: "/ar", icon: <RequestQuoteIcon /> },
     ],
   },
 
   {
-    label: "商品管理",
+    id: "products",
+    labelKey: "menu.groups.products",
     icon: <InventoryIcon />,
     items: [
-      { label: "商品分類", to: "/product_categories", icon: <CategoryIcon /> },
-      { label: "商品資料", to: "/products", icon: <InventoryIcon /> },
+      { labelKey: "menu.items.productCategories", to: "/product_categories", icon: <CategoryIcon /> },
+      { labelKey: "menu.items.products", to: "/products", icon: <InventoryIcon /> },
     ],
   },
 
   {
-    label: "費用管理",
+    id: "expenses",
+    labelKey: "menu.groups.expenses",
     icon: <SegmentIcon />,
     items: [
-      { label: "費用分類", to: "/expense_categories", icon: <LabelImportantIcon /> },
-      { label: "支出紀錄", to: "/expenses", icon: <MoneyOffIcon /> },
-      { label: "員工管理", to: "/employees", icon: <BadgeIcon /> },
+      { labelKey: "menu.items.expenseCategories", to: "/expense_categories", icon: <LabelImportantIcon /> },
+      { labelKey: "menu.items.expenses", to: "/expenses", icon: <MoneyOffIcon /> },
+      { labelKey: "menu.items.employees", to: "/employees", icon: <BadgeIcon /> },
     ],
   },
 
   {
-    label: "財務報表",
+    id: "reports",
+    labelKey: "menu.groups.reports",
     icon: <AssessmentIcon />,
     items: [
-      { label: "現金流量表", to: "/reports/cashflow", icon: <TimelineIcon /> },
-      { label: "綜合損益表", to: "/reports/profitloss", icon: <TrendingUpIcon /> },
-      { label: "資產負債表", to: "/reports/balancesheet", icon: <TableViewIcon /> },
-      { label: "應收帳款表", to: "/reports/ar_summary", icon: <InsightsIcon /> },
-      { label: "應付帳款表", to: "/reports/ap_summary", icon: <AssessmentIcon /> },
+      { labelKey: "menu.items.reportCashflow", to: "/reports/cashflow", icon: <TimelineIcon /> },
+      { labelKey: "menu.items.reportProfitloss", to: "/reports/profitloss", icon: <TrendingUpIcon /> },
+      { labelKey: "menu.items.reportBalancesheet", to: "/reports/balancesheet", icon: <TableViewIcon /> },
+      { labelKey: "menu.items.reportArSummary", to: "/reports/ar_summary", icon: <InsightsIcon /> },
+      { labelKey: "menu.items.reportApSummary", to: "/reports/ap_summary", icon: <AssessmentIcon /> },
     ],
   },
 
   {
-    label: "系統管理",
+    id: "system",
+    labelKey: "menu.groups.system",
     icon: <SecurityIcon />,
     items: [
-      { label: "使用者管理", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["user:view"] },
-      { label: "角色與權限", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["role:view"] },
-      { label: "查核中心", to: "/admin/activity-audit-logs", icon: <FactCheckIcon />, requiredRole: "ROLE_SUPER_ADMIN" },
-      { label: "個人資料", to: "/profile", icon: <AccountCircleIcon /> },
-      { label: "修改密碼", to: "/change-password", icon: <PasswordIcon /> },
-      // 通知中心僅限管理員以上角色檢視，一般使用者不顯示
-      { label: "通知中心", to: "/notifications", icon: <NotificationIcon />, requiredRole: "ROLE_ADMIN" },
+      { labelKey: "menu.items.users", to: "/users", icon: <ManageAccountsIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["user:view"] },
+      { labelKey: "menu.items.roles", to: "/roles", icon: <SecurityIcon />, requiredRole: "ROLE_ADMIN", requiredAuthorities: ["role:view"] },
+      { labelKey: "menu.items.auditLogs", to: "/admin/activity-audit-logs", icon: <FactCheckIcon />, requiredRole: "ROLE_SUPER_ADMIN" },
+      { labelKey: "menu.items.profile", to: "/profile", icon: <AccountCircleIcon /> },
+      { labelKey: "menu.items.changePassword", to: "/change-password", icon: <PasswordIcon /> },
+      { labelKey: "menu.items.notifications", to: "/notifications", icon: <NotificationIcon />, requiredRole: "ROLE_ADMIN" },
     ],
   },
 ];

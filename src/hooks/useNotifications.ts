@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { getApiUrl } from '@/config/apiUrl';
+import { applyAcceptLanguageHeader, appendLangQueryIfMissing } from '@/utils/apiLocale';
 import { logger } from '@/utils/logger';
 
 const API_BASE_URL = getApiUrl();
@@ -9,6 +10,7 @@ const TEST_USER_ID = 1;
 // 與 dataProvider 一致：自動附加 Authorization Bearer Token
 const buildAuthHeaders = () => {
     const headers = new Headers();
+    applyAcceptLanguageHeader(headers);
     headers.set("Accept", "application/json");
 
     const token = localStorage.getItem("token");
@@ -42,11 +44,11 @@ export const useNotifications = (refreshInterval = 5000) => {
         try {
             const [listRes, countRes] = await Promise.all([
                 fetch(
-                    `${API_BASE_URL}/notifications/unread?userId=${TEST_USER_ID}`,
+                    appendLangQueryIfMissing(`${API_BASE_URL}/notifications/unread?userId=${TEST_USER_ID}`),
                     { headers: buildAuthHeaders() }
                 ),
                 fetch(
-                    `${API_BASE_URL}/notifications/unread-count?userId=${TEST_USER_ID}`,
+                    appendLangQueryIfMissing(`${API_BASE_URL}/notifications/unread-count?userId=${TEST_USER_ID}`),
                     { headers: buildAuthHeaders() }
                 )
             ]);
@@ -104,7 +106,7 @@ export const useNotifications = (refreshInterval = 5000) => {
 
         try {
             const response = await fetch(
-                `${API_BASE_URL}/notifications/${noti.userNotificationId}/read`,
+                appendLangQueryIfMissing(`${API_BASE_URL}/notifications/${noti.userNotificationId}/read`),
                 {
                     method: 'PATCH',
                     headers: (() => {

@@ -21,6 +21,7 @@ import { useLocation } from "react-router-dom";
 
 import { menuGroups, type MenuItem } from "./menuConfig";
 import { useAuthAuthority } from "@/hooks/useAuthAuthority";
+import { useTranslation } from "react-i18next";
 
 /** 與 hasRoleSuperAdmin 一致，避免 JWT 角色字串格式差異導致選單誤隱藏 */
 function isSuperAdminMenuRole(roles: string[]): boolean {
@@ -59,6 +60,7 @@ const CustomMenuInner = () => {
     const location = useLocation();
     const { permissions } = usePermissions();
     const { hasAnyAuthority } = useAuthAuthority();
+    const { t } = useTranslation("common");
 
     /**  控制每組選單的開關 */
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
@@ -83,7 +85,7 @@ const CustomMenuInner = () => {
             if (matched) {
                 setOpenGroups((prev) => ({
                     ...prev,
-                    [group.label]: true,
+                    [group.id]: true,
                 }));
             }
         });
@@ -109,14 +111,14 @@ const CustomMenuInner = () => {
             }}
         >
             {menuGroups.flatMap((group) => {
-                const isOpen = openGroups[group.label];
+                const isOpen = openGroups[group.id];
 
                 /** ==============================
                  *   GROUP HEADER（含動畫）
                  * ============================== */
                 const groupHeader = (
                     <ListItemButton
-                        onClick={() => toggleGroup(group.label)}
+                        onClick={() => toggleGroup(group.id)}
                         sx={{
                             width: "100%",
                             borderRadius: 1,
@@ -164,7 +166,7 @@ const CustomMenuInner = () => {
 
                         {open && (
                             <ListItemText
-                                primary={group.label}
+                                primary={t(group.labelKey)}
                                 primaryTypographyProps={{
                                     fontSize: 15,
                                     fontWeight: 500,
@@ -190,14 +192,14 @@ const CustomMenuInner = () => {
                      *     GROUP HEADER
                      * ------------------------- */
                     <Box
-                        key={`${group.label}-header`}
+                        key={`${group.id}-header`}
                         sx={{ width: "100%" }}
                     >
                         {open ? (
                             groupHeader
                         ) : (
                             <Tooltip
-                                title={group.label}
+                                title={t(group.labelKey)}
                                 placement="right"
                             >
                                 {groupHeader}
@@ -209,7 +211,7 @@ const CustomMenuInner = () => {
                      *     子選單區塊
                      * ------------------------- */
                     <Collapse
-                        key={`${group.label}-collapse`}
+                        key={`${group.id}-collapse`}
                         in={isOpen}
                         timeout={250}
                         unmountOnExit
@@ -218,8 +220,11 @@ const CustomMenuInner = () => {
                             <MenuItemLink
                                 key={item.to}
                                 to={item.to}
-                                primaryText={item.label}
                                 leftIcon={item.icon}
+                                /** 勿傳字串 primaryText：react-admin 會用 polyglot 再 translate 一次，menu.* 不在 ra 字串內會顯示 raw key */
+                                // MUI v7 的 TooltipProps 型別要求 children，但 MenuItemLink 內部會實際包 Tooltip trigger，
+                                // 因此這裡提供 children: null 只為滿足型別檢查。
+                                tooltipProps={{ title: t(item.labelKey), children: null as any }}
                                 sx={{
                                     width: "100%",
                                     pl: open ? 6 : 1.5,
@@ -256,7 +261,9 @@ const CustomMenuInner = () => {
                                         },
                                     },
                                 }}
-                            />
+                            >
+                                {t(item.labelKey)}
+                            </MenuItemLink>
                         ))}
                     </Collapse>,
                 ];

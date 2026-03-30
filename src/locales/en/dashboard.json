@@ -1,0 +1,192 @@
+{
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening"
+  },
+  "welcomeSubtitle": "Welcome to Lianhua ERP",
+  "dataLastUpdated": "Data last updated: {{time}}",
+  "quickActions": {
+    "title": "Quick actions",
+    "refreshing": "Refreshing…",
+    "refresh": "Refresh",
+    "todosTitle": "To-do",
+    "addSale": "New sale",
+    "addPurchase": "New purchase",
+    "addExpense": "New expense",
+    "addOrder": "New order"
+  },
+  "alerts": {
+    "pendingOrders": "Pending orders ({{count}})",
+    "apHigh": "Accounts payable is high"
+  },
+  "sections": {
+    "operationCash": {
+      "title": "Operations & cash collection",
+      "subtitle": "Operation & Cash Collection Overview"
+    },
+    "financial": {
+      "title": "Financial performance & liquidity",
+      "subtitle": "Financial Performance & Liquidity"
+    },
+    "costInsights": {
+      "title": "Cost structure & insights",
+      "subtitle": "Cost Structure & Business Insights"
+    },
+    "customerRisk": {
+      "title": "Customer relationships & risk",
+      "subtitle": "Customer Relationships & Operational Risk"
+    }
+  },
+  "snackbar": {
+    "dataUpdated": "Dashboard data updated"
+  },
+  "error": {
+    "loadFailed": "Failed to load data: {{message}}"
+  },
+  "common": {
+    "other": "Other",
+    "amount": "Amount",
+    "purchaseAmount": "Purchase amount",
+    "noData": "No data",
+    "noDataInRange": "No data in this range",
+    "noTrendData": "No revenue or receipts in this range"
+  },
+  "orderStage": {
+    "DRAFT": "Draft",
+    "CONFIRMED": "Confirmed",
+    "DELIVERED": "Delivered",
+    "INVOICED": "Invoiced",
+    "PAID": "Paid",
+    "CANCELLED": "Cancelled"
+  },
+  "stats": {
+    "financial": "Financial KPIs",
+    "operations": "Operations",
+    "cashflow": "Cash flow",
+    "business": "Business overview"
+  },
+  "statItems": {
+    "monthSalesTotal": "Month sales (total)",
+    "accountsReceivable": "Accounts receivable (AR)",
+    "accountsPayable": "Accounts payable (AP)",
+    "profitMargin": "Net margin",
+    "todaySalesTotal": "Today revenue",
+    "monthPurchaseTotal": "Month purchases",
+    "monthExpenseTotal": "Month expenses",
+    "netProfit": "Month net profit",
+    "todayReceiptsTotal": "Today order receipts",
+    "todayTotalInflow": "Today total inflow",
+    "monthTotalReceived": "Month received (total)",
+    "upcomingAR": "Due AR (7D)",
+    "supplierCount": "Suppliers",
+    "customerCount": "Customers",
+    "activeProductCount": "Active products",
+    "pendingOrderCount": "Open orders"
+  },
+  "onlineUsers": {
+    "title": "Online users",
+    "subtitle": "Currently online",
+    "reconnecting": "Disconnected. Reconnecting…",
+    "empty": "No users online"
+  },
+  "charts": {
+    "trend": {
+      "periodRevenue": "Period revenue",
+      "cashIn": "Cash collected",
+      "collectionRate": "Collection rate",
+      "title": "Revenue & cash collection trend",
+      "last7": "Last 7 days",
+      "last14": "Last 14 days",
+      "last30": "Last 30 days",
+      "seriesRevenue": "Period revenue",
+      "seriesCash": "Cash collected"
+    },
+    "expenseStructure": {
+      "title": "Operating expense breakdown",
+      "totalLabel": "Operating expenses (total)"
+    },
+    "purchaseStructure": {
+      "title": "Purchase mix",
+      "total": "Purchases (total)"
+    },
+    "profitLoss": {
+      "title": "P&L trend",
+      "m3": "Last 3 months",
+      "m6": "Last 6 months",
+      "m12": "Last 12 months",
+      "revenue": "Revenue",
+      "expense": "Expense",
+      "gross": "Gross profit",
+      "net": "Net profit"
+    },
+    "productPareto": {
+      "title": "Product contribution (80/20)",
+      "tooltipAmount": "Amount"
+    },
+    "supplierConc": {
+      "title": "Supplier concentration"
+    },
+    "customerConc": {
+      "title": "Customer concentration",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "warningTop3": "Top 3 customers > 70%",
+      "revenueTotal": "Revenue (total)"
+    },
+    "customerRetention": {
+      "title": "Retention & churn risk",
+      "all": "All",
+      "dormant": "Dormant risk (>60d)",
+      "lastOrder": "Last order {{date}} · {{days}} days ago",
+      "dormantStatus": "Dormant",
+      "summary": "{{total}} rows, showing top 8"
+    },
+    "cashflowForecast": {
+      "title": "Cash flow forecast",
+      "baseDate": "Base date",
+      "endDate": "End date",
+      "inflow": "Inflow",
+      "outflow": "Outflow",
+      "net": "Net flow"
+    },
+    "breakEven": {
+      "title": "Break-even analysis",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "cumRevenue": "Cumulative revenue",
+      "cumExpense": "Cumulative expense",
+      "threshold": "Break-even threshold"
+    },
+    "liquidity": {
+      "title": "Liquidity & short-term solvency",
+      "asOf": "As of {{date}}",
+      "currentAssets": "Current assets",
+      "currentLiabilities": "Current liabilities",
+      "quickAssets": "Quick assets",
+      "currentRatio": "Current ratio"
+    },
+    "advanced": {
+      "orderAmount": "Order amount",
+      "orderCount": "Order count",
+      "funnelTitle": "Order fulfillment funnel",
+      "amount": "Amount",
+      "count": "Count",
+      "agingTitle": "AR / AP aging",
+      "ar": "Accounts receivable",
+      "ap": "Accounts payable",
+      "sectionTitle": "Advanced operations"
+    },
+    "tasks": {
+      "title": "Tasks & risk alerts",
+      "countBadge": "{{count}} items",
+      "hint": "Click a row to open the related list.",
+      "orderDate": "Order date: {{date}}",
+      "typeAr": "Collections",
+      "typeOrder": "Order handling",
+      "empty": "No urgent tasks",
+      "emptyHint": "Alerts appear when invoices are due or orders need attention."
+    },
+    "costRestricted": "Cost structure is visible to OWNER / MANAGER only"
+  }
+}

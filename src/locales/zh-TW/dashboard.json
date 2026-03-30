@@ -1,0 +1,192 @@
+{
+  "greeting": {
+    "morning": "早安",
+    "afternoon": "午安",
+    "evening": "晚安"
+  },
+  "welcomeSubtitle": "歡迎使用蓮華 ERP 管理系統",
+  "dataLastUpdated": "數據最後更新：{{time}}",
+  "quickActions": {
+    "title": "快速操作",
+    "refreshing": "更新中…",
+    "refresh": "重新整理",
+    "todosTitle": "待辦事項",
+    "addSale": "新增銷售",
+    "addPurchase": "新增進貨",
+    "addExpense": "新增支出",
+    "addOrder": "新增訂單"
+  },
+  "alerts": {
+    "pendingOrders": "待處理訂單 ({{count}})",
+    "apHigh": "應付帳款偏高"
+  },
+  "sections": {
+    "operationCash": {
+      "title": "營運與收現狀況",
+      "subtitle": "Operation & Cash Collection Overview"
+    },
+    "financial": {
+      "title": "財務績效與資金健康",
+      "subtitle": "Financial Performance & Liquidity"
+    },
+    "costInsights": {
+      "title": "成本結構與經營洞察",
+      "subtitle": "Cost Structure & Business Insights"
+    },
+    "customerRisk": {
+      "title": "客戶關係與營運風險",
+      "subtitle": "Customer Relationships & Operational Risk"
+    }
+  },
+  "snackbar": {
+    "dataUpdated": "儀表板數據已更新"
+  },
+  "error": {
+    "loadFailed": "載入數據時發生錯誤：{{message}}"
+  },
+  "common": {
+    "other": "其他",
+    "amount": "金額",
+    "purchaseAmount": "採購金額",
+    "noData": "暫無數據",
+    "noDataInRange": "當前區間無數據",
+    "noTrendData": "選擇區間內尚無營收或收款資料"
+  },
+  "orderStage": {
+    "DRAFT": "草稿",
+    "CONFIRMED": "已確認",
+    "DELIVERED": "已出貨",
+    "INVOICED": "已開票",
+    "PAID": "已收款",
+    "CANCELLED": "已取消"
+  },
+  "stats": {
+    "financial": "財務指標",
+    "operations": "營運概況",
+    "cashflow": "現金流量",
+    "business": "業務概況"
+  },
+  "statItems": {
+    "monthSalesTotal": "本月銷售總額",
+    "accountsReceivable": "應收帳款 (AR)",
+    "accountsPayable": "應付帳款 (AP)",
+    "profitMargin": "淨利率",
+    "todaySalesTotal": "今日營收",
+    "monthPurchaseTotal": "本月採購",
+    "monthExpenseTotal": "本月費用",
+    "netProfit": "本月淨利",
+    "todayReceiptsTotal": "今日訂單收款",
+    "todayTotalInflow": "今日總入金",
+    "monthTotalReceived": "本月累計實收",
+    "upcomingAR": "即期應收 (7D)",
+    "supplierCount": "合作供應商",
+    "customerCount": "累計客戶",
+    "activeProductCount": "上架商品",
+    "pendingOrderCount": "未結案訂單"
+  },
+  "onlineUsers": {
+    "title": "線上使用者",
+    "subtitle": "目前線上",
+    "reconnecting": "連線中斷，正在自動重連…",
+    "empty": "目前無線上使用者"
+  },
+  "charts": {
+    "trend": {
+      "periodRevenue": "期間營收",
+      "cashIn": "實際收款",
+      "collectionRate": "收現率",
+      "title": "營收與現金回收趨勢",
+      "last7": "近 7 天",
+      "last14": "近 14 天",
+      "last30": "近 30 天",
+      "seriesRevenue": "期間營收",
+      "seriesCash": "實際收款"
+    },
+    "expenseStructure": {
+      "title": "營運支出結構分析",
+      "totalLabel": "營運支出總計"
+    },
+    "purchaseStructure": {
+      "title": "採購結構分析",
+      "total": "採購總計"
+    },
+    "profitLoss": {
+      "title": "損益趨勢分析",
+      "m3": "過去 3 個月",
+      "m6": "過去 6 個月",
+      "m12": "過去 12 個月",
+      "revenue": "營收",
+      "expense": "費用",
+      "gross": "毛利",
+      "net": "淨利"
+    },
+    "productPareto": {
+      "title": "商品貢獻度分析（80／20 法則）",
+      "tooltipAmount": "金額"
+    },
+    "supplierConc": {
+      "title": "供應商集中度分析"
+    },
+    "customerConc": {
+      "title": "客戶採購集中度分析",
+      "startDate": "開始日期",
+      "endDate": "結束日期",
+      "warningTop3": "前三大客戶佔比 > 70%",
+      "revenueTotal": "營收總計"
+    },
+    "customerRetention": {
+      "title": "客戶留存與回購風險分析",
+      "all": "全部",
+      "dormant": "沉睡風險 (>60天)",
+      "lastOrder": "最後訂單 {{date}} · {{days}} 天前",
+      "dormantStatus": "沉睡",
+      "summary": "共 {{total}} 筆，僅顯示前 8 筆"
+    },
+    "cashflowForecast": {
+      "title": "現金流量預測分析",
+      "baseDate": "基準日",
+      "endDate": "結束日",
+      "inflow": "流入",
+      "outflow": "流出",
+      "net": "淨流入"
+    },
+    "breakEven": {
+      "title": "損益平衡點分析",
+      "prevMonth": "上個月",
+      "nextMonth": "下個月",
+      "cumRevenue": "累計營收",
+      "cumExpense": "累計支出",
+      "threshold": "損益平衡門檻"
+    },
+    "liquidity": {
+      "title": "流動性與短期償債能力指標",
+      "asOf": "截至今日 {{date}}",
+      "currentAssets": "流動資產",
+      "currentLiabilities": "流動負債",
+      "quickAssets": "速動資產",
+      "currentRatio": "流動比率"
+    },
+    "advanced": {
+      "orderAmount": "訂單金額",
+      "orderCount": "訂單筆數",
+      "funnelTitle": "訂單履約進度分析",
+      "amount": "金額",
+      "count": "筆數",
+      "agingTitle": "應收／應付帳款帳齡分析",
+      "ar": "應收帳款",
+      "ap": "應付帳款",
+      "sectionTitle": "進階營運分析"
+    },
+    "tasks": {
+      "title": "營運待辦事項與即期風險預警",
+      "countBadge": "共 {{count}} 筆",
+      "hint": "點擊任一列可快速前往對應列表進行處理。",
+      "orderDate": "訂單日期：{{date}}",
+      "typeAr": "帳款催收",
+      "typeOrder": "訂單處理",
+      "empty": "目前無緊急待辦事項",
+      "emptyHint": "帳款到期或訂單異常時，會自動在此顯示提醒。"
+    },
+    "costRestricted": "成本結構區塊僅限 OWNER / MANAGER 角色檢視"
+  }
+}

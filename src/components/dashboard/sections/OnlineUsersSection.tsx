@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import PeopleIcon from '@mui/icons-material/People';
 import { SectionHeader } from '../SectionHeader';
 import { useOnlineUsers } from '@/hooks/useOnlineUsers';
@@ -16,6 +17,7 @@ interface OnlineUser {
 
 /** 儀表板「線上使用者」區塊：即時顯示目前線上使用者列表與 WebSocket 連線狀態 */
 export const OnlineUsersSection: React.FC = () => {
+  const { t } = useTranslation('dashboard');
   // 從 Hook 取得資料，並對 onlineUsers 進行型別標註
   const { onlineUsers, loading, error, connectionStatus } = useOnlineUsers();
   const users = onlineUsers as OnlineUser[];
@@ -30,8 +32,8 @@ export const OnlineUsersSection: React.FC = () => {
   return (
     <Box sx={{ mb: 4 }}>
       <SectionHeader
-        title="線上使用者"
-        subtitle="Currently Online"
+        title={t('onlineUsers.title')}
+        subtitle={t('onlineUsers.subtitle')}
         icon={<PeopleIcon color="primary" />}
       />
       <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
@@ -56,7 +58,7 @@ export const OnlineUsersSection: React.FC = () => {
           
           {connectionStatus === 'reconnecting' && (
             <Typography variant="caption" color="warning.main" sx={{ display: 'block', mb: 1 }}>
-              連線中斷，正在自動重連…
+              {t('onlineUsers.reconnecting')}
             </Typography>
           )}
 
@@ -74,7 +76,7 @@ export const OnlineUsersSection: React.FC = () => {
 
           {!loading && !error && users.length === 0 && (
             <Typography variant="body2" color="text.secondary">
-              目前無線上使用者
+              {t('onlineUsers.empty')}
             </Typography>
           )}
 

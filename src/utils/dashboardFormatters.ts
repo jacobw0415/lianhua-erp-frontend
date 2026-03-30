@@ -49,14 +49,22 @@ export function formatAxisCurrency(value: number): string {
   return `NT$${value.toLocaleString()}`;
 }
 
-/** 儀表板日期顯示：YYYY年MM月DD日 (星期X) */
-export function formatDashboardDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-  const weekday = weekdays[date.getDay()];
-  return `${year}年${month}月${day}日 (${weekday})`;
+/** 儀表板日期顯示（依介面語系） */
+export function formatDashboardDate(date: Date, localeTag: string): string {
+  const loc = localeTag.startsWith('en') ? 'en-US' : 'zh-TW';
+  try {
+    return date.toLocaleDateString(loc, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+  } catch {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 }
 
 /** 儀表板時間顯示：HH:mm */

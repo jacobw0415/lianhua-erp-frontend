@@ -31,6 +31,7 @@ import { DESIGN_PARETO_REF } from '@/constants/designSystem';
 import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke } from '@/utils/chartTheme';
+import { useTranslation } from 'react-i18next';
 
 export interface BreakEvenSectionProps {
   breakEvenPeriod: string;
@@ -50,6 +51,7 @@ export const BreakEvenSection: React.FC<BreakEvenSectionProps> = ({
   isBreakEvenLoading,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const gridStroke = getChartGridStroke(theme);
 
   /** 損益平衡點：自訂 Tooltip，各指標名稱與金額使用對應線條色 */
@@ -92,7 +94,7 @@ export const BreakEvenSection: React.FC<BreakEvenSectionProps> = ({
       <IconButton
         size="small"
         onClick={() => setBreakEvenPeriod(dayjs(breakEvenPeriod).subtract(1, 'month').format('YYYY-MM'))}
-        aria-label="上個月"
+        aria-label={t('charts.breakEven.prevMonth')}
       >
         <ChevronLeftIcon />
       </IconButton>
@@ -108,7 +110,7 @@ export const BreakEvenSection: React.FC<BreakEvenSectionProps> = ({
       <IconButton
         size="small"
         onClick={() => setBreakEvenPeriod(dayjs(breakEvenPeriod).add(1, 'month').format('YYYY-MM'))}
-        aria-label="下個月"
+        aria-label={t('charts.breakEven.nextMonth')}
         disabled={isBreakEvenCurrentOrFutureMonth}
       >
         <ChevronRightIcon />
@@ -120,13 +122,13 @@ export const BreakEvenSection: React.FC<BreakEvenSectionProps> = ({
     <DashboardChartCard
       title={
         <>
-          <BalanceIcon fontSize="small" /> 損益平衡點分析
+          <BalanceIcon fontSize="small" /> {t('charts.breakEven.title')}
         </>
       }
       actions={actions}
       loading={isBreakEvenLoading}
       hasData={breakEven.length > 0}
-      emptyMessage="暫無數據"
+      emptyMessage={t('common.noData')}
       height={300}
     >
       <ChartContainer height={300}>
@@ -142,9 +144,9 @@ export const BreakEvenSection: React.FC<BreakEvenSectionProps> = ({
                 <span style={{ color: entry?.color ?? theme.palette.text.primary }}>{value}</span>
               )}
             />
-            <Line type="natural" dataKey="runningRevenue" name="累計營收" stroke={CHART_COLORS.revenue} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 4, strokeWidth: 2 }} isAnimationActive animationDuration={400} />
-            <Line type="natural" dataKey="runningExpense" name="累計支出" stroke={CHART_COLORS.expense} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 4 }} isAnimationActive animationDuration={400} />
-            <Line type="monotone" dataKey="breakEvenThreshold" name="損益平衡門檻" stroke={DESIGN_PARETO_REF} strokeDasharray="5 5" strokeWidth={2.5} dot={false} isAnimationActive animationDuration={400} />
+            <Line type="natural" dataKey="runningRevenue" name={t('charts.breakEven.cumRevenue')} stroke={CHART_COLORS.revenue} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 4, strokeWidth: 2 }} isAnimationActive animationDuration={400} />
+            <Line type="natural" dataKey="runningExpense" name={t('charts.breakEven.cumExpense')} stroke={CHART_COLORS.expense} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 4 }} isAnimationActive animationDuration={400} />
+            <Line type="monotone" dataKey="breakEvenThreshold" name={t('charts.breakEven.threshold')} stroke={DESIGN_PARETO_REF} strokeDasharray="5 5" strokeWidth={2.5} dot={false} isAnimationActive animationDuration={400} />
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>

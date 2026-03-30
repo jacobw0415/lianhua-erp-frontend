@@ -4,6 +4,15 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  /** 穩定預打包 MUI／Emotion，減少 dev 時「Outdated Optimize Dep」與單一 icon chunk 不一致 */
+  optimizeDeps: {
+    include: [
+      "@emotion/react",
+      "@emotion/styled",
+      "@mui/material",
+      "@mui/icons-material",
+    ],
+  },
   define: {
     global: "globalThis",
   },

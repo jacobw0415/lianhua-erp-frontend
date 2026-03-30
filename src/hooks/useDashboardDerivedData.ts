@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import dayjs from 'dayjs';
-import { ORDER_STAGE_LABELS } from '@/constants/dashboardConstants';
+import type { TFunction } from 'i18next';
 import type { DashboardStats, OrderFunnelPoint } from '@/hooks/useDashboardStats';
 import type {
   ProductParetoPoint,
@@ -27,6 +27,7 @@ export interface UseDashboardDerivedDataParams {
   retentionDormantOnly: boolean;
   stats: DashboardStats;
   breakEvenPeriod: string;
+  t: TFunction<'dashboard'>;
 }
 
 export interface PurchaseStructureDisplayItem {
@@ -72,6 +73,7 @@ export function useDashboardDerivedData(params: UseDashboardDerivedDataParams) {
     customerRetention,
     retentionDormantOnly,
     breakEvenPeriod,
+    t,
   } = params;
 
   const safeTrendData = useMemo(() => {
@@ -87,8 +89,8 @@ export function useDashboardDerivedData(params: UseDashboardDerivedDataParams) {
     if (sorted.length <= 8) return sorted;
     const top8 = sorted.slice(0, 8);
     const otherSum = sorted.slice(8).reduce((sum, d) => sum + Number(d.totalAmount), 0);
-    return [...top8, { itemName: '其他', totalAmount: otherSum }];
-  }, [purchaseStructure]);
+    return [...top8, { itemName: t('common.other'), totalAmount: otherSum }];
+  }, [purchaseStructure, t]);
 
   const customerConcentrationDonutData = useMemo((): CustomerConcentrationDonutItem[] => {
     if (!customerConcentration?.length) return [];
@@ -128,9 +130,11 @@ export function useDashboardDerivedData(params: UseDashboardDerivedDataParams) {
       .sort((a, b) => Number(b[dataKey] ?? 0) - Number(a[dataKey] ?? 0))
       .map((item) => ({
         ...item,
-        stageLabel: ORDER_STAGE_LABELS[item.stage] ?? item.stage,
+        stageLabel: t(`orderStage.${item.stage}` as 'orderStage.DRAFT', {
+          defaultValue: item.stage,
+        }),
       })) as OrderFunnelDisplayItem[];
-  }, [orderFunnel, orderFunnelMetric]);
+  }, [orderFunnel, orderFunnelMetric, t]);
 
   const isBreakEvenCurrentOrFutureMonth = useMemo(
     () => breakEvenPeriod >= dayjs().format('YYYY-MM'),

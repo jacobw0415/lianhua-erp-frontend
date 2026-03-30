@@ -18,6 +18,7 @@ import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke } from '@/utils/chartTheme';
 import type { SupplierConcentrationPoint } from '@/hooks/useDashboardAnalytics';
+import { useTranslation } from 'react-i18next';
 
 export interface SupplierConcentrationSectionProps {
   data: SupplierConcentrationPoint[];
@@ -31,6 +32,7 @@ export const SupplierConcentrationSection: React.FC<SupplierConcentrationSection
   dateRangeLabel,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const gridStroke = getChartGridStroke(theme);
 
   /** 供應商集中度：自訂 Tooltip，採購金額使用對應色調 */
@@ -60,7 +62,7 @@ export const SupplierConcentrationSection: React.FC<SupplierConcentrationSection
           component="span"
           sx={{ display: 'block', color: item.color ?? theme.palette.text.primary }}
         >
-          採購金額: {item.value != null ? `NT$ ${Number(item.value).toLocaleString()}` : '—'}
+          {t('common.purchaseAmount')}: {item.value != null ? `NT$ ${Number(item.value).toLocaleString()}` : '—'}
         </Typography>
       </Paper>
     );
@@ -70,7 +72,7 @@ export const SupplierConcentrationSection: React.FC<SupplierConcentrationSection
     <DashboardChartCard
       title={
         <>
-          <BusinessCenterIcon fontSize="small" /> 供應商集中度分析
+          <BusinessCenterIcon fontSize="small" /> {t('charts.supplierConc.title')}
         </>
       }
       subtitle={
@@ -113,7 +115,7 @@ export const SupplierConcentrationSection: React.FC<SupplierConcentrationSection
             />
             <Bar
               dataKey="totalAmount"
-              name="採購金額"
+              name={t('common.purchaseAmount')}
               fill={CHART_COLORS.secondary}
               radius={[0, 8, 8, 0]}
               maxBarSize={26}

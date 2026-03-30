@@ -25,6 +25,8 @@ import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke, getChartReferenceLineStroke } from '@/utils/chartTheme';
 import type { CashflowForecastPoint } from '@/hooks/useDashboardAnalytics';
+import { useTranslation } from 'react-i18next';
+import 'dayjs/locale/en';
 
 export interface CashflowForecastSectionProps {
   data: CashflowForecastPoint[];
@@ -48,6 +50,8 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
   defaultEnd,
 }) => {
   const theme = useTheme();
+  const { t, i18n } = useTranslation('dashboard');
+  const dayjsLocale = i18n.language.startsWith('en') ? 'en' : 'zh-tw';
   const gridStroke = getChartGridStroke(theme);
   const refLineStroke = getChartReferenceLineStroke(theme);
 
@@ -95,13 +99,13 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
     <DashboardChartCard
       title={
         <>
-          <TimelineIcon fontSize="small" /> 現金流量預測分析
+          <TimelineIcon fontSize="small" /> {t('charts.cashflowForecast.title')}
         </>
       }
       actions={
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="zh-tw">
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
           <DatePicker
-            label="基準日"
+            label={t('charts.cashflowForecast.baseDate')}
             value={startDate ? dayjs(startDate) : null}
             onChange={(v) => onStartDateChange(v ? v.format('YYYY-MM-DD') : defaultStart)}
             format="YYYY-MM-DD"
@@ -109,7 +113,7 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
             slotProps={{ textField: { size: 'small', sx: { width: 160 } } }}
           />
           <DatePicker
-            label="結束日"
+            label={t('charts.cashflowForecast.endDate')}
             value={endDate ? dayjs(endDate) : null}
             onChange={(v) => onEndDateChange(v ? v.format('YYYY-MM-DD') : defaultEnd)}
             format="YYYY-MM-DD"
@@ -148,7 +152,7 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
             <ReferenceLine y={0} stroke={refLineStroke} strokeWidth={1} />
             <Bar
               dataKey="inflow"
-              name="流入"
+              name={t('charts.cashflowForecast.inflow')}
               fill={CHART_COLORS.cashflowInflow}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
@@ -157,7 +161,7 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
             />
             <Bar
               dataKey="outflowNegative"
-              name="流出"
+              name={t('charts.cashflowForecast.outflow')}
               fill={CHART_COLORS.expense}
               radius={[0, 0, 4, 4]}
               maxBarSize={28}
@@ -167,7 +171,7 @@ export const CashflowForecastSection: React.FC<CashflowForecastSectionProps> = (
             <Line
               type="monotone"
               dataKey="net"
-              name="淨流入"
+              name={t('charts.cashflowForecast.net')}
               stroke={CHART_COLORS.netProfit}
               strokeWidth={2.5}
               dot={{ r: 4 }}

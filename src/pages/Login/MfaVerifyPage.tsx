@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useColorMode } from "@/contexts/useColorMode";
 import {
   Box,
@@ -16,14 +17,17 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 import { applyLoginSuccessFromContainer } from "@/providers/authProvider";
 import { logger } from "@/utils/logger";
 
 const apiUrl = getApiUrl();
-const TITLE = "MFA 驗證碼";
-const SUBTITLE = "請輸入 6 碼驗證碼以完成登入";
 
 export const MfaVerifyPage = () => {
+  const { t } = useTranslation("common");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,9 +101,9 @@ export const MfaVerifyPage = () => {
     logger.debug("[MFA] 正在發送單次驗證請求...");
 
     try {
-      const res = await fetch(`${apiUrl}/auth/mfa/verify`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/mfa/verify`), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: mergeHeadersWithAcceptLanguage({ "Content-Type": "application/json" }),
         body: JSON.stringify({ pendingToken, code: code.trim() }),
       });
 
@@ -112,11 +116,11 @@ export const MfaVerifyPage = () => {
         setIsSubmitting(false);
 
         if (res.status === 409) {
-          setError("系統狀態衝突，請嘗試重新輸入或重新整理頁面。");
+          setError(t("mfa.error409"));
         } else if (res.status === 400) {
-          setError("驗證碼錯誤，請重新確認。");
+          setError(t("mfa.error400"));
         } else {
-          setError(jsonBody?.message || "驗證失敗");
+          setError(jsonBody?.message || t("mfa.errorFailed"));
         }
         return;
       }
@@ -147,7 +151,7 @@ export const MfaVerifyPage = () => {
     } catch (err) {
       submitLock.current = false;
       setIsSubmitting(false);
-      setError("連線失敗，請檢查網路");
+      setError(t("mfa.errorNetwork"));
     }
   };
 
@@ -171,9 +175,9 @@ export const MfaVerifyPage = () => {
             <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: alpha(accentColor, 0.15), display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
               <LockOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>{TITLE}</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>{t("mfa.title")}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {username ? `${SUBTITLE}（${username}）` : SUBTITLE}
+              {username ? t("mfa.subtitleWithUser", { user: username }) : t("mfa.subtitle")}
             </Typography>
           </Box>
 
@@ -182,7 +186,7 @@ export const MfaVerifyPage = () => {
           <Box onKeyDown={handleKeyDown}>
             <TextField
               fullWidth
-              label="6 碼驗證碼"
+              label={t("mfa.codeLabel")}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
               disabled={isSubmitting || !pendingToken}
@@ -203,10 +207,10 @@ export const MfaVerifyPage = () => {
               disabled={isSubmitting || !pendingToken || code.length !== 6}
               sx={{ py: 1.5, fontWeight: 700, bgcolor: accentColor }}
             >
-              {isSubmitting ? "驗證中..." : "確認驗證碼"}
+              {isSubmitting ? t("mfa.verifying") : t("mfa.confirm")}
             </Button>
             <Button onClick={handleBackToLogin} fullWidth sx={{ mt: 2 }} disabled={isSubmitting}>
-              返回登入
+              {t("mfa.back")}
             </Button>
           </Box>
         </CardContent>

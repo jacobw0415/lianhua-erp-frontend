@@ -1,4 +1,8 @@
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  applyAcceptLanguageHeader,
+} from "@/utils/apiLocale";
 
 /** 與後端 `GET /api/reports/{reportKey}/export` 的 path 參數一致 */
 export const REPORT_EXPORT_KEYS = {
@@ -33,6 +37,8 @@ export interface ReportExportDownloadOptions {
   size?: number;
   /** 例如 `accountingPeriod,desc`（僅支援 accountingPeriod） */
   sort?: string;
+  /** 匯出表頭語系需與 UI 不同時（後端 `exportLang`） */
+  exportLang?: "zh-TW" | "en";
 }
 
 function parseFilenameFromContentDisposition(header: string | null): string | null {
@@ -85,6 +91,9 @@ export function buildReportExportQuery(
     if (options.size !== undefined) q.set("size", String(options.size));
   }
   if (options.sort) q.set("sort", options.sort);
+  if (options.exportLang) {
+    q.set("exportLang", options.exportLang === "en" ? "en" : "zh-TW");
+  }
   return q;
 }
 
@@ -109,7 +118,9 @@ export async function downloadReportExport(
   options: ReportExportDownloadOptions = {}
 ): Promise<void> {
   const query = buildReportExportQuery(filter, options).toString();
-  const url = `${getApiUrl()}/reports/${reportKey}/export?${query}`;
+  const url = appendLangQueryIfMissing(
+    `${getApiUrl()}/reports/${reportKey}/export?${query}`
+  );
 
   const token =
     typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
@@ -119,6 +130,7 @@ export async function downloadReportExport(
       : "Bearer";
 
   const headers = new Headers();
+  applyAcceptLanguageHeader(headers);
   if (token) {
     headers.set("Authorization", `${tokenType} ${token}`);
   }

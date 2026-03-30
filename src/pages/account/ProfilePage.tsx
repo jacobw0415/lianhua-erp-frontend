@@ -35,6 +35,10 @@ import {
   DETAIL_LAYOUT_MAX_WIDTH,
 } from "@/constants/layoutConstants";
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  applyAcceptLanguageHeader,
+} from "@/utils/apiLocale";
 import { QRCodeSVG } from "qrcode.react";
 import { getRoleDisplayName } from "@/constants/userRoles";
 import { DisableMfaVerifyDialog } from "@/components/common/DisableMfaVerifyDialog";
@@ -311,6 +315,7 @@ const ProfilePage: React.FC = () => {
     setMfaSetupCode("");
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
+      applyAcceptLanguageHeader(headers);
       const token =
         typeof localStorage !== "undefined"
           ? localStorage.getItem("token")
@@ -323,7 +328,7 @@ const ProfilePage: React.FC = () => {
         headers.set("Authorization", `${tokenType} ${token}`);
       }
 
-      const res = await fetch(`${apiUrl}/auth/mfa/setup`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/mfa/setup`), {
         method: "POST",
         headers,
       });
@@ -386,13 +391,14 @@ const ProfilePage: React.FC = () => {
     setMfaLoading(true);
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
+      applyAcceptLanguageHeader(headers);
       const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
       const tokenType = (typeof localStorage !== "undefined" && localStorage.getItem("tokenType")) || "Bearer";
       if (token) {
         headers.set("Authorization", `${tokenType} ${token}`);
       }
 
-      const res = await fetch(`${apiUrl}/auth/mfa/verify`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/mfa/verify`), {
         method: "POST",
         headers,
         body: JSON.stringify({ code: trimmed }),
@@ -468,13 +474,14 @@ const ProfilePage: React.FC = () => {
     setMfaLoading(true);
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
+      applyAcceptLanguageHeader(headers);
       const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
       const tokenType = (typeof localStorage !== "undefined" && localStorage.getItem("tokenType")) || "Bearer";
       if (token) {
         headers.set("Authorization", `${tokenType} ${token}`);
       }
 
-      const res = await fetch(`${apiUrl}/auth/mfa/disable`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/mfa/disable`), {
         method: "POST",
         headers,
         body: JSON.stringify({ code: trimmed }),

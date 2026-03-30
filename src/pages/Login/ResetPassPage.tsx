@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useColorMode } from "@/contexts/useColorMode";
 import {
   Box,
@@ -20,15 +21,17 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 
 const apiUrl = getApiUrl();
 
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) || "";
 
-const TITLE = "重設密碼";
-const SUBTITLE = "請輸入新密碼並再次確認";
-
 export const ResetPassPage = () => {
+  const { t } = useTranslation("common");
   const [searchParams] = useSearchParams();
   const tokenFromUrl = searchParams.get("token") ?? "";
 
@@ -99,22 +102,22 @@ export const ResetPassPage = () => {
     e.preventDefault();
     setError(null);
     if (!newPassword.trim()) {
-      setError("請輸入新密碼");
+      setError(t("resetPassword.errorNewRequired"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("兩次輸入的密碼不一致");
+      setError(t("resetPassword.errorMismatch"));
       return;
     }
     if (newPassword.length < 6) {
-      setError("密碼長度至少 6 個字元");
+      setError(t("resetPassword.errorMinLength"));
       return;
     }
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${apiUrl}/auth/reset-password`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/reset-password`), {
         method: "POST",
-        headers: new Headers({ "Content-Type": "application/json" }),
+        headers: mergeHeadersWithAcceptLanguage({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           token: tokenFromUrl,
           newPassword: newPassword.trim(),
@@ -138,23 +141,21 @@ export const ResetPassPage = () => {
       }
       if (res.status === 400) {
         const friendly =
-          /頻繁|稍後再試/i.test(message || "") ||
+          /頻繁|稍後再試|frequent|rate|too many/i.test(message || "") ||
           /嘗試過多/i.test(message || "")
-            ? "操作過於頻繁，請稍後再試。"
+            ? t("resetPassword.errorRateLimit")
             : "";
-        setError(
-          friendly || "操作過於頻繁，請稍後再試。"
-        );
+        setError(friendly || t("resetPassword.errorRateLimit"));
         setCooldown(60);
         return;
       }
       if (res.status >= 500) {
-        setError("系統發生錯誤，請稍後再試或聯絡系統管理員");
+        setError(t("resetPassword.errorServer"));
         return;
       }
-      setError(message || "重設失敗，連結可能已過期，請重新申請");
+      setError(message || t("resetPassword.errorResetFailed"));
     } catch {
-      setError("無法連線，請檢查網路後再試");
+      setError(t("resetPassword.errorNetwork"));
     } finally {
       setIsSubmitting(false);
     }
@@ -193,13 +194,13 @@ export const ResetPassPage = () => {
         <Card elevation={isDark ? 8 : 4} sx={cardSx}>
           <CardContent sx={{ p: 4 }}>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-              {TITLE}
+              {t("resetPassword.title")}
             </Typography>
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-              無效或缺少重設連結，請從「忘記密碼」重新取得連結。
+              {t("resetPassword.tokenInvalidDetail")}
             </Alert>
             <Button onClick={handleGoLogin} startIcon={<ArrowBackIcon />} fullWidth>
-              返回登入
+              {t("resetPassword.backToLogin")}
             </Button>
           </CardContent>
         </Card>
@@ -229,11 +230,11 @@ export const ResetPassPage = () => {
                 <LockOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
-                {TITLE}
+                {t("resetPassword.title")}
               </Typography>
             </Box>
             <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
-              密碼已重設。請使用新密碼登入。
+              {t("resetPassword.successAlert")}
             </Alert>
             <Button
               onClick={handleGoLogin}
@@ -247,7 +248,7 @@ export const ResetPassPage = () => {
                 "&:hover": { backgroundColor: isDark ? "#66BB6A" : "#2E7D32" },
               }}
             >
-              前往登入
+              {t("resetPassword.goLogin")}
             </Button>
           </CardContent>
         </Card>
@@ -276,10 +277,10 @@ export const ResetPassPage = () => {
               <LockOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
-              {TITLE}
+              {t("resetPassword.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {SUBTITLE}
+              {t("resetPassword.subtitle")}
             </Typography>
           </Box>
 
@@ -297,8 +298,8 @@ export const ResetPassPage = () => {
             <TextField
               fullWidth
               type={showNewPassword ? "text" : "password"}
-              label="新密碼"
-              placeholder="請輸入新密碼"
+              label={t("resetPassword.newPassword")}
+              placeholder={t("resetPassword.placeholderNew")}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
@@ -313,7 +314,7 @@ export const ResetPassPage = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={showNewPassword ? "隱藏密碼" : "顯示密碼"}
+                      aria-label={showNewPassword ? t("resetPassword.ariaHidePassword") : t("resetPassword.ariaShowPassword")}
                       onClick={() => setShowNewPassword((v) => !v)}
                       edge="end"
                       size="small"
@@ -332,8 +333,8 @@ export const ResetPassPage = () => {
             <TextField
               fullWidth
               type={showConfirmPassword ? "text" : "password"}
-              label="確認新密碼"
-              placeholder="請再次輸入新密碼"
+              label={t("resetPassword.confirmPassword")}
+              placeholder={t("resetPassword.placeholderConfirm")}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
@@ -347,7 +348,7 @@ export const ResetPassPage = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={showConfirmPassword ? "隱藏密碼" : "顯示密碼"}
+                      aria-label={showConfirmPassword ? t("resetPassword.ariaHidePassword") : t("resetPassword.ariaShowPassword")}
                       onClick={() => setShowConfirmPassword((v) => !v)}
                       edge="end"
                       size="small"
@@ -380,10 +381,10 @@ export const ResetPassPage = () => {
               }}
             >
               {isSubmitting
-                ? "提交中…"
+                ? t("resetPassword.submitting")
                 : cooldown > 0
-                  ? `請 ${cooldown} 秒後再試`
-                  : "提交新密碼"}
+                  ? t("resetPassword.cooldown", { seconds: cooldown })
+                  : t("resetPassword.submit")}
             </Button>
             <Button
               onClick={handleGoLogin}
@@ -391,7 +392,7 @@ export const ResetPassPage = () => {
               fullWidth
               sx={{ mt: 2 }}
             >
-              返回登入
+              {t("resetPassword.backToLogin")}
             </Button>
           </Box>
         </CardContent>

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:force": "vite --force",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -20,11 +21,13 @@
     "dayjs": "^1.11.19",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
+    "i18next": "^26.0.1",
     "qrcode.react": "^4.2.0",
     "ra-data-simple-rest": "^5.12.3",
     "react": "^19.1.1",
     "react-admin": "^5.12.3",
     "react-dom": "^19.1.1",
+    "react-i18next": "^17.0.1",
     "recharts": "^3.7.0",
     "sockjs-client": "^1.6.1",
     "xlsx": "^0.18.5",

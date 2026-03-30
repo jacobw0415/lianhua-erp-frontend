@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { SectionHeader } from '@/components/dashboard/SectionHeader';
 import { ProfitLossSection } from '@/components/dashboard/sections/ProfitLossSection';
 import { BreakEvenSection } from '@/components/dashboard/sections/BreakEvenSection';
@@ -11,6 +12,7 @@ import { DASHBOARD_GRID } from '@/constants/dashboardConstants';
 import { useDashboardContext } from '@/contexts/DashboardContext';
 
 export const DashboardFinancialBlock: React.FC = () => {
+  const { t } = useTranslation('dashboard');
   const {
     hasMounted,
     filters,
@@ -44,8 +46,8 @@ export const DashboardFinancialBlock: React.FC = () => {
   return (
     <Box sx={{ mb: 4 }}>
       <SectionHeader
-        title="財務績效與資金健康"
-        subtitle="Financial Performance & Liquidity"
+        title={t('sections.financial.title')}
+        subtitle={t('sections.financial.subtitle')}
         icon={<AccountBalanceWalletIcon color="primary" />}
       />
       <Box sx={{ mb: 2 }}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import type { TFunction } from 'i18next';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
 import { STAT_CARD_COLORS } from '@/constants/chartColors';
 import { formatPercent } from '@/utils/dashboardFormatters';
@@ -70,10 +71,12 @@ export function buildStatSectionItems(
   navigate: (path: string) => void,
   iconMap: StatIconMap,
   titleIconMap: StatIconMap,
+  t: TFunction<'dashboard'>,
   colorMap: StatColorMap = STAT_CARD_COLORS
-): { title: string; titleIcon: React.ReactNode; items: StatCardProps[] } {
+): { id: string; title: string; titleIcon: React.ReactNode; items: StatCardProps[] } {
   const items: StatCardProps[] = sectionConfig.items.map((item) => ({
-    title: item.title,
+    rowKey: String(item.valueKey),
+    title: t(`statItems.${String(item.valueKey)}` as 'statItems.monthSalesTotal'),
     icon: iconMap[item.iconKey] ?? null,
     value: getValueNode(item, stats, loading) ?? '—',
     iconColor: getIconColor(item, stats, colorMap),
@@ -81,7 +84,8 @@ export function buildStatSectionItems(
     onClick: item.path ? () => navigate(item.path!) : undefined,
   }));
   return {
-    title: sectionConfig.title,
+    id: sectionConfig.id,
+    title: t(`stats.${sectionConfig.id}` as 'stats.financial'),
     titleIcon: titleIconMap[sectionConfig.titleIconKey] ?? null,
     items,
   };

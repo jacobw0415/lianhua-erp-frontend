@@ -1,8 +1,10 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useRedirect } from "react-admin";
+import { useTranslation } from "react-i18next";
 
 export const ForbiddenPage = () => {
   const redirect = useRedirect();
+  const { t } = useTranslation("common");
 
   return (
     <Box
@@ -17,21 +19,20 @@ export const ForbiddenPage = () => {
       }}
     >
       <Typography variant="h4" fontWeight={700}>
-        無權限存取
+        {t("forbidden.title")}
       </Typography>
       <Typography variant="body1" color="text.secondary">
-        您的帳號目前無法操作此功能，若有疑問請聯絡系統管理員。
+        {t("forbidden.message")}
       </Typography>
       <Button
         variant="contained"
         sx={{ mt: 2 }}
         onClick={() => redirect("/")}
       >
-        回到儀表板
+        {t("forbidden.backHome")}
       </Button>
     </Box>
   );
 };
 
 ForbiddenPage.displayName = "ForbiddenPage";
-

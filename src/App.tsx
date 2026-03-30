@@ -90,6 +90,8 @@ import { RoleList } from "@/pages/roles/RoleList";
 import { ActivityAuditLogList } from "@/pages/activityAuditLogs/ActivityAuditLogList";
 import ProfilePage from "@/pages/account/ProfilePage";
 import ChangePasswordPage from "@/pages/account/ChangePasswordPage";
+import { raI18nProvider } from "@/providers/raI18nProvider";
+import { RaLocaleSync } from "@/components/RaLocaleSync";
 
 // ============================
 // 🚀 App 外層 Provider
@@ -190,12 +192,14 @@ const App = () => {
       dashboard={LazyDashboard}
       dataProvider={dataProvider}
       authProvider={authProvider}
+      i18nProvider={raI18nProvider}
       loginPage={LoginPage}
       notification={NoopNotification}
       theme={LianhuaLightTheme}
       darkTheme={LianhuaDarkTheme}
       defaultTheme={mode}
     >
+      <RaLocaleSync />
       {/* 無佈局頁面：登入相關（不顯示側邊選單與 AppBar） */}
       <CustomRoutes noLayout>
         <Route path="/forgot-password" element={<ForgotPassPage />} />

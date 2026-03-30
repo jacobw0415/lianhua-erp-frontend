@@ -17,6 +17,7 @@ import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PlainCurrency } from '@/components/money/PlainCurrency';
 
 interface TaskItem {
@@ -35,6 +36,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
 
   return (
     <Paper
@@ -61,14 +63,14 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <AssignmentLateIcon color="error" fontSize="small" /> 營運待辦事項與即期風險預警
+          <AssignmentLateIcon color="error" fontSize="small" /> {t('charts.tasks.title')}
         </Typography>
         {tasks && tasks.length > 0 && (
-          <Chip label={`共 ${tasks.length} 筆`} size="small" color="error" variant={isDark ? 'filled' : 'outlined'} />
+          <Chip label={t('charts.tasks.countBadge', { count: tasks.length })} size="small" color="error" variant={isDark ? 'filled' : 'outlined'} />
         )}
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-        點擊任一列可快速前往對應列表進行處理。
+        {t('charts.tasks.hint')}
       </Typography>
       <Divider sx={{ mb: 1 }} />
 
@@ -116,7 +118,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
                 }
                 secondary={
                   <Typography variant="body2" color="text.secondary">
-                    訂單日期：{task.dueDate}
+                    {t('charts.tasks.orderDate', { date: task.dueDate })}
                   </Typography>
                 }
               />
@@ -126,7 +128,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
                 </Typography>
                 <Chip
                   size="small"
-                  label={task.type === 'AR_DUE' ? '帳款催收' : '訂單處理'}
+                  label={task.type === 'AR_DUE' ? t('charts.tasks.typeAr') : t('charts.tasks.typeOrder')}
                   color={task.type === 'AR_DUE' ? 'error' : 'warning'}
                   variant="outlined"
                   sx={{ mt: 0.5 }}
@@ -138,10 +140,10 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({ tasks }) => {
       ) : (
         <Box sx={{ flex: 1, minHeight: 260, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 0.5 }}>
-            目前無緊急待辦事項
+            {t('charts.tasks.empty')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            帳款到期或訂單異常時，會自動在此顯示提醒。
+            {t('charts.tasks.emptyHint')}
           </Typography>
         </Box>
       )}

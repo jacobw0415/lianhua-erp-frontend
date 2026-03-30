@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { fetchUtils } from "react-admin";
 import { logger } from "@/utils/logger";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 
 /**
  * 自動向後端載入 Reference 選項（支援 Swagger 格式）
@@ -29,7 +33,9 @@ export const useReferenceOptions = (
     const load = async (): Promise<void> => {
       setLoading(true);
       try {
-        const { json } = await fetchUtils.fetchJson(url);
+        const { json } = await fetchUtils.fetchJson(appendLangQueryIfMissing(url), {
+          headers: mergeHeadersWithAcceptLanguage({ Accept: "application/json" }),
+        });
 
         // 🔥 支援 Swagger 格式：[] 或 { data: [] }
         const items: UnknownRecord[] = Array.isArray(json)

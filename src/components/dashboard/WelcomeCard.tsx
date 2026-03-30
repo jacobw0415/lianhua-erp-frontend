@@ -4,6 +4,8 @@ import { useTheme } from '@mui/material/styles';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import NightlightIcon from '@mui/icons-material/Nightlight';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 interface GreetingInfo {
   text: string;
@@ -20,8 +22,11 @@ interface WelcomeCardProps {
 const getCardBackground = (isDark: boolean) =>
   isDark ? 'rgba(27, 94, 32, 0.85)' : 'rgba(46, 125, 50, 0.85)';
 
-/** 問候圖示色：依主題回傳（亮/暗皆可讀） */
-export const getGreeting = (palette: { mode: string; warning?: { main?: string }; info?: { main?: string } }): GreetingInfo => {
+/** 問候圖示色：依主題回傳（亮/暗皆可讀）；文案由 dashboard 命名空間提供 */
+export const getGreeting = (
+  palette: { mode: string; warning?: { main?: string }; info?: { main?: string } },
+  t: TFunction<'dashboard'>,
+): GreetingInfo => {
   const hour = new Date().getHours();
   const isDark = palette.mode === 'dark';
   const morning = isDark ? '#FFD54F' : '#F9A825';
@@ -29,18 +34,18 @@ export const getGreeting = (palette: { mode: string; warning?: { main?: string }
   const evening = isDark ? '#90CAF9' : '#42A5F5';
   if (hour < 12) {
     return {
-      text: '早安',
+      text: t('greeting.morning'),
       icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: morning }} />,
     };
   }
   if (hour < 18) {
     return {
-      text: '午安',
+      text: t('greeting.afternoon'),
       icon: <WbSunnyIcon sx={{ fontSize: 24, ml: 1, color: afternoon }} />,
     };
   }
   return {
-    text: '晚安',
+    text: t('greeting.evening'),
     icon: <NightlightIcon sx={{ fontSize: 24, ml: 1, color: evening }} />,
   };
 };
@@ -52,8 +57,10 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({
   lastUpdated,
 }) => {
   const theme = useTheme();
+  const { t, i18n } = useTranslation('dashboard');
   const isDark = theme.palette.mode === 'dark';
   const cardBackground = getCardBackground(isDark);
+  const timeLoc = i18n.language.startsWith('en') ? 'en-US' : 'zh-TW';
 
   return (
     <Card
@@ -105,11 +112,13 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({
               <Box sx={{ ml: 1.5 }}>{greeting.icon}</Box>
             </Box>
             <Typography variant="h6" sx={{ opacity: 0.95, fontWeight: 500 }}>
-              歡迎使用蓮華 ERP 管理系統
+              {t('welcomeSubtitle')}
             </Typography>
             {lastUpdated && (
               <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 1 }}>
-                數據最後更新：{new Date(lastUpdated).toLocaleTimeString()}
+                {t('dataLastUpdated', {
+                  time: new Date(lastUpdated).toLocaleTimeString(timeLoc),
+                })}
               </Typography>
             )}
           </Box>
@@ -152,4 +161,3 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({
     </Card>
   );
 };
-

@@ -2,6 +2,7 @@ import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogin } from "react-admin";
+import { useTranslation } from "react-i18next";
 import { useColorMode } from "@/contexts/useColorMode";
 import {
   Box,
@@ -21,8 +22,6 @@ import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { logger } from "@/utils/logger";
 
-const TITLE = "蓮華 ERP";
-const SUBTITLE = "請登入以繼續使用系統";
 const LOGIN_COOLDOWN_SEC = 60;
 
 type BannerState = {
@@ -31,6 +30,7 @@ type BannerState = {
 } | null;
 
 export const LoginPage = () => {
+  const { t } = useTranslation("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +39,6 @@ export const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginCooldown, setLoginCooldown] = useState(0);
 
-  // 🌟 物理鎖：防止在異步回傳前重複提交
   const submitLock = useRef(false);
 
   const login = useLogin();
@@ -48,7 +47,6 @@ export const LoginPage = () => {
   const { mode } = useColorMode();
   const isDark = mode === "dark";
 
-  // 登入狀態提示邏輯
   useEffect(() => {
     if (typeof sessionStorage === "undefined") return;
     const expiredFlag = sessionStorage.getItem("login_expired");
@@ -56,28 +54,29 @@ export const LoginPage = () => {
     const logoutSuccess = sessionStorage.getItem("logout_success");
 
     if (logoutSuccess === "1") {
-      setBanner({ message: "您已成功登出。", severity: "success" });
+      setBanner({ message: t("login.bannerLogout"), severity: "success" });
       sessionStorage.removeItem("logout_success");
     } else if (expiredFlag === "1") {
       setBanner({
-        message: reason === "force_logout" ? "您已被管理員強制登出。" : "登入已逾期，請重新登入。",
+        message:
+          reason === "force_logout"
+            ? t("login.bannerForceLogout")
+            : t("login.bannerExpired"),
         severity: "warning",
       });
       sessionStorage.removeItem("login_expired");
       sessionStorage.removeItem("login_expired_reason");
     }
-  }, []);
+  }, [t]);
 
-  // 倒數計時器
   useEffect(() => {
     if (loginCooldown <= 0) return;
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       setLoginCooldown((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [loginCooldown]);
 
-  // 背景鎖定
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
@@ -100,8 +99,7 @@ export const LoginPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 1. 同步檢查物理鎖
+
     if (submitLock.current || isSubmitting) return;
 
     setError(null);
@@ -109,50 +107,43 @@ export const LoginPage = () => {
     const trimmedPassword = password.trim();
 
     if (!trimmedUsername || !trimmedPassword) {
-      setError("請輸入帳號與密碼");
+      setError(t("login.errorEmpty"));
       return;
     }
 
-    // 2. 立即上鎖
     submitLock.current = true;
     setIsSubmitting(true);
 
     login({ username: trimmedUsername, password: trimmedPassword })
       .then(() => {
-        // 🌟 修正：只有在真正成功且沒有拋出 MFA_REQUIRED 的情況下才導向首頁
         logger.debug("[Login] Success, navigating to dashboard");
         navigate("/", { replace: true });
       })
       .catch((err: any) => {
-        // 3. 失敗或 MFA 需求時解鎖（MFA 導頁後會由 MFA 頁面接手鎖定）
         submitLock.current = false;
         setIsSubmitting(false);
 
         const code = err?.code || err?.message;
 
-        // 🌟 核心修正：明確攔截 MFA 需求，防止進入一般錯誤流程
         if (code === "MFA_REQUIRED") {
           logger.debug("[Login] MFA Required, redirecting to MFA page...");
-          // 確保這裡使用 replace，避免按回退鍵回到已提交的登入表單
           navigate("/mfa", { replace: true });
           return;
         }
 
-        const msg = err?.message ?? "登入失敗，請稍後再試";
+        const msg = err?.message ?? t("login.errorFailed");
         setError(msg);
 
-        if (/嘗試過多|操作過於頻繁|稍後再試/i.test(msg)) {
+        if (/嘗試過多|操作過於頻繁|稍後再試|too many|rate|frequent/i.test(msg)) {
           setLoginCooldown(LOGIN_COOLDOWN_SEC);
         }
       })
       .finally(() => {
-        // 萬一既沒成功也沒進 catch 的極端情況
         setIsSubmitting(false);
         submitLock.current = false;
       });
   };
 
-  // 自動導向重設密碼邏輯
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token = params.get("token") || params.get("resetToken");
@@ -172,8 +163,8 @@ export const LoginPage = () => {
             <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: alpha(accentColor, 0.15), display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
               <LockOutlinedIcon sx={{ fontSize: 28, color: accentColor }} />
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>{TITLE}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{SUBTITLE}</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>{t("login.title")}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{t("login.subtitle")}</Typography>
           </Box>
 
           {banner && <Alert severity={banner.severity} onClose={() => setBanner(null)} sx={{ mb: 2 }}>{banner.message}</Alert>}
@@ -181,7 +172,8 @@ export const LoginPage = () => {
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
-              fullWidth label="帳號"
+              fullWidth
+              label={t("login.username")}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
@@ -197,7 +189,8 @@ export const LoginPage = () => {
               sx={{ mb: 2 }}
             />
             <TextField
-              fullWidth label="密碼"
+              fullWidth
+              label={t("login.password")}
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -227,11 +220,15 @@ export const LoginPage = () => {
               disabled={isSubmitting || loginCooldown > 0}
               sx={{ py: 1.5, fontWeight: 700, bgcolor: accentColor }}
             >
-              {isSubmitting ? "登入中…" : loginCooldown > 0 ? `請 ${loginCooldown} 秒後再試` : "登入"}
+              {isSubmitting
+                ? t("login.submitting")
+                : loginCooldown > 0
+                  ? t("login.cooldown", { seconds: loginCooldown })
+                  : t("login.submit")}
             </Button>
             <Box sx={{ mt: 2, textAlign: "center" }}>
               <Link to="/forgot-password" style={{ color: accentColor, fontSize: "0.875rem", textDecoration: "none" }}>
-                忘記密碼？
+                {t("login.forgotPassword")}
               </Link>
             </Box>
           </Box>

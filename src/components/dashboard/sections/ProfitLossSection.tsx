@@ -26,6 +26,7 @@ import { CHART_COLORS } from '@/constants/chartColors';
 import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke } from '@/utils/chartTheme';
+import { useTranslation } from 'react-i18next';
 
 interface ProfitLossPoint {
   period: string;
@@ -51,6 +52,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
   isProfitLossTrendLoading,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const gridStroke = getChartGridStroke(theme);
 
   /** 損益趨勢：自訂 Tooltip，各指標名稱與金額使用對應線條色 */
@@ -88,16 +90,16 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
     <Paper sx={{ p: 2, borderRadius: 2, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-          損益趨勢分析
+          {t('charts.profitLoss.title')}
         </Typography>
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <Select
             value={profitLossMonths}
             onChange={(e) => setProfitLossMonths(Number(e.target.value))}
           >
-            <MenuItem value={3}>過去 3 個月</MenuItem>
-            <MenuItem value={6}>過去 6 個月</MenuItem>
-            <MenuItem value={12}>過去 12 個月</MenuItem>
+            <MenuItem value={3}>{t('charts.profitLoss.m3')}</MenuItem>
+            <MenuItem value={6}>{t('charts.profitLoss.m6')}</MenuItem>
+            <MenuItem value={12}>{t('charts.profitLoss.m12')}</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -137,7 +139,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  name="營收"
+                  name={t('charts.profitLoss.revenue')}
                   stroke={CHART_COLORS.netProfit}
                   fill="url(#revenueAreaGrad)"
                   strokeWidth={2}
@@ -145,7 +147,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
                 <Area
                   type="monotone"
                   dataKey="expense"
-                  name="費用"
+                  name={t('charts.profitLoss.expense')}
                   stroke={CHART_COLORS.expense}
                   fill="url(#expenseAreaGrad)"
                   strokeWidth={2}
@@ -153,7 +155,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
                 <Line
                   type="natural"
                   dataKey="grossProfit"
-                  name="毛利"
+                  name={t('charts.profitLoss.gross')}
                   stroke={CHART_COLORS.revenue}
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -162,7 +164,7 @@ export const ProfitLossSection: React.FC<ProfitLossSectionProps> = ({
                 <Line
                   type="natural"
                   dataKey="netProfit"
-                  name="淨利"
+                  name={t('charts.profitLoss.net')}
                   stroke={CHART_COLORS.secondary}
                   strokeWidth={2.5}
                   dot={{ r: 4 }}

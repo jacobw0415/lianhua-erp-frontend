@@ -1,5 +1,9 @@
 import type { AuthProvider } from "react-admin";
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 import { clearAppCache } from "@/utils/appCache";
 import { clearProfileCache } from "@/utils/profileCache";
 import { logger, logError } from "@/utils/logger";
@@ -340,9 +344,9 @@ export async function refreshSessionToken(): Promise<boolean> {
 
   const apiUrl = getApiUrl();
   try {
-    const response = await fetch(`${apiUrl}/auth/refresh`, {
+    const response = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/refresh`), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: mergeHeadersWithAcceptLanguage({ "Content-Type": "application/json" }),
       body: JSON.stringify({ refreshToken }),
     });
     const json = await response.json().catch(() => null);
@@ -386,10 +390,10 @@ export function applyLoginSuccessWithSse(
 export const authProvider: AuthProvider = {
   login: async ({ username, password }) => {
     const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/auth/login`, {
+    const response = await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/login`), {
       method: "POST",
       body: JSON.stringify({ username, password }),
-      headers: { "Content-Type": "application/json" },
+      headers: mergeHeadersWithAcceptLanguage({ "Content-Type": "application/json" }),
     });
 
     const json = await response.json().catch(() => ({}));
@@ -424,11 +428,11 @@ export const authProvider: AuthProvider = {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        await fetch(`${apiUrl}/auth/logout`, {
+        await fetch(appendLangQueryIfMissing(`${apiUrl}/auth/logout`), {
           method: "POST",
-          headers: {
+          headers: mergeHeadersWithAcceptLanguage({
             Authorization: `${localStorage.getItem("tokenType") || "Bearer"} ${token}`,
-          },
+          }),
         });
       } catch {
         logger.warn("Logout API failed.");

@@ -14,6 +14,7 @@ import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import WarningIcon from '@mui/icons-material/Warning';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export interface QuickAction {
   label: string;
@@ -43,6 +44,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
 
   if (quickActions.length === 0 && alerts.length === 0 && !onRefresh) {
     return null;
@@ -74,7 +76,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
             color="text.secondary"
             sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
           >
-            <PendingActionsIcon fontSize="small" /> 快速操作
+            <PendingActionsIcon fontSize="small" /> {t('quickActions.title')}
             {onRefresh && (
               <Button
                 size="small"
@@ -84,7 +86,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                 disabled={isRefreshing}
                 sx={{ ml: 1 }}
               >
-                {isRefreshing ? '更新中…' : '重新整理'}
+                {isRefreshing ? t('quickActions.refreshing') : t('quickActions.refresh')}
               </Button>
             )}
           </Typography>
@@ -100,7 +102,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
           >
             {quickActions.map((action) => (
               <Button
-                key={action.label}
+                key={action.path}
                 variant="outlined"
                 size="small"
                 color={action.color}
@@ -151,7 +153,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
                   gap: 1,
                 }}
               >
-                <WarningIcon fontSize="small" color="warning" /> 待辦事項
+                <WarningIcon fontSize="small" color="warning" /> {t('quickActions.todosTitle')}
               </Typography>
 
               <Stack

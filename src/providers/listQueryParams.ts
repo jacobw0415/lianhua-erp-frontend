@@ -130,6 +130,10 @@ export interface BuildExportQueryOptions {
   format: string;
   /** 匯出欄位 key，逗號分隔傳遞（例如 `columns=orderNo,customerName`） */
   columns?: string[];
+  /**
+   * 匯出表頭／工作表語系需與 UI 不同時指定（後端 `exportLang`，優先於 LocaleContextHolder）。
+   */
+  exportLang?: "zh-TW" | "en";
 }
 
 /**
@@ -150,6 +154,9 @@ export function buildExportQueryParams(
   q.set("scope", options.scope);
   if (options.columns?.length) {
     q.set("columns", options.columns.join(","));
+  }
+  if (options.exportLang) {
+    q.set("exportLang", options.exportLang === "en" ? "en" : "zh-TW");
   }
   return q;
 }

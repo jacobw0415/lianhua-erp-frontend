@@ -16,6 +16,10 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Link as RouterLink } from "react-router-dom";
 import { getApiUrl } from "@/config/apiUrl";
+import {
+  appendLangQueryIfMissing,
+  mergeHeadersWithAcceptLanguage,
+} from "@/utils/apiLocale";
 import { useGlobalAlert } from "@/contexts/GlobalAlertContext";
 import { authProvider } from "@/providers/authProvider";
 import { applyBodyScrollbarStyles } from "@/utils/scrollbarStyles";
@@ -110,9 +114,9 @@ const ChangePasswordPage: React.FC = () => {
         return;
       }
 
-      const res = await fetch(`${apiUrl}/users/me/password`, {
+      const res = await fetch(appendLangQueryIfMissing(`${apiUrl}/users/me/password`), {
         method: "PUT",
-        headers: new Headers({
+        headers: mergeHeadersWithAcceptLanguage({
           "Content-Type": "application/json",
           Authorization: `${tokenType} ${token}`,
         }),

@@ -30,6 +30,7 @@ import { CHART_COLORS, PIE_COLORS } from '@/constants/chartColors';
 import { formatAxisCurrency } from '@/utils/dashboardFormatters';
 import { getChartTooltipContentStyle, getChartLegendStyle } from '@/utils/chartTooltipStyle';
 import { getChartGridStroke } from '@/utils/chartTheme';
+import { useTranslation } from 'react-i18next';
 
 interface TrendPoint {
   date: string;
@@ -71,7 +72,14 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
   dateRangeLabel,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation('dashboard');
   const gridStroke = getChartGridStroke(theme);
+
+  // 英文文案：Operating expenses (total)
+  // 為避免圓心標籤與其他 UI 元素重疊，把 (total) 另起一行。
+  const expenseTotalLabel = t('charts.expenseStructure.totalLabel');
+  const expenseTotalIsSuffix = /\(total\)\s*$/i.test(expenseTotalLabel);
+  const expenseTotalMainText = expenseTotalLabel.replace(/\s*\(total\)\s*$/i, '').trim();
 
   /** 營收與現金回收趨勢：自訂 Tooltip，顯示日期、金額、收現率% */
   const renderTrendTooltip = (props: any) => {
@@ -98,14 +106,14 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
           {label}
         </Typography>
         <Typography component="span" variant="body2" sx={{ fontWeight: 600, color: CHART_COLORS.revenue }}>
-          期間營收
+          {t('charts.trend.periodRevenue')}
         </Typography>
         <Typography component="span" variant="body2" sx={{ ml: 0.5, color: CHART_COLORS.revenue }}>
           NT$ {sale.toLocaleString()}
         </Typography>
         <br />
         <Typography component="span" variant="body2" sx={{ fontWeight: 600, color: CHART_COLORS.netProfit }}>
-          實際收款
+          {t('charts.trend.cashIn')}
         </Typography>
         <Typography component="span" variant="body2" sx={{ ml: 0.5, color: CHART_COLORS.netProfit }}>
           NT$ {receipt.toLocaleString()}
@@ -114,7 +122,7 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
           <>
             <br />
             <Typography component="span" variant="caption" color="text.secondary">
-              收現率
+              {t('charts.trend.collectionRate')}
             </Typography>
             <Typography component="span" variant="caption" sx={{ ml: 0.5, fontWeight: 600 }}>
               {rate.toFixed(1)}%
@@ -129,13 +137,13 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
     <Paper sx={{ p: 3, borderRadius: 2, minHeight: 450, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          營收與現金回收趨勢
+          {t('charts.trend.title')}
         </Typography>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select value={trendDays} onChange={(e) => setTrendDays(Number(e.target.value))}>
-              <MenuItem value={7}>近 7 天</MenuItem>
-              <MenuItem value={14}>近 14 天</MenuItem>
-              <MenuItem value={30}>近 30 天</MenuItem>
+              <MenuItem value={7}>{t('charts.trend.last7')}</MenuItem>
+              <MenuItem value={14}>{t('charts.trend.last14')}</MenuItem>
+              <MenuItem value={30}>{t('charts.trend.last30')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -195,7 +203,7 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
                   <Bar
                     yAxisId="left"
                     dataKey="saleAmount"
-                    name="期間營收"
+                    name={t('charts.trend.seriesRevenue')}
                     fill={CHART_COLORS.revenue}
                     radius={[4, 4, 0, 0]}
                     maxBarSize={40}
@@ -206,7 +214,7 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
                     yAxisId="right"
                     type="natural"
                     dataKey="receiptAmount"
-                    name="實際收款"
+                    name={t('charts.trend.seriesCash')}
                     stroke={CHART_COLORS.netProfit}
                     strokeWidth={2.5}
                     strokeDasharray="4 2"
@@ -223,7 +231,7 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
               {isTrendsLoading ? (
                 <Skeleton variant="rectangular" width="100%" height="100%" />
               ) : (
-                <ChartEmptyState message="選擇區間內尚無營收或收款資料" height={350} />
+                <ChartEmptyState message={t('common.noTrendData')} height={350} />
               )}
             </Box>
           )}
@@ -266,7 +274,7 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
     <Paper sx={{ p: 2, borderRadius: 2, minHeight: 320, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <MoneyOffIcon fontSize="small" /> 營運支出結構分析
+          <MoneyOffIcon fontSize="small" /> {t('charts.expenseStructure.title')}
         </Typography>
       </Box>
       {dateRangeLabel != null && (
@@ -335,7 +343,17 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
                 <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   NT$ {expenses.reduce((sum, d) => sum + Number(d.amount), 0).toLocaleString()}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">營運支出總計</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {expenseTotalIsSuffix ? (
+                    <>
+                      {expenseTotalMainText}
+                      <br />
+                      (total)
+                    </>
+                  ) : (
+                    expenseTotalLabel
+                  )}
+                </Typography>
               </Box>
             </Box>
           ) : (
@@ -343,7 +361,7 @@ export const TrendAndExpenseSection: React.FC<TrendAndExpenseSectionProps> = ({
               {isExpensesLoading ? (
                 <Skeleton variant="circular" width={200} height={200} />
               ) : (
-                <ChartEmptyState message="當前區間無數據" height={260} />
+                <ChartEmptyState message={t('common.noDataInRange')} height={260} />
               )}
             </Box>
           )}
